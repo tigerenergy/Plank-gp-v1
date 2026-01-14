@@ -210,22 +210,50 @@ body {
   color: var(--pastel-violet);
 }
 
-/* 날짜 뱃지 - 다크 모드 */
+/* 날짜 뱃지 - 다크 모드 (눈에 띄게) */
 .date-badge {
-  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium;
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold;
+  border: 1px solid transparent;
 }
 
 .date-badge-normal {
-  background: rgba(148, 163, 184, 0.15);
-  color: var(--color-text-tertiary);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #a5b4fc;
 }
+
 .date-badge-soon {
-  background: rgba(252, 211, 77, 0.15);
-  color: var(--pastel-amber);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.15) 100%);
+  border-color: rgba(251, 191, 36, 0.4);
+  color: #fcd34d;
+  animation: pulse-glow 2s ease-in-out infinite;
 }
+
 .date-badge-overdue {
-  background: rgba(248, 113, 113, 0.2);
-  color: #f87171;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.2) 100%);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+  animation: pulse-glow-red 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+  }
+  50% {
+    box-shadow: 0 0 8px 2px rgba(251, 191, 36, 0.3);
+  }
+}
+
+@keyframes pulse-glow-red {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+  50% {
+    box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.4);
+  }
 }
 
 /* 카드 추가 버튼 */

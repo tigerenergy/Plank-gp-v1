@@ -18,14 +18,14 @@
 │    │                 (보드 상세 페이지)                     │                 │
 │    └──────────────────────┬──────────────────────────────┘                 │
 │                           │                                                 │
-│           ┌───────────────┼───────────────┐                                │
-│           ▼               ▼               ▼                                │
-│    ┌───────────┐   ┌───────────┐   ┌───────────┐                          │
-│    │  Column   │   │   Card    │   │ CardModal │                          │
-│    │ (컬럼/리스트)│   │  (카드)    │   │ (카드 모달) │                          │
-│    └─────┬─────┘   └─────┬─────┘   └─────┬─────┘                          │
-│          │               │               │                                 │
-│          └───────────────┼───────────────┘                                 │
+│           ┌───────────────┼───────────────┬──────────────┐                 │
+│           ▼               ▼               ▼              ▼                 │
+│    ┌───────────┐   ┌───────────┐   ┌───────────┐  ┌────────────┐          │
+│    │  Column   │   │   Card    │   │ CardModal │  │ConfirmModal│          │
+│    │ (컬럼/리스트)│   │  (카드)    │   │ (카드 모달) │  │ (확인 모달)  │          │
+│    └─────┬─────┘   └─────┬─────┘   └─────┬─────┘  └─────┬──────┘          │
+│          │               │               │              │                  │
+│          └───────────────┼───────────────┴──────────────┘                  │
 │                          ▼                                                  │
 │    ┌─────────────────────────────────────────────────────┐                 │
 │    │                 Zustand Store                        │                 │
@@ -71,9 +71,9 @@
 │    │ • title       │    │ • board_id(FK)│    │ • list_id(FK) │             │
 │    │ • created_at  │    │ • title       │    │ • title       │             │
 │    │ • updated_at  │    │ • position    │    │ • description │             │
-│    │               │    │ • created_at  │    │ • position    │             │
-│    │               │    │ • updated_at  │    │ • due_date    │             │
-│    │               │    │               │    │ • created_at  │             │
+│    │               │    │ • color       │    │ • position    │             │
+│    │               │    │ • created_at  │    │ • due_date    │             │
+│    │               │    │ • updated_at  │    │ • created_at  │             │
 │    │               │    │               │    │ • updated_at  │             │
 │    └───────────────┘    └───────────────┘    └───────────────┘             │
 │                                                                             │
@@ -104,6 +104,7 @@ jjap-rello/
 │   │   ├── Card.tsx                 #   - 카드 컴포넌트
 │   │   ├── CardModal.tsx            #   - 카드 상세 모달
 │   │   ├── Column.tsx               #   - 컬럼(리스트) 컴포넌트
+│   │   ├── ConfirmModal.tsx         #   - 확인 모달 (삭제 확인 등)
 │   │   └── Header.tsx               #   - 헤더 컴포넌트 (미사용)
 │   │
 │   ├── globals.css                  # 글로벌 스타일 (Tailwind + 커스텀)
@@ -149,27 +150,33 @@ jjap-rello/
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  2. Zustand Store (useBoardStore)                               │
+│  2. 확인 필요시 ConfirmModal 표시                                 │
+│     - 삭제 등 위험한 작업 전 사용자 확인 요청                       │
+└─────────────────────────────┬───────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  3. Zustand Store (useBoardStore)                               │
 │     - 낙관적 업데이트 (즉시 UI 반영)                               │
 │     - 이전 상태 저장 (롤백용)                                      │
 └─────────────────────────────┬───────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  3. Server Actions (board.ts, list.ts, card.ts)                 │
+│  4. Server Actions (board.ts, list.ts, card.ts)                 │
 │     - Zod로 입력 유효성 검사                                      │
 │     - Supabase API 호출                                          │
 └─────────────────────────────┬───────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  4. Supabase (PostgreSQL)                                       │
+│  5. Supabase (PostgreSQL)                                       │
 │     - 데이터 저장/조회/수정/삭제                                   │
 └─────────────────────────────┬───────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  5. 응답 처리                                                    │
+│  6. 응답 처리                                                    │
 │     - 성공: Toast 알림 표시                                       │
 │     - 실패: 롤백 + 에러 Toast 표시                                │
 └─────────────────────────────────────────────────────────────────┘
@@ -184,8 +191,10 @@ RootLayout (layout.tsx)
 │   └── Toaster (sonner)
 │
 ├── HomePage (page.tsx)
-│   └── BoardCard (인라인)
-│       └── EditForm (인라인)
+│   ├── BoardCard (인라인)
+│   │   └── EditForm (인라인)
+│   │
+│   └── ConfirmModal ◀── 보드 삭제 확인
 │
 └── BoardPage (board/[id]/page.tsx)
     │
@@ -198,14 +207,21 @@ RootLayout (layout.tsx)
     │   │   ├── ColumnHeader
     │   │   │   ├── Title (편집 가능)
     │   │   │   └── OptionsMenu (드롭다운)
+    │   │   │       ├── 제목 수정
+    │   │   │       └── 삭제 → ConfirmModal
     │   │   │
     │   │   ├── SortableContext
     │   │   │   └── Card[] (Card.tsx)
     │   │   │       ├── Title
-    │   │   │       ├── DueDateBadge
+    │   │   │       ├── DueDateBadge (상태별 색상)
+    │   │   │       │   ├── 기본 (회색)
+    │   │   │       │   ├── 마감 임박 (주황/펄스)
+    │   │   │       │   └── 마감 지남 (빨강/펄스)
     │   │   │       └── DescriptionIcon
     │   │   │
-    │   │   └── AddCardForm (AddCardForm.tsx)
+    │   │   ├── AddCardForm (AddCardForm.tsx)
+    │   │   │
+    │   │   └── ConfirmModal ◀── 리스트 삭제 확인
     │   │
     │   ├── AddListButton
     │   │
@@ -216,7 +232,9 @@ RootLayout (layout.tsx)
         ├── TitleInput
         ├── DueDateInput
         ├── DescriptionTextarea
-        └── ActionButtons (저장, 삭제)
+        ├── ActionButtons (저장, 삭제)
+        │
+        └── ConfirmModal ◀── 카드 삭제 확인
 ```
 
 ---
@@ -250,8 +268,10 @@ globals.css
 │   └── .drag-*           (드래그 효과)
 │
 └── Animations
-    ├── pulse-glow        (마감일 펄스)
-    └── fadeInSlideDown   (드롭다운)
+    ├── pulse-glow-amber  (마감 임박 펄스)
+    ├── pulse-glow-red    (마감 지남 펄스)
+    ├── fade-in-up        (드롭다운)
+    └── animate-in        (모달 등장)
 ```
 
 ---
@@ -299,43 +319,93 @@ useBoardStore
 
 ---
 
+## 🧱 컴포넌트 상세
+
+### ConfirmModal (확인 모달)
+
+브라우저 기본 `confirm()` 대신 사용하는 커스텀 확인 모달입니다.
+
+```typescript
+interface ConfirmModalProps {
+  isOpen: boolean // 모달 열림 상태
+  title: string // 모달 제목
+  message: string // 확인 메시지
+  confirmText?: string // 확인 버튼 텍스트 (기본: '확인')
+  cancelText?: string // 취소 버튼 텍스트 (기본: '취소')
+  onConfirm: () => void // 확인 클릭 콜백
+  onCancel: () => void // 취소 클릭 콜백
+  variant?: 'danger' | 'warning' | 'default' // 스타일 변형
+}
+```
+
+**사용처:**
+
+- `page.tsx` - 보드 삭제 확인
+- `Column.tsx` - 리스트 삭제 확인
+- `CardModal.tsx` - 카드 삭제 확인
+
+**특징:**
+
+- ESC 키로 닫기 지원
+- 배경 클릭 시 닫기
+- 다크 모드 테마
+- 부드러운 등장 애니메이션
+- variant별 아이콘 및 버튼 색상
+
+---
+
 ## 🛠️ 기술 스택 상세
 
-| 분류 | 기술 | 버전 | 용도 |
-|------|------|------|------|
-| **Framework** | Next.js | 16.x | React 풀스택 프레임워크 |
-| **Language** | TypeScript | 5.x | 타입 안정성 |
-| **Styling** | Tailwind CSS | 3.4.x | 유틸리티 기반 CSS |
-| **State** | Zustand | 5.x | 클라이언트 상태 관리 |
-| **Database** | Supabase | 2.x | PostgreSQL + API |
-| **DnD** | @dnd-kit | 6.x | 드래그 앤 드롭 |
-| **Form** | React Hook Form | 7.x | 폼 상태 관리 |
-| **Validation** | Zod | 3.x | 스키마 유효성 검사 |
-| **Toast** | Sonner | 1.x | 알림 메시지 |
-| **Font** | Pretendard | 1.3.9 | 한글 웹폰트 |
+| 분류           | 기술            | 버전  | 용도                    |
+| -------------- | --------------- | ----- | ----------------------- |
+| **Framework**  | Next.js         | 16.x  | React 풀스택 프레임워크 |
+| **Language**   | TypeScript      | 5.x   | 타입 안정성             |
+| **Styling**    | Tailwind CSS    | 3.4.x | 유틸리티 기반 CSS       |
+| **State**      | Zustand         | 5.x   | 클라이언트 상태 관리    |
+| **Database**   | Supabase        | 2.x   | PostgreSQL + API        |
+| **DnD**        | @dnd-kit        | 6.x   | 드래그 앤 드롭          |
+| **Form**       | React Hook Form | 7.x   | 폼 상태 관리            |
+| **Validation** | Zod             | 3.x   | 스키마 유효성 검사      |
+| **Toast**      | Sonner          | 1.x   | 알림 메시지             |
+| **Font**       | Pretendard      | 1.3.9 | 한글 웹폰트             |
 
 ---
 
 ## 🚀 주요 기능
 
 ### ✅ 구현 완료
+
 - [x] 보드 CRUD (생성, 조회, 수정, 삭제)
 - [x] 리스트 CRUD (생성, 조회, 수정, 삭제)
 - [x] 카드 CRUD (생성, 조회, 수정, 삭제)
 - [x] 드래그 앤 드롭 (카드 이동)
-- [x] 마감일 설정 및 시각적 표시
-- [x] 반응형 레이아웃 (모바일/데스크톱)
-- [x] 다크 모드 UI
+- [x] 마감일 설정 및 시각적 표시 (상태별 색상/애니메이션)
+- [x] 반응형 레이아웃 (모바일 세로 스택 / 데스크톱 가로 스크롤)
+- [x] 다크 모드 UI (파스텔 포인트 컬러)
 - [x] 낙관적 업데이트
+- [x] 커스텀 확인 모달 (ConfirmModal)
 - [x] 한국어 지원
 
 ### 📋 추가 가능 기능
+
 - [ ] 리스트 드래그 앤 드롭
 - [ ] 라벨 시스템
 - [ ] 체크리스트
 - [ ] 검색 기능
 - [ ] 사용자 인증
 - [ ] 멀티 사용자 협업
+
+---
+
+## 📱 반응형 브레이크포인트
+
+| 브레이크포인트 | 너비     | 레이아웃                    |
+| -------------- | -------- | --------------------------- |
+| 모바일 (기본)  | < 640px  | 컬럼 세로 스택, 세로 스크롤 |
+| sm             | ≥ 640px  | 컬럼 가로 배치, 가로 스크롤 |
+| md             | ≥ 768px  | -                           |
+| lg             | ≥ 1024px | -                           |
+| xl             | ≥ 1280px | -                           |
 
 ---
 

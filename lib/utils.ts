@@ -1,35 +1,47 @@
 import type { ListColor } from '@/types'
 
-// 리스트 색상에 따른 글래스모피즘 스타일
+// 리스트 색상에 따른 다크 모드 + 파스텔 스타일
 export const listColorClasses: Record<ListColor, { 
   gradient: string
   text: string
   headerBg: string
+  badge: string
+  accent: string
 }> = {
   rose: {
-    gradient: 'column-glass-pink',
-    text: 'text-white',
-    headerBg: 'bg-pink-500/10',
+    gradient: 'column-glass-rose',
+    text: 'text-[#f9a8d4]',
+    headerBg: 'bg-[#f9a8d4]/5',
+    badge: 'badge-rose',
+    accent: '#f9a8d4',
   },
   amber: {
-    gradient: 'column-glass-blue',
-    text: 'text-white',
-    headerBg: 'bg-blue-500/10',
+    gradient: 'column-glass-amber',
+    text: 'text-[#fcd34d]',
+    headerBg: 'bg-[#fcd34d]/5',
+    badge: 'badge-amber',
+    accent: '#fcd34d',
   },
   sky: {
-    gradient: 'column-glass-cyan',
-    text: 'text-white',
-    headerBg: 'bg-cyan-500/10',
+    gradient: 'column-glass-sky',
+    text: 'text-[#7dd3fc]',
+    headerBg: 'bg-[#7dd3fc]/5',
+    badge: 'badge-sky',
+    accent: '#7dd3fc',
   },
   emerald: {
-    gradient: 'column-glass-green',
-    text: 'text-white',
-    headerBg: 'bg-emerald-500/10',
+    gradient: 'column-glass-emerald',
+    text: 'text-[#6ee7b7]',
+    headerBg: 'bg-[#6ee7b7]/5',
+    badge: 'badge-emerald',
+    accent: '#6ee7b7',
   },
   violet: {
     gradient: 'column-glass-violet',
-    text: 'text-white',
-    headerBg: 'bg-violet-500/10',
+    text: 'text-[#c4b5fd]',
+    headerBg: 'bg-[#c4b5fd]/5',
+    badge: 'badge-violet',
+    accent: '#c4b5fd',
   },
 }
 

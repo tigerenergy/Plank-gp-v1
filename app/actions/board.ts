@@ -108,6 +108,10 @@ export async function getBoard(boardId: string): Promise<ActionResult<Board>> {
       .single()
 
     if (error) {
+      // PGRST116: 결과가 0개인 경우 (보드가 존재하지 않음)
+      if (error.code === 'PGRST116') {
+        return { success: false, error: '보드를 찾을 수 없습니다. 삭제되었거나 존재하지 않는 보드입니다.' }
+      }
       console.error('보드 조회 에러:', error)
       return { success: false, error: '보드를 불러오는데 실패했습니다.' }
     }

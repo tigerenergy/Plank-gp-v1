@@ -107,9 +107,10 @@ export default function BoardPage() {
       if (activeCardData.list_id !== targetListId) {
         const targetList = lists.find((l) => l.id === targetListId)
         if (targetList) {
-          const newPosition = targetList.cards.length > 0
-            ? targetList.cards[targetList.cards.length - 1].position + 1
-            : 1
+          const newPosition =
+            targetList.cards.length > 0
+              ? targetList.cards[targetList.cards.length - 1].position + 1
+              : 1
           moveCardInStore(activeId, activeCardData.list_id, targetListId, newPosition)
         }
       }
@@ -160,9 +161,10 @@ export default function BoardPage() {
       targetListId = overId
       const targetList = lists.find((l) => l.id === targetListId)
       if (targetList) {
-        newPosition = targetList.cards.length > 0
-          ? targetList.cards[targetList.cards.length - 1].position + 1
-          : 1
+        newPosition =
+          targetList.cards.length > 0
+            ? targetList.cards[targetList.cards.length - 1].position + 1
+            : 1
       }
     }
 
@@ -188,10 +190,10 @@ export default function BoardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-          <p className="text-white/70 font-medium">보드를 불러오는 중...</p>
+      <div className='flex items-center justify-center min-h-[100dvh] px-4'>
+        <div className='flex flex-col items-center gap-4'>
+          <div className='w-12 h-12 border-3 border-[#252542] border-t-[#c4b5fd] rounded-full animate-spin' />
+          <p className='text-[#9ca3af] font-medium text-sm'>보드를 불러오는 중...</p>
         </div>
       </div>
     )
@@ -199,27 +201,45 @@ export default function BoardPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="flex flex-col items-center gap-4 text-center max-w-md glass-light rounded-3xl p-8">
-          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
-            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      <div className='flex items-center justify-center min-h-[100dvh] px-4'>
+        <div
+          className='flex flex-col items-center gap-4 text-center w-full max-w-md 
+                        bg-[#1a1a2e] border border-white/10 rounded-xl p-6 sm:p-8
+                        shadow-[0_8px_30px_rgba(0,0,0,0.4)]'
+        >
+          <div className='w-14 h-14 bg-red-500/10 rounded-full flex items-center justify-center'>
+            <svg
+              className='w-7 h-7 text-red-400'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'
+              />
             </svg>
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-800 mb-2">오류가 발생했습니다</h2>
-            <p className="text-gray-600">{error}</p>
+            <h2 className='text-lg font-bold text-[#f3f4f6] mb-2'>오류가 발생했습니다</h2>
+            <p className='text-sm text-[#9ca3af]'>{error}</p>
           </div>
-          <div className="flex gap-3">
+          <div className='flex flex-col sm:flex-row gap-2 w-full sm:w-auto mt-2'>
             <button
               onClick={() => router.push('/')}
-              className="ios-button text-gray-600"
+              className='px-4 py-2.5 rounded-lg text-sm font-medium
+                         bg-white/5 border border-white/10 text-[#d1d5db]
+                         hover:bg-white/10 transition-all w-full sm:w-auto'
             >
               보드 목록으로
             </button>
             <button
               onClick={loadData}
-              className="ios-button-primary"
+              className='px-4 py-2.5 rounded-lg text-sm font-medium
+                         bg-violet-600 hover:bg-violet-500 text-white
+                         transition-all w-full sm:w-auto'
             >
               다시 시도
             </button>
@@ -230,22 +250,33 @@ export default function BoardPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className='h-[100dvh] flex flex-col overflow-hidden'>
       {/* 헤더 */}
-      <header className="sticky top-0 z-50 glass-dark border-b border-white/10">
-        <div className="px-4 sm:px-6 py-3">
-          <div className="flex items-center gap-4">
+      <header className='flex-shrink-0 sticky top-0 z-50 bg-[#0f0f1a]/80 backdrop-blur-xl border-b border-white/5'>
+        <div className='px-4 sm:px-6 py-3'>
+          <div className='flex items-center gap-3'>
             <Link
-              href="/"
-              className="w-9 h-9 rounded-full glass flex items-center justify-center
-                       hover:bg-white/30 transition-all"
-              title="보드 목록으로"
+              href='/'
+              className='w-9 h-9 rounded-lg bg-white/5 border border-white/10 
+                        flex items-center justify-center
+                        hover:bg-white/10 hover:border-white/20 transition-all active:scale-95'
+              title='보드 목록으로'
             >
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <svg
+                className='w-4 h-4 text-[#9ca3af]'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M15 19l-7-7 7-7'
+                />
               </svg>
             </Link>
-            <h1 className="text-lg font-bold text-white truncate">
+            <h1 className='text-lg font-bold text-[#f3f4f6] truncate flex-1'>
               {board?.title || '보드'}
             </h1>
           </div>
@@ -253,7 +284,7 @@ export default function BoardPage() {
       </header>
 
       {/* 보드 영역 */}
-      <div className="flex-1 overflow-hidden">
+      <div className='flex-1 min-h-0 overflow-auto'>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
@@ -261,31 +292,38 @@ export default function BoardPage() {
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex gap-4 sm:gap-5 p-4 sm:p-6 h-full overflow-x-auto">
+          {/* 모바일: 세로 배치, 데스크톱: 가로 배치 */}
+          <div className='flex flex-col sm:flex-row gap-4 p-4 sm:p-6 sm:h-full sm:overflow-x-auto sm:items-start board-scroll'>
             {lists.map((list) => (
               <Column key={list.id} list={list} />
             ))}
 
             {/* 리스트 추가 버튼 */}
-            <div className="flex-shrink-0">
+            <div className='sm:flex-shrink-0'>
               <button
-                className="w-64 sm:w-72 min-w-[256px] sm:min-w-[288px] p-4 glass
-                           border border-dashed border-white/40 hover:border-white/60
-                           rounded-3xl text-white/70 hover:text-white hover:bg-white/20
-                           flex items-center justify-center gap-2 transition-all duration-300"
+                className='w-full sm:w-72 sm:min-w-[288px] p-3
+                           bg-white/5 border border-dashed border-white/15 
+                           hover:border-violet-500/40 hover:bg-violet-500/5
+                           rounded-xl text-[#6b7280] hover:text-[#c4b5fd]
+                           flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98]'
                 onClick={() => toast.info('리스트 추가 기능은 준비 중입니다.')}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M12 4v16m8-8H4'
+                  />
                 </svg>
-                리스트 추가
+                <span className='text-sm font-medium'>리스트 추가</span>
               </button>
             </div>
           </div>
 
-          <DragOverlay>
+          <DragOverlay dropAnimation={null}>
             {activeCard && (
-              <div className="drag-overlay">
+              <div className='drag-overlay'>
                 <Card card={activeCard} />
               </div>
             )}

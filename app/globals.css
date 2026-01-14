@@ -7,17 +7,44 @@
 :root {
   --font-pretendard: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto,
     'Helvetica Neue', 'Segoe UI', 'Noto Sans KR', sans-serif;
+
+  /* 다크 모드 컬러 팔레트 */
+  --color-bg-primary: #0f0f1a;
+  --color-bg-secondary: #1a1a2e;
+  --color-bg-tertiary: #252542;
+  --color-bg-card: #2a2a45;
+  --color-bg-card-hover: #353555;
+
+  /* 텍스트 계층 */
+  --color-text-primary: #f3f4f6;
+  --color-text-secondary: #d1d5db;
+  --color-text-tertiary: #9ca3af;
+  --color-text-muted: #6b7280;
+
+  /* 파스텔 포인트 컬러 */
+  --pastel-rose: #f9a8d4;
+  --pastel-amber: #fcd34d;
+  --pastel-sky: #7dd3fc;
+  --pastel-emerald: #6ee7b7;
+  --pastel-violet: #c4b5fd;
 }
 
 html {
   font-family: var(--font-pretendard);
+  height: 100%;
+  height: 100dvh;
 }
 
 body {
   @apply antialiased;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  height: 100%;
+  min-height: 100dvh;
+  background: radial-gradient(ellipse at 20% 0%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+    linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
   background-attachment: fixed;
+  color: var(--color-text-primary);
+  overflow-x: hidden;
 }
 
 /* 글래스 카드 */
@@ -65,73 +92,158 @@ body {
 .column-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* 카드 호버 */
-.card-hover {
-  @apply transition-all duration-200;
+/* 보드 가로 스크롤 */
+.board-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
 }
 
-.card-hover:hover {
+.board-scroll > * {
+  scroll-snap-align: start;
+}
+
+@media (max-width: 640px) {
+  .board-scroll {
+    scroll-padding-left: 0.75rem;
+  }
+}
+
+/* 카드 스타일 */
+.card-dark {
+  background: var(--color-bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  @apply transition-all duration-200 ease-out;
+}
+
+.card-dark:hover {
+  background: var(--color-bg-card-hover);
+  border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
 
-/* 드래그 */
+/* 드래그 커서 */
+.draggable {
+  cursor: grab;
+}
+
+.draggable:active {
+  cursor: grabbing;
+}
+
+/* 드래그 중인 카드 */
+.card-dragging {
+  @apply opacity-50 scale-[1.02];
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* 드래그 오버레이 */
 .drag-overlay {
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  @apply scale-105 rotate-[2deg];
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(139, 92, 246, 0.5);
+  z-index: 9999;
 }
 
-/* 컬럼 스타일 */
-.column-glass-pink {
-  background: linear-gradient(180deg, rgba(236, 72, 153, 0.15) 0%, rgba(244, 114, 182, 0.08) 100%);
+/* 드롭 플레이스홀더 */
+.drop-placeholder {
+  @apply rounded-xl border-2 border-dashed border-violet-400/50;
+  background: rgba(139, 92, 246, 0.1);
+  min-height: 60px;
 }
 
-.column-glass-blue {
-  background: linear-gradient(180deg, rgba(59, 130, 246, 0.15) 0%, rgba(96, 165, 250, 0.08) 100%);
+/* 컬럼 스타일 - 다크 모드 + 파스텔 악센트 */
+.column-dark {
+  background: rgba(26, 26, 46, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
-.column-glass-cyan {
-  background: linear-gradient(180deg, rgba(6, 182, 212, 0.15) 0%, rgba(34, 211, 238, 0.08) 100%);
+.column-glass-rose {
+  background: linear-gradient(180deg, rgba(26, 26, 46, 0.9) 0%, rgba(26, 26, 46, 0.95) 100%);
+  border-top: 3px solid var(--pastel-rose);
 }
 
-.column-glass-green {
-  background: linear-gradient(180deg, rgba(34, 197, 94, 0.15) 0%, rgba(74, 222, 128, 0.08) 100%);
+.column-glass-amber {
+  background: linear-gradient(180deg, rgba(26, 26, 46, 0.9) 0%, rgba(26, 26, 46, 0.95) 100%);
+  border-top: 3px solid var(--pastel-amber);
+}
+
+.column-glass-sky {
+  background: linear-gradient(180deg, rgba(26, 26, 46, 0.9) 0%, rgba(26, 26, 46, 0.95) 100%);
+  border-top: 3px solid var(--pastel-sky);
+}
+
+.column-glass-emerald {
+  background: linear-gradient(180deg, rgba(26, 26, 46, 0.9) 0%, rgba(26, 26, 46, 0.95) 100%);
+  border-top: 3px solid var(--pastel-emerald);
 }
 
 .column-glass-violet {
-  background: linear-gradient(180deg, rgba(139, 92, 246, 0.15) 0%, rgba(167, 139, 250, 0.08) 100%);
+  background: linear-gradient(180deg, rgba(26, 26, 46, 0.9) 0%, rgba(26, 26, 46, 0.95) 100%);
+  border-top: 3px solid var(--pastel-violet);
 }
 
-/* 날짜 뱃지 */
+/* 컬럼 헤더 배지 색상 */
+.badge-rose {
+  background: rgba(249, 168, 212, 0.2);
+  color: var(--pastel-rose);
+}
+.badge-amber {
+  background: rgba(252, 211, 77, 0.2);
+  color: var(--pastel-amber);
+}
+.badge-sky {
+  background: rgba(125, 211, 252, 0.2);
+  color: var(--pastel-sky);
+}
+.badge-emerald {
+  background: rgba(110, 231, 183, 0.2);
+  color: var(--pastel-emerald);
+}
+.badge-violet {
+  background: rgba(196, 181, 253, 0.2);
+  color: var(--pastel-violet);
+}
+
+/* 날짜 뱃지 - 다크 모드 */
 .date-badge {
-  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium;
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium;
 }
 
-.date-badge-normal { 
-  @apply bg-slate-100 text-slate-600; 
+.date-badge-normal {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--color-text-tertiary);
 }
-.date-badge-soon { 
-  @apply bg-amber-100 text-amber-700; 
+.date-badge-soon {
+  background: rgba(252, 211, 77, 0.15);
+  color: var(--pastel-amber);
 }
-.date-badge-overdue { 
-  @apply bg-red-100 text-red-600; 
+.date-badge-overdue {
+  background: rgba(248, 113, 113, 0.2);
+  color: #f87171;
 }
 
 /* 카드 추가 버튼 */
 .add-card-btn {
-  @apply w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  @apply w-full py-2 rounded-lg flex items-center justify-center gap-2 transition-all duration-200;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  color: var(--color-text-tertiary);
 }
 
 .add-card-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: scale(1.05);
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.3);
+  color: var(--pastel-violet);
 }
 
 .add-card-btn svg {
-  @apply w-4 h-4 text-white/70;
+  @apply w-4 h-4;
 }
 
 /* iOS 버튼 */
@@ -193,4 +305,20 @@ body {
   background: white;
   border-color: rgba(99, 102, 241, 0.5);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* 드롭다운 메뉴 애니메이션 */
+@keyframes fadeInSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: fadeInSlideDown 0.15s ease-out forwards;
 }

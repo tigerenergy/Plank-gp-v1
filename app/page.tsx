@@ -96,10 +96,10 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       {/* 헤더 */}
-      <header className="sticky top-0 z-50 glass-dark border-b border-white/10">
+      <header className="sticky top-0 z-50 bg-[#0f0f1a]/80 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-          <h1 className="text-2xl font-bold text-white">
-            짭렐로 ✨
+          <h1 className="text-2xl font-bold text-[#f3f4f6]">
+            짭렐로 <span className="text-[#c4b5fd]">✦</span>
           </h1>
         </div>
       </header>
@@ -107,15 +107,15 @@ export default function Home() {
       {/* 메인 컨텐츠 */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-white mb-2">내 보드</h2>
-          <p className="text-white/70">보드를 선택하거나 새로 만들어보세요</p>
+          <h2 className="text-xl font-semibold text-[#f3f4f6] mb-2">내 보드</h2>
+          <p className="text-[#6b7280]">보드를 선택하거나 새로 만들어보세요</p>
         </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="flex flex-col items-center gap-4">
-              <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-              <p className="text-white/70 font-medium">보드를 불러오는 중...</p>
+              <div className="w-12 h-12 border-3 border-[#252542] border-t-[#c4b5fd] rounded-full animate-spin" />
+              <p className="text-[#6b7280] font-medium">보드를 불러오는 중...</p>
             </div>
           </div>
         ) : (
@@ -124,8 +124,10 @@ export default function Home() {
               <div
                 key={board.id}
                 onClick={() => editingBoardId !== board.id && router.push(`/board/${board.id}`)}
-                className="relative group cursor-pointer rounded-2xl p-5 h-36 glass
-                         hover:scale-[1.02] hover:bg-white/20 transition-all duration-200"
+                className="relative group cursor-pointer rounded-xl p-5 h-36 
+                           bg-[#1a1a2e] border border-white/5
+                           hover:border-violet-500/30 hover:bg-[#1e1e38] 
+                           transition-all duration-200 shadow-lg"
               >
                 {editingBoardId === board.id ? (
                   <form 
@@ -137,18 +139,22 @@ export default function Home() {
                       type="text"
                       value={editingTitle}
                       onChange={(e) => setEditingTitle(e.target.value)}
-                      className="ios-input text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-[#252542] border border-white/10
+                                 text-[#f3f4f6] text-sm focus:outline-none focus:border-violet-500/50"
                       autoFocus
                       onClick={(e) => e.stopPropagation()}
                     />
                     <div className="flex gap-2 mt-auto">
-                      <button type="submit" className="ios-button-primary flex-1 text-sm py-2">
+                      <button type="submit" 
+                              className="flex-1 py-2 rounded-lg text-sm font-medium
+                                         bg-violet-600 hover:bg-violet-500 text-white transition-all">
                         저장
                       </button>
                       <button
                         type="button"
                         onClick={handleCancelEdit}
-                        className="ios-button text-sm py-2"
+                        className="px-4 py-2 rounded-lg text-sm
+                                   bg-white/5 text-[#9ca3af] hover:bg-white/10 transition-all"
                       >
                         취소
                       </button>
@@ -156,18 +162,18 @@ export default function Home() {
                   </form>
                 ) : (
                   <>
-                    <h3 className="text-lg font-bold text-white truncate">
+                    <h3 className="text-lg font-bold text-[#f3f4f6] truncate group-hover:text-white transition-colors">
                       {board.title}
                     </h3>
-                    <p className="text-white/60 text-sm mt-1">
+                    <p className="text-[#6b7280] text-sm mt-1">
                       {new Date(board.created_at).toLocaleDateString('ko-KR')}
                     </p>
 
                     <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
                       <button
                         onClick={(e) => handleStartEdit(e, board)}
-                        className="w-8 h-8 rounded-full flex items-center justify-center
-                                 bg-white/20 hover:bg-indigo-500 text-white transition-all"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center
+                                 bg-white/10 hover:bg-violet-500 text-[#9ca3af] hover:text-white transition-all"
                         title="보드 수정"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,8 +182,8 @@ export default function Home() {
                       </button>
                       <button
                         onClick={(e) => handleDeleteBoard(e, board.id)}
-                        className="w-8 h-8 rounded-full flex items-center justify-center
-                                 bg-white/20 hover:bg-red-500 text-white transition-all"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center
+                                 bg-white/10 hover:bg-red-500 text-[#9ca3af] hover:text-white transition-all"
                         title="보드 삭제"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -193,18 +199,23 @@ export default function Home() {
             {isCreating ? (
               <form
                 onSubmit={handleCreateBoard}
-                className="rounded-2xl p-5 h-36 glass"
+                className="rounded-xl p-5 h-36 bg-[#1a1a2e] border border-violet-500/30
+                           shadow-[0_0_20px_rgba(139,92,246,0.1)]"
               >
                 <input
                   type="text"
                   value={newBoardTitle}
                   onChange={(e) => setNewBoardTitle(e.target.value)}
                   placeholder="보드 제목 입력..."
-                  className="ios-input text-sm mb-3"
+                  className="w-full px-3 py-2 rounded-lg bg-[#252542] border border-white/10
+                             text-[#f3f4f6] text-sm placeholder-[#6b7280]
+                             focus:outline-none focus:border-violet-500/50 mb-3"
                   autoFocus
                 />
                 <div className="flex gap-2">
-                  <button type="submit" className="ios-button-primary flex-1 text-sm">
+                  <button type="submit" 
+                          className="flex-1 py-2 rounded-lg text-sm font-medium
+                                     bg-violet-600 hover:bg-violet-500 text-white transition-all">
                     생성
                   </button>
                   <button
@@ -213,7 +224,8 @@ export default function Home() {
                       setIsCreating(false)
                       setNewBoardTitle('')
                     }}
-                    className="ios-button text-sm"
+                    className="px-4 py-2 rounded-lg text-sm
+                               bg-white/5 text-[#9ca3af] hover:bg-white/10 transition-all"
                   >
                     취소
                   </button>
@@ -222,16 +234,16 @@ export default function Home() {
             ) : (
               <button
                 onClick={() => setIsCreating(true)}
-                className="flex flex-col items-center justify-center gap-3 rounded-2xl h-36
-                         glass border border-dashed border-white/30 
-                         hover:border-white/50 hover:bg-white/15 transition-all duration-200"
+                className="flex flex-col items-center justify-center gap-3 rounded-xl h-36
+                         bg-white/[0.02] border border-dashed border-white/10 
+                         hover:border-violet-500/30 hover:bg-violet-500/5 transition-all duration-200"
               >
-                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-[#6b7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                 </div>
-                <span className="text-white/70 font-medium text-sm">새 보드 만들기</span>
+                <span className="text-[#6b7280] font-medium text-sm">새 보드 만들기</span>
               </button>
             )}
           </div>
@@ -239,16 +251,17 @@ export default function Home() {
 
         {!isLoading && boards.length === 0 && !isCreating && (
           <div className="text-center py-16">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl glass flex items-center justify-center">
-              <svg className="w-10 h-10 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-[#1a1a2e] border border-white/5 flex items-center justify-center">
+              <svg className="w-10 h-10 text-[#6b7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">아직 보드가 없어요</h3>
-            <p className="text-white/50 mb-6">첫 번째 보드를 만들어서 작업을 시작해보세요!</p>
+            <h3 className="text-xl font-semibold text-[#f3f4f6] mb-2">아직 보드가 없어요</h3>
+            <p className="text-[#6b7280] mb-6">첫 번째 보드를 만들어서 작업을 시작해보세요!</p>
             <button
               onClick={() => setIsCreating(true)}
-              className="ios-button-primary px-6 py-2.5"
+              className="px-6 py-2.5 rounded-lg font-medium
+                         bg-violet-600 hover:bg-violet-500 text-white transition-all"
             >
               + 새 보드 만들기
             </button>

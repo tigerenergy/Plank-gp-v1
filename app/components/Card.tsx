@@ -41,19 +41,19 @@ export function Card({ card }: CardProps) {
       {...listeners}
       onClick={() => openCardModal(card)}
       className={`
-        rounded-xl cursor-pointer card-hover
-        bg-white/90 backdrop-blur-sm border border-white/50
-        ${isDragging ? 'opacity-60 scale-105' : ''}
+        group rounded-lg draggable card-dark
+        ${isDragging ? 'card-dragging' : ''}
       `}
     >
       <div className="p-3">
         {/* 제목 */}
-        <h3 className="text-sm font-medium text-gray-800 mb-2 line-clamp-2 leading-relaxed">
+        <h3 className="text-sm font-medium text-[#f3f4f6] mb-2 line-clamp-2 leading-relaxed 
+                       group-hover:text-white transition-colors">
           {card.title}
         </h3>
 
         {/* 메타 정보 */}
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-2 flex-wrap">
           {card.due_date && (
             <div className={`date-badge ${getDueDateColorClass(card.due_date)}`}>
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -64,7 +64,8 @@ export function Card({ card }: CardProps) {
           )}
 
           {card.description && (
-            <div className="flex items-center text-gray-400" title="설명 있음">
+            <div className="flex items-center text-[#6b7280] group-hover:text-[#9ca3af] transition-colors" 
+                 title="설명 있음">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
               </svg>

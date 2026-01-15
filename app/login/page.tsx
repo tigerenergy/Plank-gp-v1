@@ -50,7 +50,9 @@ export default function LoginPage() {
                 />
               </svg>
             </motion.div>
-            <h1 className='text-xl font-bold text-slate-900 dark:text-white mb-1.5 tracking-tight'>Plank</h1>
+            <h1 className='text-xl font-bold text-slate-900 dark:text-white mb-1.5 tracking-tight'>
+              Plank
+            </h1>
             <p className='text-slate-500 dark:text-slate-400 text-sm tracking-wide'>
               팀과 함께 성장하는 협업 공간
             </p>
@@ -99,7 +101,7 @@ export default function LoginPage() {
         </div>
 
         {/* 하단 */}
-        <p className='mt-6 text-center text-xs text-slate-400'>© 2026 Plank</p>
+        <p className='mt-6 text-center text-[11px] text-slate-400 tracking-wide'>© 2026 Plank</p>
       </motion.div>
     </div>
   )

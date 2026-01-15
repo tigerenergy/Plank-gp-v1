@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import {
   DndContext,
   DragOverlay,
@@ -11,46 +11,59 @@ import {
 import type { DropAnimation } from '@dnd-kit/core'
 import type { User } from '@supabase/supabase-js'
 import { useBoardStore } from '@/store/useBoardStore'
-import { getBoardData, getBoard } from '@/app/actions/board'
-import { getTeamMembers } from '@/app/actions/member'
 import { useBoardDragDrop } from '@/hooks/useBoardDragDrop'
 import { Column } from '@/app/components/Column'
 import { Card } from '@/app/components/Card'
 import { CardModal } from '@/app/components/CardModal'
 import { BoardHeader } from '@/app/components/board/BoardHeader'
-import { BoardLoading } from '@/app/components/board/BoardLoading'
-import { BoardError } from '@/app/components/board/BoardError'
 import { AddListButton } from '@/app/components/board/AddListButton'
 import { BoardSettingsModal } from '@/app/components/board/BoardSettingsModal'
+import type { Board, ListWithCards, TeamMember } from '@/types'
 
 interface BoardClientProps {
   user: User | null
+  initialBoard: Board
+  initialLists: ListWithCards[]
+  initialMembers: TeamMember[]
 }
 
-export default function BoardClient({ user }: BoardClientProps) {
-  const params = useParams()
+export default function BoardClient({
+  user,
+  initialBoard,
+  initialLists,
+  initialMembers,
+}: BoardClientProps) {
   const router = useRouter()
-  const boardId = params.id as string
 
   const {
     board,
     lists,
     members,
-    isLoading,
-    error,
     setBoard,
     setLists,
     setMembers,
     setLoading,
-    setError,
     setCurrentUserId,
     isCardModalOpen,
   } = useBoardStore()
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
+  // 초기 데이터 설정 (서버에서 받은 데이터)
+  useEffect(() => {
+    setBoard(initialBoard)
+    setLists(initialLists)
+    setMembers(initialMembers)
+    setLoading(false)
+  }, [initialBoard, initialLists, initialMembers, setBoard, setLists, setMembers, setLoading])
+
+  // 현재 사용자 ID 설정
+  useEffect(() => {
+    setCurrentUserId(user?.id || null)
+  }, [user?.id, setCurrentUserId])
+
   // 보드 소유자인지 확인
-  const isOwner = board?.created_by === user?.id
+  const isOwner = (board?.created_by || initialBoard.created_by) === user?.id
 
   const { sensors, activeCard, handleDragStart, handleDragOver, handleDragEnd } = useBoardDragDrop()
 
@@ -67,57 +80,17 @@ export default function BoardClient({ user }: BoardClientProps) {
     easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
   }
 
-  // 데이터 로드
-  const loadData = async () => {
-    setLoading(true)
-    setError(null)
-
-    const boardResult = await getBoard(boardId)
-    if (!boardResult.success || !boardResult.data) {
-      setError(boardResult.error || '보드를 불러올 수 없습니다.')
-      return
-    }
-
-    setBoard(boardResult.data)
-
-    // 리스트 & 카드 로드
-    const listsResult = await getBoardData(boardResult.data.id)
-    if (listsResult.success && listsResult.data) {
-      setLists(listsResult.data)
-    } else {
-      setError(listsResult.error || '데이터를 불러올 수 없습니다.')
-    }
-
-    // 팀원 로드
-    const membersResult = await getTeamMembers()
-    if (membersResult.success && membersResult.data) {
-      setMembers(membersResult.data)
-    }
-  }
-
-  // 현재 사용자 ID 설정
-  useEffect(() => {
-    setCurrentUserId(user?.id || null)
-  }, [user?.id, setCurrentUserId])
-
-  useEffect(() => {
-    loadData()
-  }, [boardId])
-
-  if (isLoading) {
-    return <BoardLoading />
-  }
-
-  if (error) {
-    return <BoardError error={error} onRetry={loadData} onBack={() => router.push('/')} />
-  }
+  // 실제 렌더링할 데이터 (스토어 우선, 없으면 초기값)
+  const displayLists = lists.length > 0 ? lists : initialLists
+  const displayMembers = members.length > 0 ? members : initialMembers
+  const displayBoard = board || initialBoard
 
   return (
     <div className='h-[100dvh] flex flex-col overflow-hidden'>
       <BoardHeader
-        title={board?.title || '보드'}
+        title={displayBoard.title}
         user={user}
-        members={members}
+        members={displayMembers}
         onSettingsClick={() => setIsSettingsOpen(true)}
       />
 
@@ -131,7 +104,7 @@ export default function BoardClient({ user }: BoardClientProps) {
           onDragEnd={isOwner ? handleDragEnd : undefined}
         >
           <div className='flex flex-col sm:flex-row gap-4 p-4 sm:p-6 sm:h-full sm:overflow-x-auto sm:items-start board-scroll'>
-            {lists.map((list) => (
+            {displayLists.map((list) => (
               <Column key={list.id} list={list} isOwner={isOwner} />
             ))}
             {/* 소유자만 리스트 추가 가능 */}

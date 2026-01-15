@@ -1,6 +1,6 @@
 'use server'
 
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import type { ActionResult, List } from '@/types'
 import { createListSchema, updateListSchema } from '@/schema/validation'
 
@@ -10,6 +10,8 @@ export async function createList(input: {
   title: string
 }): Promise<ActionResult<List>> {
   try {
+    const supabase = await createClient()
+    
     // 유효성 검사
     const validation = createListSchema.safeParse(input)
     if (!validation.success) {
@@ -55,6 +57,8 @@ export async function updateList(input: {
   title?: string
 }): Promise<ActionResult<List>> {
   try {
+    const supabase = await createClient()
+    
     // 유효성 검사
     const validation = updateListSchema.safeParse(input)
     if (!validation.success) {
@@ -86,6 +90,7 @@ export async function updateList(input: {
 // 리스트 삭제
 export async function deleteList(id: string): Promise<ActionResult> {
   try {
+    const supabase = await createClient()
     const { error } = await supabase.from('lists').delete().eq('id', id)
 
     if (error) {

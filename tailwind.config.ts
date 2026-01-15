@@ -3,11 +3,34 @@ import plugin from 'tailwindcss/plugin'
 
 const config: Config = {
   content: ['./app/**/*.{js,ts,jsx,tsx,mdx}', './components/**/*.{js,ts,jsx,tsx,mdx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       // 색상 시스템
       colors: {
-        // 다크 모드 배경
+        // CSS 변수 기반 (라이트/다크 모드 지원)
+        background: 'rgb(var(--background) / <alpha-value>)',
+        foreground: 'rgb(var(--foreground) / <alpha-value>)',
+        card: {
+          DEFAULT: 'rgb(var(--card) / <alpha-value>)',
+          foreground: 'rgb(var(--card-foreground) / <alpha-value>)',
+        },
+        primary: {
+          DEFAULT: 'rgb(var(--primary) / <alpha-value>)',
+          foreground: 'rgb(var(--primary-foreground) / <alpha-value>)',
+        },
+        secondary: {
+          DEFAULT: 'rgb(var(--secondary) / <alpha-value>)',
+          foreground: 'rgb(var(--secondary-foreground) / <alpha-value>)',
+        },
+        muted: {
+          DEFAULT: 'rgb(var(--muted) / <alpha-value>)',
+          foreground: 'rgb(var(--muted-foreground) / <alpha-value>)',
+        },
+        border: 'rgb(var(--border) / <alpha-value>)',
+        input: 'rgb(var(--input) / <alpha-value>)',
+
+        // 다크 모드 배경 (하위호환)
         bg: {
           primary: '#0f0f1a',
           secondary: '#1a1a2e',
@@ -15,7 +38,7 @@ const config: Config = {
           card: '#2a2a45',
           'card-hover': '#353555',
         },
-        // 텍스트 계층
+        // 텍스트 계층 (하위호환)
         text: {
           primary: '#f3f4f6',
           secondary: '#d1d5db',

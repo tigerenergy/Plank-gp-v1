@@ -2,13 +2,14 @@
 
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
-import type { Board, ListWithCards, Card } from '@/types'
+import type { Board, ListWithCards, Card, Profile } from '@/types'
 
 // 스토어 상태 타입
 interface BoardState {
   // 데이터
   board: Board | null
   lists: ListWithCards[]
+  members: Profile[]
   isLoading: boolean
   error: string | null
 
@@ -22,6 +23,7 @@ interface BoardState {
   // 액션
   setBoard: (board: Board) => void
   setLists: (lists: ListWithCards[]) => void
+  setMembers: (members: Profile[]) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
 
@@ -56,6 +58,7 @@ export const useBoardStore = create<BoardState>()(
     // 초기 상태
     board: null,
     lists: [],
+    members: [],
     isLoading: true,
     error: null,
     selectedCard: null,
@@ -72,6 +75,11 @@ export const useBoardStore = create<BoardState>()(
       set((state) => {
         state.lists = lists
         state.isLoading = false
+      }),
+
+    setMembers: (members) =>
+      set((state) => {
+        state.members = members
       }),
 
     setLoading: (loading) =>

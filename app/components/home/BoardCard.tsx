@@ -44,7 +44,7 @@ export function BoardCard({
 
   if (isEditing) {
     return (
-      <div className='rounded-xl p-5 h-36 bg-bg-secondary border border-white/5 shadow-lg'>
+      <div className='rounded-xl p-5 h-36 bg-white dark:bg-[#1a1a2e] border border-gray-200 dark:border-white/5 shadow-lg'>
         <form
           onSubmit={(e) => onUpdate(e, board.id)}
           onClick={(e) => e.stopPropagation()}
@@ -54,8 +54,8 @@ export function BoardCard({
             type='text'
             value={editingTitle}
             onChange={(e) => onEditingTitleChange(e.target.value)}
-            className='w-full px-3 py-2 rounded-lg bg-bg-tertiary border border-white/10
-                       text-text-primary text-sm focus:outline-none focus:border-violet-500/50'
+            className='w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-[#252542] border border-gray-300 dark:border-white/10
+                       text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/50'
             autoFocus
           />
           <div className='flex gap-2 mt-auto'>
@@ -71,7 +71,7 @@ export function BoardCard({
               type='button'
               onClick={handleCancelEdit}
               className='px-4 py-2 rounded-lg text-sm
-                         bg-white/5 text-text-tertiary hover:bg-white/10 transition-colors'
+                         bg-gray-200 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-white/10 transition-colors'
               whileTap={{ scale: 0.95 }}
             >
               취소
@@ -86,17 +86,18 @@ export function BoardCard({
     <motion.div
       onClick={onNavigate}
       className='relative group cursor-pointer rounded-xl p-5 h-36 
-                 bg-bg-secondary border border-white/5 shadow-lg'
+                 bg-white dark:bg-[#1a1a2e] border border-gray-200 dark:border-white/5 shadow-lg
+                 hover:shadow-xl hover:border-violet-300 dark:hover:border-violet-500/30 transition-all'
       variants={cardHover}
       initial='initial'
       whileHover='hover'
       whileTap='tap'
       transition={easeTransition}
     >
-      <h3 className='text-lg font-bold text-text-primary truncate group-hover:text-white transition-colors'>
+      <h3 className='text-lg font-bold text-gray-900 dark:text-gray-100 truncate group-hover:text-violet-600 dark:group-hover:text-white transition-colors'>
         {board.title}
       </h3>
-      <p className='text-text-muted text-sm mt-1'>
+      <p className='text-gray-500 dark:text-gray-500 text-sm mt-1'>
         {new Date(board.created_at).toLocaleDateString('ko-KR')}
       </p>
 
@@ -105,7 +106,7 @@ export function BoardCard({
         <motion.button
           onClick={handleStartEdit}
           className='w-8 h-8 rounded-lg flex items-center justify-center
-                   bg-white/10 hover:bg-violet-500 text-text-tertiary hover:text-white transition-colors'
+                   bg-gray-200 dark:bg-white/10 hover:bg-violet-500 text-gray-500 dark:text-gray-400 hover:text-white transition-colors'
           title='보드 수정'
           whileTap={{ scale: 0.9 }}
         >
@@ -114,7 +115,7 @@ export function BoardCard({
         <motion.button
           onClick={handleDelete}
           className='w-8 h-8 rounded-lg flex items-center justify-center
-                   bg-white/10 hover:bg-red-500 text-text-tertiary hover:text-white transition-colors'
+                   bg-gray-200 dark:bg-white/10 hover:bg-red-500 text-gray-500 dark:text-gray-400 hover:text-white transition-colors'
           title='보드 삭제'
           whileTap={{ scale: 0.9 }}
         >

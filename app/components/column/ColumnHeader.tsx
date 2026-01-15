@@ -46,7 +46,7 @@ export function ColumnHeader({
   onDeleteClick,
 }: ColumnHeaderProps) {
   return (
-    <div className={`flex-shrink-0 px-3 sm:px-4 py-3 ${colorClasses.headerBg} border-b border-white/5`}>
+    <div className='flex-shrink-0 px-3 sm:px-4 py-3 bg-gray-50/50 dark:bg-transparent border-b border-gray-100 dark:border-white/5'>
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-2 min-w-0 flex-1'>
           {/* Status indicator dots */}
@@ -63,13 +63,19 @@ export function ColumnHeader({
               onChange={(e) => onEditTitleChange(e.target.value)}
               onBlur={onUpdateTitle}
               onKeyDown={onKeyDown}
-              className='flex-1 px-2 py-1 text-sm font-semibold bg-bg-tertiary border border-violet-500/50 
-                         rounded-md text-text-primary focus:outline-none focus:ring-2 focus:ring-violet-500/30'
+              className='flex-1 px-2 py-1 text-sm font-semibold 
+                         bg-white dark:bg-[#252542] border border-violet-400 dark:border-violet-500/50 
+                         rounded-md text-gray-900 dark:text-gray-100 
+                         focus:outline-none focus:ring-2 focus:ring-violet-500/30'
             />
           ) : (
             <>
-              <h2 className={`font-semibold text-sm ${colorClasses.text} truncate`}>{list.title}</h2>
-              <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-md font-medium ${colorClasses.badge}`}>
+              <h2 className={`font-semibold text-sm ${colorClasses.text} truncate`}>
+                {list.title}
+              </h2>
+              <span
+                className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-md font-medium ${colorClasses.badge}`}
+              >
                 {list.cards.length}
               </span>
             </>
@@ -80,8 +86,9 @@ export function ColumnHeader({
         <div className='relative' ref={menuRef}>
           <motion.button
             onClick={onMenuToggle}
-            className='flex-shrink-0 p-1.5 text-text-muted hover:text-text-tertiary 
-                       hover:bg-white/5 rounded-lg transition-colors'
+            className='flex-shrink-0 p-1.5 text-gray-400 dark:text-gray-500 
+                       hover:text-gray-600 dark:hover:text-gray-300 
+                       hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors'
             title='더보기'
             whileTap={{ scale: 0.9 }}
           >
@@ -92,7 +99,8 @@ export function ColumnHeader({
             {isMenuOpen && (
               <motion.div
                 className='absolute right-0 top-full mt-1 w-40 py-1 z-50
-                              bg-bg-secondary border border-white/10 rounded-lg shadow-xl'
+                           bg-white dark:bg-[#1a1a2e] border border-gray-200 dark:border-white/10 
+                           rounded-lg shadow-xl'
                 variants={slideDown}
                 initial='initial'
                 animate='animate'
@@ -101,8 +109,8 @@ export function ColumnHeader({
               >
                 <motion.button
                   onClick={onStartEdit}
-                  className='w-full px-3 py-2 text-left text-sm text-text-secondary 
-                             hover:bg-white/5 flex items-center gap-2 transition-colors'
+                  className='w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 
+                             hover:bg-gray-100 dark:hover:bg-white/5 flex items-center gap-2 transition-colors'
                   whileTap={{ scale: 0.98 }}
                 >
                   <EditIcon />
@@ -110,8 +118,8 @@ export function ColumnHeader({
                 </motion.button>
                 <motion.button
                   onClick={onDeleteClick}
-                  className='w-full px-3 py-2 text-left text-sm text-red-400 
-                             hover:bg-red-500/10 flex items-center gap-2 transition-colors'
+                  className='w-full px-3 py-2 text-left text-sm text-red-500 dark:text-red-400 
+                             hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2 transition-colors'
                   whileTap={{ scale: 0.98 }}
                 >
                   <DeleteIcon />

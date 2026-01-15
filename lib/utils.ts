@@ -1,6 +1,6 @@
 import type { ListColor } from '@/types'
 
-// 리스트 색상에 따른 다크 모드 + 파스텔 스타일
+// 리스트 색상에 따른 다크/라이트 모드 스타일
 export const listColorClasses: Record<ListColor, { 
   gradient: string
   text: string
@@ -12,48 +12,48 @@ export const listColorClasses: Record<ListColor, {
 }> = {
   rose: {
     gradient: 'column-glass-rose',
-    text: 'text-[#f9a8d4]',
-    headerBg: 'bg-[#f9a8d4]/5',
-    badge: 'badge-rose',
-    accent: '#f9a8d4',
-    dotPrimary: 'bg-[#f9a8d4]',
-    dotSecondary: 'bg-[#ec4899]',
+    text: 'text-pink-600 dark:text-[#f9a8d4]',
+    headerBg: 'bg-pink-50 dark:bg-[#f9a8d4]/5',
+    badge: 'bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-300',
+    accent: '#ec4899',
+    dotPrimary: 'bg-pink-400 dark:bg-[#f9a8d4]',
+    dotSecondary: 'bg-pink-600 dark:bg-[#ec4899]',
   },
   amber: {
     gradient: 'column-glass-amber',
-    text: 'text-[#fcd34d]',
-    headerBg: 'bg-[#fcd34d]/5',
-    badge: 'badge-amber',
-    accent: '#fcd34d',
-    dotPrimary: 'bg-[#fcd34d]',
-    dotSecondary: 'bg-[#f59e0b]',
+    text: 'text-amber-600 dark:text-[#fcd34d]',
+    headerBg: 'bg-amber-50 dark:bg-[#fcd34d]/5',
+    badge: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-300',
+    accent: '#f59e0b',
+    dotPrimary: 'bg-amber-400 dark:bg-[#fcd34d]',
+    dotSecondary: 'bg-amber-600 dark:bg-[#f59e0b]',
   },
   sky: {
     gradient: 'column-glass-sky',
-    text: 'text-[#7dd3fc]',
-    headerBg: 'bg-[#7dd3fc]/5',
-    badge: 'badge-sky',
-    accent: '#7dd3fc',
-    dotPrimary: 'bg-[#7dd3fc]',
-    dotSecondary: 'bg-[#3b82f6]',
+    text: 'text-sky-600 dark:text-[#7dd3fc]',
+    headerBg: 'bg-sky-50 dark:bg-[#7dd3fc]/5',
+    badge: 'bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-300',
+    accent: '#0ea5e9',
+    dotPrimary: 'bg-sky-400 dark:bg-[#7dd3fc]',
+    dotSecondary: 'bg-sky-600 dark:bg-[#3b82f6]',
   },
   emerald: {
     gradient: 'column-glass-emerald',
-    text: 'text-[#6ee7b7]',
-    headerBg: 'bg-[#6ee7b7]/5',
-    badge: 'badge-emerald',
-    accent: '#6ee7b7',
-    dotPrimary: 'bg-[#6ee7b7]',
-    dotSecondary: 'bg-[#22c55e]',
+    text: 'text-emerald-600 dark:text-[#6ee7b7]',
+    headerBg: 'bg-emerald-50 dark:bg-[#6ee7b7]/5',
+    badge: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300',
+    accent: '#10b981',
+    dotPrimary: 'bg-emerald-400 dark:bg-[#6ee7b7]',
+    dotSecondary: 'bg-emerald-600 dark:bg-[#22c55e]',
   },
   violet: {
     gradient: 'column-glass-violet',
-    text: 'text-[#c4b5fd]',
-    headerBg: 'bg-[#c4b5fd]/5',
-    badge: 'badge-violet',
-    accent: '#c4b5fd',
-    dotPrimary: 'bg-[#c4b5fd]',
-    dotSecondary: 'bg-[#8b5cf6]',
+    text: 'text-violet-600 dark:text-[#c4b5fd]',
+    headerBg: 'bg-violet-50 dark:bg-[#c4b5fd]/5',
+    badge: 'bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-300',
+    accent: '#8b5cf6',
+    dotPrimary: 'bg-violet-400 dark:bg-[#c4b5fd]',
+    dotSecondary: 'bg-violet-600 dark:bg-[#8b5cf6]',
   },
 }
 
@@ -97,33 +97,78 @@ export function formatDate(dateString: string | null): string {
   })
 }
 
-// 간단한 날짜 표시 (월 일)
+// D-day 형식 날짜 표시
 export function formatShortDate(dateString: string | null): string {
   if (!dateString) return ''
   
   const date = new Date(dateString)
-  const month = date.toLocaleDateString('en-US', { month: 'short' })
-  const day = date.getDate()
+  const now = new Date()
   
-  return `${month} ${day}`
+  // 시간 제외하고 날짜만 비교
+  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const nowOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  
+  const diffTime = dateOnly.getTime() - nowOnly.getTime()
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24))
+
+  // D-day 형식
+  if (diffDays < -7) {
+    return `${Math.abs(diffDays)}일 지남`
+  }
+  if (diffDays < 0) {
+    return `D+${Math.abs(diffDays)}`
+  }
+  if (diffDays === 0) {
+    return 'D-Day'
+  }
+  if (diffDays === 1) {
+    return 'D-1'
+  }
+  if (diffDays <= 7) {
+    return `D-${diffDays}`
+  }
+  
+  // 일주일 이상은 날짜 표시
+  return date.toLocaleDateString('ko-KR', {
+    month: 'short',
+    day: 'numeric',
+  })
 }
 
-// 마감일 색상 클래스
-export function getDueDateColorClass(dateString: string | null): string {
-  if (!dateString) return ''
+// 마감일 상태 반환
+export function getDueDateStatus(dateString: string | null): 'overdue' | 'today' | 'soon' | 'normal' {
+  if (!dateString) return 'normal'
   
   const date = new Date(dateString)
   const now = new Date()
-  const diffTime = date.getTime() - now.getTime()
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  
+  // 시간 제외하고 날짜만 비교
+  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const nowOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  
+  const diffTime = dateOnly.getTime() - nowOnly.getTime()
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24))
 
-  if (diffDays < 0) {
-    return 'date-badge-overdue'
+  if (diffDays < 0) return 'overdue'
+  if (diffDays === 0) return 'today'
+  if (diffDays <= 2) return 'soon'
+  return 'normal'
+}
+
+// 마감일 색상 클래스 (하위호환)
+export function getDueDateColorClass(dateString: string | null): string {
+  const status = getDueDateStatus(dateString)
+  
+  switch (status) {
+    case 'overdue':
+      return 'date-badge-overdue'
+    case 'today':
+      return 'date-badge-today'
+    case 'soon':
+      return 'date-badge-soon'
+    default:
+      return 'date-badge-normal'
   }
-  if (diffDays <= 1) {
-    return 'date-badge-soon'
-  }
-  return 'date-badge-normal'
 }
 
 // 순서 계산 유틸리티 (사이에 삽입 시)

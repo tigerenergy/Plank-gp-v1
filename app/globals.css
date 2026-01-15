@@ -4,10 +4,74 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CSS 변수 - 폰트 */
-:root {
-  --font-pretendard: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto,
-    'Helvetica Neue', 'Segoe UI', 'Noto Sans KR', sans-serif;
+@layer base {
+  /* ========================================
+     🌙 다크 모드 (기본)
+     ======================================== */
+  :root {
+    --font-pretendard: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto,
+      'Helvetica Neue', 'Segoe UI', 'Noto Sans KR', sans-serif;
+
+    /* 다크 모드 색상 (기본) */
+    --background: 15 15 26;
+    --foreground: 243 244 246;
+    --card: 26 26 46;
+    --card-foreground: 243 244 246;
+    --primary: 139 92 246;
+    --primary-foreground: 255 255 255;
+    --secondary: 37 37 66;
+    --secondary-foreground: 209 213 219;
+    --muted: 55 55 89;
+    --muted-foreground: 156 163 175;
+    --border: 55 55 89;
+    --input: 37 37 66;
+    --accent: 139 92 246;
+    --accent-foreground: 255 255 255;
+
+    /* 다크 모드 텍스트 */
+    --text-primary: 243 244 246;
+    --text-secondary: 209 213 219;
+    --text-tertiary: 156 163 175;
+    --text-muted: 107 114 128;
+
+    /* 다크 모드 배경 레이어 */
+    --bg-primary: 15 15 26;
+    --bg-secondary: 26 26 46;
+    --bg-tertiary: 37 37 66;
+    --bg-card: 26 26 46;
+  }
+
+  /* ========================================
+     ☀️ 라이트 모드
+     ======================================== */
+  .light {
+    --background: 249 250 251;
+    --foreground: 17 24 39;
+    --card: 255 255 255;
+    --card-foreground: 17 24 39;
+    --primary: 124 58 237;
+    --primary-foreground: 255 255 255;
+    --secondary: 243 244 246;
+    --secondary-foreground: 55 65 81;
+    --muted: 229 231 235;
+    --muted-foreground: 107 114 128;
+    --border: 209 213 219;
+    --input: 243 244 246;
+    --accent: 124 58 237;
+    --accent-foreground: 255 255 255;
+
+    /* 라이트 모드 텍스트 */
+    --text-primary: 17 24 39;
+    --text-secondary: 55 65 81;
+    --text-tertiary: 107 114 128;
+    --text-muted: 156 163 175;
+
+    /* 라이트 모드 배경 레이어 */
+    --bg-primary: 249 250 251;
+    --bg-secondary: 243 244 246;
+    --bg-tertiary: 229 231 235;
+    --bg-card: 255 255 255;
+  }
 }
 
 /* 기본 HTML/Body 스타일 */
@@ -17,17 +81,37 @@ html {
 }
 
 body {
-  @apply antialiased text-text-primary;
+  @apply antialiased;
   height: 100%;
   min-height: 100dvh;
-  background: radial-gradient(ellipse at 20% 0%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 100%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
-    linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 100%);
-  background-attachment: fixed;
   overflow-x: hidden;
+  background-color: rgb(var(--background));
+  color: rgb(var(--foreground));
 }
 
-/* 스크롤바 스타일 */
+/* ========================================
+   🎨 배경 그라데이션
+   ======================================== */
+/* 다크 모드 배경 */
+:root body,
+.dark body {
+  background: radial-gradient(ellipse at 20% 0%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(236, 72, 153, 0.08) 0%, transparent 50%),
+    linear-gradient(180deg, rgb(15, 15, 26) 0%, rgb(26, 26, 46) 100%);
+  background-attachment: fixed;
+}
+
+/* 라이트 모드 배경 */
+.light body {
+  background: radial-gradient(ellipse at 20% 0%, rgba(124, 58, 237, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(219, 39, 119, 0.04) 0%, transparent 50%),
+    linear-gradient(180deg, rgb(249, 250, 251) 0%, rgb(243, 244, 246) 100%);
+  background-attachment: fixed;
+}
+
+/* ========================================
+   📜 스크롤바 스타일
+   ======================================== */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -37,15 +121,31 @@ body {
   background: transparent;
 }
 
-::-webkit-scrollbar-thumb {
-  @apply bg-white/20 rounded-full;
+/* 다크 모드 스크롤바 */
+:root ::-webkit-scrollbar-thumb,
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-white/40;
+:root ::-webkit-scrollbar-thumb:hover,
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
-/* 보드 가로 스크롤 */
+/* 라이트 모드 스크롤바 */
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 9999px;
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* ========================================
+   🎯 보드 스크롤
+   ======================================== */
 .board-scroll {
   @apply scrollbar-thin;
   scroll-snap-type: x proximity;
@@ -61,7 +161,37 @@ body {
   }
 }
 
-/* 컬럼 스크롤 */
 .column-scroll {
   @apply scrollbar-thin;
+}
+
+/* ========================================
+   🎨 유틸리티 클래스
+   ======================================== */
+@layer utilities {
+  /* 글래스 효과 */
+  .glass {
+    @apply bg-white/5 backdrop-blur-xl;
+  }
+
+  .light .glass {
+    @apply bg-white/70 backdrop-blur-xl;
+  }
+
+  /* 카드 스타일 */
+  .card-surface {
+    background-color: rgb(var(--card));
+    border-color: rgb(var(--border));
+  }
+
+  /* 입력 필드 스타일 */
+  .input-field {
+    background-color: rgb(var(--input));
+    border-color: rgb(var(--border));
+    color: rgb(var(--foreground));
+  }
+
+  .input-field::placeholder {
+    color: rgb(var(--muted-foreground));
+  }
 }

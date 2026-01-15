@@ -7,21 +7,26 @@ interface CreateBoardFormProps {
   onCancel: () => void
 }
 
-export function CreateBoardForm({ title, onTitleChange, onSubmit, onCancel }: CreateBoardFormProps) {
+export function CreateBoardForm({
+  title,
+  onTitleChange,
+  onSubmit,
+  onCancel,
+}: CreateBoardFormProps) {
   return (
     <form
       onSubmit={onSubmit}
-      className='rounded-xl p-5 h-36 bg-bg-secondary border border-violet-500/30
-                 shadow-[0_0_20px_rgba(139,92,246,0.1)]'
+      className='rounded-xl p-5 h-36 bg-violet-50 dark:bg-[#1a1a2e] border border-violet-300 dark:border-violet-500/30
+                 shadow-lg shadow-violet-500/10'
     >
       <input
         type='text'
         value={title}
         onChange={(e) => onTitleChange(e.target.value)}
         placeholder='보드 제목 입력...'
-        className='w-full px-3 py-2 rounded-lg bg-bg-tertiary border border-white/10
-                   text-text-primary text-sm placeholder-text-muted
-                   focus:outline-none focus:border-violet-500/50 mb-3'
+        className='w-full px-3 py-2 rounded-lg bg-white dark:bg-[#252542] border border-gray-300 dark:border-white/10
+                   text-gray-900 dark:text-gray-100 text-sm placeholder-gray-400 dark:placeholder-gray-500
+                   focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/50 mb-3'
         autoFocus
       />
       <div className='flex gap-2'>
@@ -36,7 +41,7 @@ export function CreateBoardForm({ title, onTitleChange, onSubmit, onCancel }: Cr
           type='button'
           onClick={onCancel}
           className='px-4 py-2 rounded-lg text-sm
-                     bg-white/5 text-text-tertiary hover:bg-white/10 transition-all'
+                     bg-gray-200 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-white/10 transition-all'
         >
           취소
         </button>

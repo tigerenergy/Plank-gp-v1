@@ -7,6 +7,7 @@ import { Plus } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import { useHomeStore } from '@/store/useHomeStore'
 import { useDraftStore } from '@/store/useDraftStore'
+import { useNavigationStore } from '@/store/useNavigationStore'
 import { getAllBoards, createBoard, deleteBoard, updateBoard } from './actions/board'
 import { ConfirmModal } from './components/ConfirmModal'
 import { BoardCard } from './components/home/BoardCard'
@@ -41,6 +42,7 @@ export default function HomeClient({ user }: HomeClientProps) {
   } = useHomeStore()
 
   const { newBoardTitle, setNewBoardTitle, clearNewBoardTitle } = useDraftStore()
+  const setNavigating = useNavigationStore((s) => s.setNavigating)
 
   useEffect(() => {
     const loadBoards = async () => {

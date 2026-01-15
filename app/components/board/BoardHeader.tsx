@@ -1,9 +1,9 @@
 'use client'
 
-import Link from 'next/link'
 import { Users } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import type { Profile } from '@/types'
+import { NavLink } from '../NavLink'
 import { ThemeToggle } from '../ui/ThemeToggle'
 import { UserMenu } from '../auth/UserMenu'
 
@@ -24,11 +24,11 @@ export function BoardHeader({ title, user, members, onSettingsClick }: BoardHead
         <div className='flex items-center justify-between gap-4'>
           {/* 왼쪽: 뒤로가기 + 제목 */}
           <div className='flex items-center gap-3 min-w-0'>
-            <Link href='/' className='w-10 h-10 rounded-xl flex items-center justify-center btn-ghost border border-[rgb(var(--border))]' title='보드 목록'>
+            <NavLink href='/' className='w-10 h-10 rounded-xl flex items-center justify-center btn-ghost border border-[rgb(var(--border))]' title='보드 목록'>
               <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                 <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 19l-7-7 7-7' />
               </svg>
-            </Link>
+            </NavLink>
             
             <div className='flex items-center gap-2.5'>
               <span className='text-xl'>⭐</span>

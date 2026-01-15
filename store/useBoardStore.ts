@@ -2,7 +2,10 @@
 
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
-import type { Board, ListWithCards, Card, Profile } from '@/types'
+import type { Board, ListWithCards, Card, Profile, Comment, Checklist } from '@/types'
+
+// 탭 타입
+export type CardModalTab = 'details' | 'comments' | 'checklist'
 
 // 스토어 상태 타입
 interface BoardState {
@@ -13,9 +16,16 @@ interface BoardState {
   isLoading: boolean
   error: string | null
 
-  // 모달 상태
+  // 카드 모달 상태
   selectedCard: Card | null
   isCardModalOpen: boolean
+  cardModalTab: CardModalTab
+  cardComments: Comment[]
+  cardChecklists: Checklist[]
+  cardModalLoading: { comments: boolean; checklists: boolean }
+
+  // 현재 사용자 (전역)
+  currentUserId: string | null
 
   // 이전 상태 (롤백용)
   _previousLists: ListWithCards[] | null
@@ -26,11 +36,16 @@ interface BoardState {
   setMembers: (members: Profile[]) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
+  setCurrentUserId: (userId: string | null) => void
 
   // 카드 모달 액션
   openCardModal: (card: Card) => void
   closeCardModal: () => void
   updateSelectedCard: (updates: Partial<Card>) => void
+  setCardModalTab: (tab: CardModalTab) => void
+  setCardComments: (comments: Comment[]) => void
+  setCardChecklists: (checklists: Checklist[]) => void
+  setCardModalLoading: (loading: Partial<{ comments: boolean; checklists: boolean }>) => void
 
   // 낙관적 업데이트 액션
   addCard: (listId: string, card: Card) => void
@@ -63,6 +78,11 @@ export const useBoardStore = create<BoardState>()(
     error: null,
     selectedCard: null,
     isCardModalOpen: false,
+    cardModalTab: 'details' as CardModalTab,
+    cardComments: [],
+    cardChecklists: [],
+    cardModalLoading: { comments: false, checklists: false },
+    currentUserId: null,
     _previousLists: null,
 
     // 기본 세터
@@ -93,17 +113,28 @@ export const useBoardStore = create<BoardState>()(
         state.isLoading = false
       }),
 
+    setCurrentUserId: (userId) =>
+      set((state) => {
+        state.currentUserId = userId
+      }),
+
     // 카드 모달
     openCardModal: (card) =>
       set((state) => {
         state.selectedCard = card
         state.isCardModalOpen = true
+        state.cardModalTab = 'details' // 탭 초기화
+        state.cardComments = [] // 데이터 초기화
+        state.cardChecklists = []
       }),
 
     closeCardModal: () =>
       set((state) => {
         state.selectedCard = null
         state.isCardModalOpen = false
+        state.cardModalTab = 'details'
+        state.cardComments = []
+        state.cardChecklists = []
       }),
 
     updateSelectedCard: (updates) =>
@@ -111,6 +142,26 @@ export const useBoardStore = create<BoardState>()(
         if (state.selectedCard) {
           Object.assign(state.selectedCard, updates)
         }
+      }),
+
+    setCardModalTab: (tab) =>
+      set((state) => {
+        state.cardModalTab = tab
+      }),
+
+    setCardComments: (comments) =>
+      set((state) => {
+        state.cardComments = comments
+      }),
+
+    setCardChecklists: (checklists) =>
+      set((state) => {
+        state.cardChecklists = checklists
+      }),
+
+    setCardModalLoading: (loading) =>
+      set((state) => {
+        Object.assign(state.cardModalLoading, loading)
       }),
 
     // 카드 추가

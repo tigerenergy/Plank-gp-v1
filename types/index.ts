@@ -31,6 +31,8 @@ export interface Board {
   created_by: string | null
   created_at: string
   updated_at: string
+  // 조인된 생성자 정보 (getAllBoards에서 포함)
+  creator?: Profile | null
 }
 
 export interface List {

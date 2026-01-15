@@ -18,12 +18,14 @@ interface ChecklistSectionProps {
   cardId: string
   checklists: Checklist[]
   onChecklistsChange: (checklists: Checklist[]) => void
+  isOwner?: boolean
 }
 
 export function ChecklistSection({
   cardId,
   checklists,
   onChecklistsChange,
+  isOwner = false,
 }: ChecklistSectionProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [newTitle, setNewTitle] = useState('')
@@ -165,7 +167,7 @@ export function ChecklistSection({
             >
               {/* 헤더 */}
               <div className='flex items-center justify-between'>
-                {editingTitleId === checklist.id ? (
+                {editingTitleId === checklist.id && isOwner ? (
                   <input
                     type='text'
                     value={editTitle}
@@ -182,21 +184,29 @@ export function ChecklistSection({
                 ) : (
                   <h4
                     onClick={() => {
-                      setEditingTitleId(checklist.id)
-                      setEditTitle(checklist.title)
+                      if (isOwner) {
+                        setEditingTitleId(checklist.id)
+                        setEditTitle(checklist.title)
+                      }
                     }}
-                    className='text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer hover:text-violet-600 dark:hover:text-violet-400'
+                    className={`text-sm font-medium text-gray-900 dark:text-gray-100 ${
+                      isOwner
+                        ? 'cursor-pointer hover:text-violet-600 dark:hover:text-violet-400'
+                        : ''
+                    }`}
                   >
                     {checklist.title}
                   </h4>
                 )}
 
-                <button
-                  onClick={() => handleDeleteChecklist(checklist.id)}
-                  className='p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors'
-                >
-                  <Trash2 className='w-4 h-4' />
-                </button>
+                {isOwner && (
+                  <button
+                    onClick={() => handleDeleteChecklist(checklist.id)}
+                    className='p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors'
+                  >
+                    <Trash2 className='w-4 h-4' />
+                  </button>
+                )}
               </div>
 
               {/* 진행률 바 */}
@@ -218,16 +228,26 @@ export function ChecklistSection({
               <div className='space-y-1'>
                 {checklist.items?.map((item) => (
                   <div key={item.id} className='flex items-center gap-2 group py-1'>
-                    <button
-                      onClick={() => handleToggleItem(checklist.id, item)}
-                      className='flex-shrink-0'
-                    >
-                      {item.is_checked ? (
-                        <CheckSquare className='w-4 h-4 text-violet-500 dark:text-violet-400' />
-                      ) : (
-                        <Square className='w-4 h-4 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300' />
-                      )}
-                    </button>
+                    {isOwner ? (
+                      <button
+                        onClick={() => handleToggleItem(checklist.id, item)}
+                        className='flex-shrink-0'
+                      >
+                        {item.is_checked ? (
+                          <CheckSquare className='w-4 h-4 text-violet-500 dark:text-violet-400' />
+                        ) : (
+                          <Square className='w-4 h-4 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300' />
+                        )}
+                      </button>
+                    ) : (
+                      <div className='flex-shrink-0'>
+                        {item.is_checked ? (
+                          <CheckSquare className='w-4 h-4 text-violet-500 dark:text-violet-400' />
+                        ) : (
+                          <Square className='w-4 h-4 text-gray-400 dark:text-gray-500' />
+                        )}
+                      </div>
+                    )}
                     <span
                       className={`flex-1 text-sm ${
                         item.is_checked
@@ -237,95 +257,105 @@ export function ChecklistSection({
                     >
                       {item.content}
                     </span>
-                    <button
-                      onClick={() => handleDeleteItem(checklist.id, item.id)}
-                      className='p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-all'
-                    >
-                      <Trash2 className='w-3 h-3' />
-                    </button>
+                    {isOwner && (
+                      <button
+                        onClick={() => handleDeleteItem(checklist.id, item.id)}
+                        className='p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-all'
+                      >
+                        <Trash2 className='w-3 h-3' />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
 
-              {/* 항목 추가 입력 */}
-              <div className='flex gap-2'>
-                <input
-                  type='text'
-                  value={newItemInputs[checklist.id] || ''}
-                  onChange={(e) =>
-                    setNewItemInputs((prev) => ({
-                      ...prev,
-                      [checklist.id]: e.target.value,
-                    }))
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleAddItem(checklist.id)
-                  }}
-                  placeholder='항목 추가...'
-                  className='flex-1 px-2 py-1.5 bg-transparent border border-gray-300 dark:border-white/10 rounded
-                           text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500
-                           focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/50'
-                />
-                <button
-                  onClick={() => handleAddItem(checklist.id)}
-                  disabled={!newItemInputs[checklist.id]?.trim()}
-                  className='px-2 py-1.5 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 
-                           disabled:opacity-50 disabled:cursor-not-allowed'
-                >
-                  추가
-                </button>
-              </div>
+              {/* 항목 추가 입력 (소유자만) */}
+              {isOwner && (
+                <div className='flex gap-2'>
+                  <input
+                    type='text'
+                    value={newItemInputs[checklist.id] || ''}
+                    onChange={(e) =>
+                      setNewItemInputs((prev) => ({
+                        ...prev,
+                        [checklist.id]: e.target.value,
+                      }))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddItem(checklist.id)
+                    }}
+                    placeholder='항목 추가...'
+                    className='flex-1 px-2 py-1.5 bg-transparent border border-gray-300 dark:border-white/10 rounded
+                             text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500
+                             focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/50'
+                  />
+                  <button
+                    onClick={() => handleAddItem(checklist.id)}
+                    disabled={!newItemInputs[checklist.id]?.trim()}
+                    className='px-2 py-1.5 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 
+                             disabled:opacity-50 disabled:cursor-not-allowed'
+                  >
+                    추가
+                  </button>
+                </div>
+              )}
             </motion.div>
           )
         })}
       </AnimatePresence>
 
-      {/* 체크리스트 추가 */}
-      {isCreating ? (
-        <div className='flex gap-2'>
-          <input
-            type='text'
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleCreateChecklist()
-              if (e.key === 'Escape') {
+      {/* 체크리스트 추가 (소유자만) */}
+      {isOwner &&
+        (isCreating ? (
+          <div className='flex gap-2'>
+            <input
+              type='text'
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleCreateChecklist()
+                if (e.key === 'Escape') {
+                  setIsCreating(false)
+                  setNewTitle('')
+                }
+              }}
+              placeholder='체크리스트 제목...'
+              className='flex-1 px-3 py-2 bg-white dark:bg-[#252542] border border-gray-300 dark:border-white/10 rounded-lg
+                       text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500
+                       focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/50'
+              autoFocus
+            />
+            <button
+              onClick={handleCreateChecklist}
+              className='px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm rounded-lg'
+            >
+              추가
+            </button>
+            <button
+              onClick={() => {
                 setIsCreating(false)
                 setNewTitle('')
-              }
-            }}
-            placeholder='체크리스트 제목...'
-            className='flex-1 px-3 py-2 bg-white dark:bg-[#252542] border border-gray-300 dark:border-white/10 rounded-lg
-                     text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500
-                     focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/50'
-            autoFocus
-          />
+              }}
+              className='px-3 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-sm'
+            >
+              취소
+            </button>
+          </div>
+        ) : (
           <button
-            onClick={handleCreateChecklist}
-            className='px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm rounded-lg'
+            onClick={() => setIsCreating(true)}
+            className='flex items-center gap-2 w-full px-3 py-2 border border-dashed border-gray-300 dark:border-white/10
+                     rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 
+                     hover:border-gray-400 dark:hover:border-white/20 transition-colors'
           >
-            추가
+            <Plus className='w-4 h-4' />
+            체크리스트 추가
           </button>
-          <button
-            onClick={() => {
-              setIsCreating(false)
-              setNewTitle('')
-            }}
-            className='px-3 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-sm'
-          >
-            취소
-          </button>
-        </div>
-      ) : (
-        <button
-          onClick={() => setIsCreating(true)}
-          className='flex items-center gap-2 w-full px-3 py-2 border border-dashed border-gray-300 dark:border-white/10
-                   rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 
-                   hover:border-gray-400 dark:hover:border-white/20 transition-colors'
-        >
-          <Plus className='w-4 h-4' />
-          체크리스트 추가
-        </button>
+        ))}
+
+      {/* 비소유자용 안내 */}
+      {!isOwner && checklists.length === 0 && (
+        <p className='text-center text-sm text-gray-400 py-4'>체크리스트가 없습니다.</p>
       )}
     </div>
   )

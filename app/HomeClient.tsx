@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Plus } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import { useHomeStore } from '@/store/useHomeStore'
 import { useDraftStore } from '@/store/useDraftStore'
@@ -12,9 +12,8 @@ import { ConfirmModal } from './components/ConfirmModal'
 import { BoardCard } from './components/home/BoardCard'
 import { CreateBoardForm } from './components/home/CreateBoardForm'
 import { EmptyState } from './components/home/EmptyState'
-import { LoadingSpinner } from './components/ui/LoadingSpinner'
 import { Header } from './components/layout/Header'
-import { staggerContainer, staggerItem, easeTransition } from '@/lib/animations'
+import { BoardCardSkeleton } from './components/ui/Skeleton'
 
 interface HomeClientProps {
   user: User | null
@@ -41,10 +40,8 @@ export default function HomeClient({ user }: HomeClientProps) {
     setDeleteTarget,
   } = useHomeStore()
 
-  // 드래프트 스토어 (persist)
   const { newBoardTitle, setNewBoardTitle, clearNewBoardTitle } = useDraftStore()
 
-  // 보드 목록 로드
   useEffect(() => {
     const loadBoards = async () => {
       setLoading(true)
@@ -58,7 +55,6 @@ export default function HomeClient({ user }: HomeClientProps) {
     loadBoards()
   }, [setBoards, setLoading])
 
-  // 보드 생성
   const handleCreateBoard = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newBoardTitle.trim()) {
@@ -69,7 +65,7 @@ export default function HomeClient({ user }: HomeClientProps) {
     const result = await createBoard(newBoardTitle.trim())
     if (result.success && result.data) {
       toast.success('보드가 생성되었습니다!')
-      clearNewBoardTitle() // 성공 시에만 드래프트 삭제
+      clearNewBoardTitle()
       cancelCreating()
       router.push(`/board/${result.data.id}`)
     } else {
@@ -77,7 +73,6 @@ export default function HomeClient({ user }: HomeClientProps) {
     }
   }
 
-  // 보드 수정
   const handleUpdateBoard = async (e: React.FormEvent, boardId: string) => {
     e.preventDefault()
     e.stopPropagation()
@@ -97,7 +92,6 @@ export default function HomeClient({ user }: HomeClientProps) {
     }
   }
 
-  // 보드 삭제
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return
 
@@ -117,96 +111,68 @@ export default function HomeClient({ user }: HomeClientProps) {
     <main className='min-h-screen'>
       <Header user={user} />
 
-      {/* 메인 컨텐츠 */}
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 py-8'>
-        <motion.div
-          className='mb-8'
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={easeTransition}
-        >
-          <h2 className='text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2'>내 보드</h2>
-          <p className='text-gray-500 dark:text-gray-400'>보드를 선택하거나 새로 만들어보세요</p>
-        </motion.div>
+      <div className='max-w-6xl mx-auto px-4 sm:px-6 py-10'>
+        {/* 헤더 */}
+        <div className='flex items-center justify-between mb-8'>
+          <div>
+            <h2 className='text-2xl font-bold text-[rgb(var(--foreground))]'>내 보드</h2>
+            <p className='text-sm text-[rgb(var(--muted-foreground))] mt-1'>
+              {boards.length}개의 보드
+            </p>
+          </div>
 
+          {!isCreating && boards.length > 0 && (
+            <button onClick={startCreating} className='btn-primary inline-flex items-center gap-2'>
+              <Plus className='w-4 h-4' />새 보드
+            </button>
+          )}
+        </div>
+
+        {/* 로딩 */}
         {isLoading ? (
-          <LoadingSpinner message='보드를 불러오는 중...' />
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5'>
+            {[...Array(6)].map((_, i) => (
+              <BoardCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : boards.length === 0 && !isCreating ? (
+          <EmptyState onCreateClick={startCreating} />
         ) : (
-          <motion.div
-            className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
-            variants={staggerContainer}
-            initial='initial'
-            animate='animate'
-          >
-            <AnimatePresence>
-              {boards.map((board) => (
-                <motion.div key={board.id} variants={staggerItem} transition={easeTransition} layout>
-                  <BoardCard
-                    board={board}
-                    isEditing={editingBoardId === board.id}
-                    editingTitle={editingTitle}
-                    onNavigate={() => router.push(`/board/${board.id}`)}
-                    onStartEdit={startEditing}
-                    onCancelEdit={cancelEditing}
-                    onEditingTitleChange={setEditingTitle}
-                    onUpdate={handleUpdateBoard}
-                    onDelete={setDeleteTarget}
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5'>
+            {boards.map((board) => (
+              <BoardCard
+                key={board.id}
+                board={board}
+                isEditing={editingBoardId === board.id}
+                editingTitle={editingTitle}
+                onNavigate={() => router.push(`/board/${board.id}`)}
+                onStartEdit={startEditing}
+                onCancelEdit={cancelEditing}
+                onEditingTitleChange={setEditingTitle}
+                onUpdate={handleUpdateBoard}
+                onDelete={setDeleteTarget}
+                creatorAvatar={board.creator?.avatar_url}
+                creatorName={board.creator?.username || board.creator?.email?.split('@')[0]}
+                currentUserId={user?.id}
+              />
+            ))}
 
-            <motion.div variants={staggerItem} transition={easeTransition}>
-              <AnimatePresence mode='wait'>
-                {isCreating ? (
-                  <motion.div
-                    key='create-form'
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={easeTransition}
-                  >
-                    <CreateBoardForm
-                      title={newBoardTitle}
-                      onTitleChange={setNewBoardTitle}
-                      onSubmit={handleCreateBoard}
-                      onCancel={cancelCreating}
-                    />
-                  </motion.div>
-                ) : (
-                  <motion.button
-                    key='create-button'
-                    onClick={startCreating}
-                    className='flex flex-col items-center justify-center gap-3 rounded-xl h-36 w-full
-                             bg-white/[0.02] border border-dashed border-white/10 
-                             hover:border-violet-500/30 hover:bg-violet-500/5 transition-colors'
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div className='w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center'>
-                      <svg className='w-6 h-6 text-text-muted' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
-                      </svg>
-                    </div>
-                    <span className='text-text-muted font-medium text-sm'>새 보드 만들기</span>
-                  </motion.button>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          </motion.div>
+            {isCreating && (
+              <CreateBoardForm
+                title={newBoardTitle}
+                onTitleChange={setNewBoardTitle}
+                onSubmit={handleCreateBoard}
+                onCancel={cancelCreating}
+              />
+            )}
+          </div>
         )}
-
-        {!isLoading && boards.length === 0 && !isCreating && <EmptyState onCreateClick={startCreating} />}
       </div>
 
-      {/* 삭제 확인 모달 */}
       <ConfirmModal
         isOpen={!!deleteTarget}
         title='보드 삭제'
-        message={`'${deleteTarget?.title}' 보드를 삭제하시겠습니까? 보드에 포함된 모든 리스트와 카드도 함께 삭제됩니다.`}
+        message={`'${deleteTarget?.title}' 보드를 삭제하시겠습니까? 모든 리스트와 카드도 함께 삭제됩니다.`}
         confirmText='삭제'
         cancelText='취소'
         variant='danger'

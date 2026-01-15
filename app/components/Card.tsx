@@ -2,9 +2,8 @@
 
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { motion } from 'framer-motion'
-import { Clock, AlertCircle, User } from 'lucide-react'
-import type { Card as CardType, Label, LABEL_COLORS } from '@/types'
+import { Calendar, CheckSquare } from 'lucide-react'
+import type { Card as CardType, Label } from '@/types'
 import { useBoardStore } from '@/store/useBoardStore'
 import { formatShortDate, getDueDateStatus } from '@/lib/utils'
 
@@ -12,54 +11,31 @@ interface CardProps {
   card: CardType
 }
 
-// 라벨 색상 맵
-const labelColorMap: Record<string, { bg: string; text: string }> = {
-  red: { bg: 'bg-red-500', text: 'text-white' },
-  orange: { bg: 'bg-orange-500', text: 'text-white' },
-  amber: { bg: 'bg-amber-400', text: 'text-amber-900' },
-  green: { bg: 'bg-green-500', text: 'text-white' },
-  teal: { bg: 'bg-teal-500', text: 'text-white' },
-  blue: { bg: 'bg-blue-500', text: 'text-white' },
-  indigo: { bg: 'bg-indigo-500', text: 'text-white' },
-  purple: { bg: 'bg-purple-500', text: 'text-white' },
-  pink: { bg: 'bg-pink-500', text: 'text-white' },
+// 라벨 색상 매핑
+const labelColorMap: Record<string, string> = {
+  red: 'label-red',
+  orange: 'label-orange',
+  amber: 'label-amber',
+  green: 'label-green',
+  teal: 'label-teal',
+  blue: 'label-blue',
+  indigo: 'label-indigo',
+  purple: 'label-purple',
+  pink: 'label-pink',
 }
 
-// 라벨 표시 컴포넌트
-function LabelBadge({ label }: { label: Label }) {
-  const colors = labelColorMap[label.color] || labelColorMap.blue
-  return (
-    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${colors.bg} ${colors.text}`}>
-      {label.name}
-    </span>
-  )
-}
-
-// 마감일 배지 컴포넌트
-function DueDateBadge({ dueDate }: { dueDate: string }) {
-  const status = getDueDateStatus(dueDate)
-  const label = formatShortDate(dueDate)
-
-  const statusStyles = {
-    overdue:
-      'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-500/30',
-    today:
-      'bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-500/30 animate-pulse',
-    soon: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/30',
-    normal:
-      'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-white/10',
+// 마감일 스타일
+function getDueDateStyle(status: string) {
+  switch (status) {
+    case 'overdue':
+      return 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300'
+    case 'today':
+      return 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300'
+    case 'soon':
+      return 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300'
+    default:
+      return 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
   }
-
-  const Icon = status === 'overdue' || status === 'today' ? AlertCircle : Clock
-
-  return (
-    <div
-      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${statusStyles[status]}`}
-    >
-      <Icon className='w-3 h-3' />
-      <span>{label}</span>
-    </div>
-  )
 }
 
 export function Card({ card }: CardProps) {
@@ -75,77 +51,89 @@ export function Card({ card }: CardProps) {
     transition,
   }
 
+  const dueDateStatus = card.due_date ? getDueDateStatus(card.due_date) : null
+
+  // 담당자 또는 생성자
+  const displayUser = card.assignee || card.creator
+
   return (
-    <motion.div
+    <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
       onClick={() => openCardModal(card)}
       className={`
-        group rounded-lg 
-        bg-gray-50 dark:bg-[#2a2a45] 
-        hover:bg-gray-100 dark:hover:bg-[#353555]
-        border border-gray-200 dark:border-white/10 
-        hover:border-gray-300 dark:hover:border-white/20
-        cursor-grab active:cursor-grabbing
-        transition-all duration-200 shadow-sm
-        ${isDragging ? 'opacity-50 scale-[1.02] shadow-lg ring-2 ring-violet-500/50' : ''}
+        card p-4 cursor-pointer select-none
+        ${isDragging ? 'opacity-60 ring-2 ring-indigo-400 scale-[1.02] rotate-1' : ''}
       `}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
     >
-      <div className='p-3'>
-        {/* Labels */}
-        {card.labels && card.labels.length > 0 && (
-          <div className='flex flex-wrap gap-1 mb-2'>
-            {card.labels.slice(0, 3).map((label, idx) => (
-              <LabelBadge key={idx} label={label} />
-            ))}
-            {card.labels.length > 3 && (
-              <span className='text-[10px] text-gray-400 dark:text-gray-500'>
-                +{card.labels.length - 3}
-              </span>
-            )}
-          </div>
-        )}
+      {/* 라벨 */}
+      {card.labels && card.labels.length > 0 && (
+        <div className='flex flex-wrap gap-1.5 mb-3'>
+          {card.labels.slice(0, 4).map((label, idx) => (
+            <span
+              key={idx}
+              className={`px-2.5 py-1 rounded-full text-xs font-semibold ${labelColorMap[label.color] || 'label-blue'}`}
+            >
+              {label.name}
+            </span>
+          ))}
+          {card.labels.length > 4 && (
+            <span className='px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'>
+              +{card.labels.length - 4}
+            </span>
+          )}
+        </div>
+      )}
 
-        {/* Title */}
-        <h3 className='text-sm font-medium text-gray-800 dark:text-gray-100 mb-1 line-clamp-3 leading-relaxed group-hover:text-gray-900 dark:group-hover:text-white'>
-          {card.title}
-        </h3>
+      {/* 제목 */}
+      <h3 className='text-[15px] font-semibold text-[rgb(var(--foreground))] leading-relaxed mb-2'>
+        {card.title}
+      </h3>
 
-        {/* Description preview */}
-        {card.description && (
-          <p className='text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2'>
-            {card.description}
-          </p>
-        )}
+      {/* 설명 */}
+      {card.description && (
+        <p className='text-sm text-[rgb(var(--muted-foreground))] line-clamp-2 mb-3 leading-relaxed'>
+          {card.description}
+        </p>
+      )}
 
-        {/* Bottom row: Due Date + Assignee */}
-        <div className='flex items-center justify-between gap-2'>
-          {/* Due Date */}
-          {card.due_date && <DueDateBadge dueDate={card.due_date} />}
-
-          {/* Assignee */}
-          {card.assignee && (
-            <div className='flex items-center gap-1 ml-auto'>
-              {card.assignee.avatar_url ? (
-                <img
-                  src={card.assignee.avatar_url}
-                  alt={card.assignee.username || ''}
-                  referrerPolicy='no-referrer'
-                  className='w-5 h-5 rounded-full'
-                />
-              ) : (
-                <div className='w-5 h-5 rounded-full bg-violet-500/20 flex items-center justify-center'>
-                  <User className='w-3 h-3 text-violet-500' />
-                </div>
-              )}
+      {/* 하단: 마감일 + 아바타 */}
+      <div className='flex items-center justify-between mt-3 pt-3 border-t border-[rgb(var(--border))]'>
+        <div className='flex items-center gap-2'>
+          {/* 마감일 */}
+          {card.due_date && dueDateStatus && (
+            <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium ${getDueDateStyle(dueDateStatus)}`}>
+              <Calendar className='w-3.5 h-3.5' />
+              <span>{formatShortDate(card.due_date)}</span>
             </div>
           )}
         </div>
+
+        {/* 담당자 아바타 */}
+        {displayUser && (
+          <div 
+            className='flex-shrink-0'
+            title={displayUser.username || displayUser.email || ''}
+          >
+            {displayUser.avatar_url ? (
+              <img
+                src={displayUser.avatar_url}
+                alt=''
+                referrerPolicy='no-referrer'
+                className='w-8 h-8 rounded-full ring-2 ring-white dark:ring-slate-700 shadow-sm'
+              />
+            ) : (
+              <div className='w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-sm'>
+                <span className='text-xs font-bold text-white'>
+                  {(displayUser.username || displayUser.email || '?')[0].toUpperCase()}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-    </motion.div>
+    </div>
   )
 }

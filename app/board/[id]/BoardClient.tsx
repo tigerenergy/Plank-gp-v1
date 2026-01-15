@@ -43,10 +43,14 @@ export default function BoardClient({ user }: BoardClientProps) {
     setMembers,
     setLoading,
     setError,
+    setCurrentUserId,
     isCardModalOpen,
   } = useBoardStore()
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
+  // 보드 소유자인지 확인
+  const isOwner = board?.created_by === user?.id
 
   const { sensors, activeCard, handleDragStart, handleDragOver, handleDragEnd } = useBoardDragDrop()
 
@@ -91,6 +95,11 @@ export default function BoardClient({ user }: BoardClientProps) {
     }
   }
 
+  // 현재 사용자 ID 설정
+  useEffect(() => {
+    setCurrentUserId(user?.id || null)
+  }, [user?.id, setCurrentUserId])
+
   useEffect(() => {
     loadData()
   }, [boardId])
@@ -113,18 +122,20 @@ export default function BoardClient({ user }: BoardClientProps) {
       />
 
       <div className='flex-1 min-h-0 overflow-auto'>
+        {/* 소유자만 드래그앤드롭 가능 */}
         <DndContext
-          sensors={sensors}
+          sensors={isOwner ? sensors : []}
           collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
-          onDragEnd={handleDragEnd}
+          onDragStart={isOwner ? handleDragStart : undefined}
+          onDragOver={isOwner ? handleDragOver : undefined}
+          onDragEnd={isOwner ? handleDragEnd : undefined}
         >
           <div className='flex flex-col sm:flex-row gap-4 p-4 sm:p-6 sm:h-full sm:overflow-x-auto sm:items-start board-scroll'>
             {lists.map((list) => (
-              <Column key={list.id} list={list} />
+              <Column key={list.id} list={list} isOwner={isOwner} />
             ))}
-            <AddListButton />
+            {/* 소유자만 리스트 추가 가능 */}
+            {isOwner && <AddListButton />}
           </div>
 
           <DragOverlay dropAnimation={dropAnimation}>
@@ -137,7 +148,7 @@ export default function BoardClient({ user }: BoardClientProps) {
         </DndContext>
       </div>
 
-      {isCardModalOpen && <CardModal />}
+      {isCardModalOpen && <CardModal isOwner={isOwner} />}
 
       {/* 팀원 모달 */}
       <BoardSettingsModal

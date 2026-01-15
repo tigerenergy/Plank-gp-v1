@@ -4,13 +4,18 @@ import { createClient } from '@/lib/supabase/server'
 import type { ActionResult, Board, ListWithCards, Card } from '@/types'
 import { getListColor } from '@/lib/utils'
 
-// 모든 보드 목록 조회
+// 모든 보드 목록 조회 (생성자 프로필 포함)
 export async function getAllBoards(): Promise<ActionResult<Board[]>> {
   try {
     const supabase = await createClient()
     const { data: boards, error } = await supabase
       .from('boards')
-      .select('*')
+      .select(
+        `
+        *,
+        creator:profiles!boards_created_by_fkey(id, email, username, avatar_url)
+      `
+      )
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -75,10 +80,35 @@ export async function createBoard(title: string): Promise<ActionResult<Board>> {
   }
 }
 
-// 보드 삭제
+// 보드 삭제 (생성자만 가능)
 export async function deleteBoard(boardId: string): Promise<ActionResult> {
   try {
     const supabase = await createClient()
+
+    // 현재 사용자 확인
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
+    // 보드 생성자 확인
+    const { data: board } = await supabase
+      .from('boards')
+      .select('created_by')
+      .eq('id', boardId)
+      .single()
+
+    if (!board) {
+      return { success: false, error: '보드를 찾을 수 없습니다.' }
+    }
+
+    if (board.created_by !== user.id) {
+      return { success: false, error: '보드 생성자만 삭제할 수 있습니다.' }
+    }
+
     const { error } = await supabase.from('boards').delete().eq('id', boardId)
 
     if (error) {
@@ -165,7 +195,7 @@ export async function getBoardData(boardId: string): Promise<ActionResult<ListWi
       return { success: false, error: '리스트를 불러오는데 실패했습니다.' }
     }
 
-    // 각 리스트의 카드 조회 (담당자 + 생성자 정보 포함)
+    // 각 리스트의 카드 조회 (담당자 정보 포함)
     const listsWithCards: ListWithCards[] = await Promise.all(
       lists.map(async (list, index) => {
         const { data: cards, error: cardsError } = await supabase
@@ -173,8 +203,7 @@ export async function getBoardData(boardId: string): Promise<ActionResult<ListWi
           .select(
             `
             *,
-            assignee:profiles!cards_assignee_id_fkey(id, email, username, avatar_url),
-            creator:profiles!cards_created_by_fkey(id, email, username, avatar_url)
+            assignee:profiles!cards_assignee_id_fkey(id, email, username, avatar_url)
           `
           )
           .eq('list_id', list.id)

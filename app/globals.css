@@ -4,77 +4,137 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   PLANK DESIGN SYSTEM (Trello-inspired)
+   - 밝고 깨끗한 디자인
+   - 파스텔 컬러 팔레트
+   - 부드러운 그림자와 둥근 모서리
+   ============================================ */
+
 @layer base {
   /* ========================================
-     🌙 다크 모드 (기본)
+     ☀️ 라이트 모드 (기본)
      ======================================== */
   :root {
     --font-pretendard: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto,
       'Helvetica Neue', 'Segoe UI', 'Noto Sans KR', sans-serif;
 
-    /* 다크 모드 색상 (기본) */
-    --background: 15 15 26;
-    --foreground: 243 244 246;
-    --card: 26 26 46;
-    --card-foreground: 243 244 246;
-    --primary: 139 92 246;
+    /* 기본 색상 */
+    --background: 245 247 250;
+    --foreground: 30 41 59;
+    
+    --card: 255 255 255;
+    --card-hover: 250 251 252;
+    --card-foreground: 30 41 59;
+    
+    --primary: 99 102 241;
+    --primary-hover: 79 82 221;
     --primary-foreground: 255 255 255;
-    --secondary: 37 37 66;
-    --secondary-foreground: 209 213 219;
-    --muted: 55 55 89;
-    --muted-foreground: 156 163 175;
-    --border: 55 55 89;
-    --input: 37 37 66;
-    --accent: 139 92 246;
-    --accent-foreground: 255 255 255;
+    
+    --secondary: 241 245 249;
+    --secondary-hover: 226 232 240;
+    --secondary-foreground: 71 85 105;
+    
+    --muted: 226 232 240;
+    --muted-foreground: 100 116 139;
+    
+    --border: 226 232 240;
+    --border-hover: 203 213 225;
+    
+    --input: 248 250 252;
+    --ring: 99 102 241;
+    
+    /* 그림자 */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
 
-    /* 다크 모드 텍스트 */
-    --text-primary: 243 244 246;
-    --text-secondary: 209 213 219;
-    --text-tertiary: 156 163 175;
-    --text-muted: 107 114 128;
+    /* 파스텔 라벨 색상 */
+    --label-red: 254 226 226;
+    --label-red-text: 185 28 28;
+    --label-orange: 255 237 213;
+    --label-orange-text: 194 65 12;
+    --label-amber: 254 243 199;
+    --label-amber-text: 180 83 9;
+    --label-green: 220 252 231;
+    --label-green-text: 22 101 52;
+    --label-teal: 204 251 241;
+    --label-teal-text: 17 94 89;
+    --label-blue: 219 234 254;
+    --label-blue-text: 30 64 175;
+    --label-indigo: 224 231 255;
+    --label-indigo-text: 67 56 202;
+    --label-purple: 243 232 255;
+    --label-purple-text: 107 33 168;
+    --label-pink: 252 231 243;
+    --label-pink-text: 157 23 77;
 
-    /* 다크 모드 배경 레이어 */
-    --bg-primary: 15 15 26;
-    --bg-secondary: 26 26 46;
-    --bg-tertiary: 37 37 66;
-    --bg-card: 26 26 46;
+    /* 상태 색상 */
+    --status-todo: 251 191 36;
+    --status-progress: 59 130 246;
+    --status-done: 34 197 94;
   }
 
   /* ========================================
-     ☀️ 라이트 모드
+     🌙 다크 모드
      ======================================== */
-  .light {
-    --background: 249 250 251;
-    --foreground: 17 24 39;
-    --card: 255 255 255;
-    --card-foreground: 17 24 39;
-    --primary: 124 58 237;
-    --primary-foreground: 255 255 255;
-    --secondary: 243 244 246;
-    --secondary-foreground: 55 65 81;
-    --muted: 229 231 235;
-    --muted-foreground: 107 114 128;
-    --border: 209 213 219;
-    --input: 243 244 246;
-    --accent: 124 58 237;
-    --accent-foreground: 255 255 255;
+  .dark {
+    --background: 15 23 42;
+    --foreground: 241 245 249;
+    
+    --card: 30 41 59;
+    --card-hover: 51 65 85;
+    --card-foreground: 241 245 249;
+    
+    --primary: 129 140 248;
+    --primary-hover: 165 180 252;
+    --primary-foreground: 15 23 42;
+    
+    --secondary: 51 65 85;
+    --secondary-hover: 71 85 105;
+    --secondary-foreground: 203 213 225;
+    
+    --muted: 71 85 105;
+    --muted-foreground: 148 163 184;
+    
+    --border: 51 65 85;
+    --border-hover: 71 85 105;
+    
+    --input: 30 41 59;
+    --ring: 129 140 248;
+    
+    /* 다크모드 그림자 */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
 
-    /* 라이트 모드 텍스트 */
-    --text-primary: 17 24 39;
-    --text-secondary: 55 65 81;
-    --text-tertiary: 107 114 128;
-    --text-muted: 156 163 175;
-
-    /* 라이트 모드 배경 레이어 */
-    --bg-primary: 249 250 251;
-    --bg-secondary: 243 244 246;
-    --bg-tertiary: 229 231 235;
-    --bg-card: 255 255 255;
+    /* 다크모드 라벨 */
+    --label-red: 127 29 29;
+    --label-red-text: 254 202 202;
+    --label-orange: 124 45 18;
+    --label-orange-text: 254 215 170;
+    --label-amber: 120 53 15;
+    --label-amber-text: 253 230 138;
+    --label-green: 20 83 45;
+    --label-green-text: 187 247 208;
+    --label-teal: 19 78 74;
+    --label-teal-text: 153 246 228;
+    --label-blue: 30 58 138;
+    --label-blue-text: 191 219 254;
+    --label-indigo: 49 46 129;
+    --label-indigo-text: 199 210 254;
+    --label-purple: 76 29 149;
+    --label-purple-text: 233 213 255;
+    --label-pink: 131 24 67;
+    --label-pink-text: 251 207 232;
   }
 }
 
-/* 기본 HTML/Body 스타일 */
+/* ============================================
+   기본 스타일
+   ============================================ */
 html {
   font-family: var(--font-pretendard);
   height: 100dvh;
@@ -87,111 +147,197 @@ body {
   overflow-x: hidden;
   background-color: rgb(var(--background));
   color: rgb(var(--foreground));
+  font-size: 14px;
+  line-height: 1.6;
 }
 
-/* ========================================
-   🎨 배경 그라데이션
-   ======================================== */
-/* 다크 모드 배경 */
-:root body,
-.dark body {
-  background: radial-gradient(ellipse at 20% 0%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 100%, rgba(236, 72, 153, 0.08) 0%, transparent 50%),
-    linear-gradient(180deg, rgb(15, 15, 26) 0%, rgb(26, 26, 46) 100%);
-  background-attachment: fixed;
-}
-
-/* 라이트 모드 배경 */
-.light body {
-  background: radial-gradient(ellipse at 20% 0%, rgba(124, 58, 237, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 100%, rgba(219, 39, 119, 0.04) 0%, transparent 50%),
-    linear-gradient(180deg, rgb(249, 250, 251) 0%, rgb(243, 244, 246) 100%);
-  background-attachment: fixed;
-}
-
-/* ========================================
-   📜 스크롤바 스타일
-   ======================================== */
+/* ============================================
+   스크롤바
+   ============================================ */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* 다크 모드 스크롤바 */
-:root ::-webkit-scrollbar-thumb,
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 9999px;
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--muted));
+  border-radius: 4px;
 }
 
-:root ::-webkit-scrollbar-thumb:hover,
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--muted-foreground));
 }
 
-/* 라이트 모드 스크롤바 */
-.light ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 9999px;
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--muted)) transparent;
 }
 
-.light ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
-}
-
-/* ========================================
-   🎯 보드 스크롤
-   ======================================== */
-.board-scroll {
-  @apply scrollbar-thin;
-  scroll-snap-type: x proximity;
-}
-
-.board-scroll > * {
-  scroll-snap-align: start;
-}
-
-@media (max-width: 640px) {
-  .board-scroll {
-    scroll-padding-left: 0.75rem;
-  }
-}
-
-.column-scroll {
-  @apply scrollbar-thin;
-}
-
-/* ========================================
-   🎨 유틸리티 클래스
-   ======================================== */
+/* ============================================
+   유틸리티 클래스
+   ============================================ */
 @layer utilities {
-  /* 글래스 효과 */
-  .glass {
-    @apply bg-white/5 backdrop-blur-xl;
+  /* 버튼 */
+  .btn-primary {
+    @apply px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200;
+    background-color: rgb(var(--primary));
+    color: rgb(var(--primary-foreground));
+    box-shadow: var(--shadow);
   }
 
-  .light .glass {
-    @apply bg-white/70 backdrop-blur-xl;
+  .btn-primary:hover {
+    background-color: rgb(var(--primary-hover));
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
   }
 
-  /* 카드 스타일 */
-  .card-surface {
-    background-color: rgb(var(--card));
-    border-color: rgb(var(--border));
+  .btn-primary:active {
+    transform: translateY(0);
   }
 
-  /* 입력 필드 스타일 */
-  .input-field {
+  .btn-secondary {
+    @apply px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200;
+    background-color: rgb(var(--secondary));
+    color: rgb(var(--secondary-foreground));
+  }
+
+  .btn-secondary:hover {
+    background-color: rgb(var(--secondary-hover));
+  }
+
+  .btn-ghost {
+    @apply px-3 py-2 rounded-lg font-medium text-sm transition-colors duration-150;
+    color: rgb(var(--muted-foreground));
+  }
+
+  .btn-ghost:hover {
+    background-color: rgb(var(--secondary));
+    color: rgb(var(--foreground));
+  }
+
+  /* 입력 */
+  .input {
+    @apply w-full px-4 py-3 rounded-xl border text-sm transition-all duration-200;
     background-color: rgb(var(--input));
     border-color: rgb(var(--border));
     color: rgb(var(--foreground));
   }
 
-  .input-field::placeholder {
+  .input::placeholder {
     color: rgb(var(--muted-foreground));
   }
+
+  .input:focus {
+    @apply outline-none ring-2;
+    border-color: rgb(var(--primary));
+    ring-color: rgba(99, 102, 241, 0.15);
+  }
+
+  /* 카드 */
+  .card {
+    @apply rounded-2xl border transition-all duration-200;
+    background-color: rgb(var(--card));
+    border-color: rgb(var(--border));
+    box-shadow: var(--shadow);
+  }
+
+  .card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  /* 파스텔 라벨 */
+  .label-red { background-color: rgb(var(--label-red)); color: rgb(var(--label-red-text)); }
+  .label-orange { background-color: rgb(var(--label-orange)); color: rgb(var(--label-orange-text)); }
+  .label-amber { background-color: rgb(var(--label-amber)); color: rgb(var(--label-amber-text)); }
+  .label-green { background-color: rgb(var(--label-green)); color: rgb(var(--label-green-text)); }
+  .label-teal { background-color: rgb(var(--label-teal)); color: rgb(var(--label-teal-text)); }
+  .label-blue { background-color: rgb(var(--label-blue)); color: rgb(var(--label-blue-text)); }
+  .label-indigo { background-color: rgb(var(--label-indigo)); color: rgb(var(--label-indigo-text)); }
+  .label-purple { background-color: rgb(var(--label-purple)); color: rgb(var(--label-purple-text)); }
+  .label-pink { background-color: rgb(var(--label-pink)); color: rgb(var(--label-pink-text)); }
+}
+
+/* ============================================
+   DatePicker
+   ============================================ */
+.rdp {
+  --rdp-cell-size: 40px;
+  --rdp-accent-color: rgb(var(--primary));
+  margin: 0;
+}
+
+.rdp-month {
+  background: transparent;
+}
+
+.rdp-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  margin-bottom: 16px;
+}
+
+.rdp-caption_label {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgb(var(--foreground));
+}
+
+.rdp-nav_button {
+  @apply w-9 h-9 rounded-lg flex items-center justify-center transition-colors;
+  color: rgb(var(--muted-foreground));
+}
+
+.rdp-nav_button:hover {
+  background-color: rgb(var(--secondary));
+  color: rgb(var(--foreground));
+}
+
+.rdp-head_cell {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgb(var(--muted-foreground));
+  width: var(--rdp-cell-size);
+  height: 36px;
+}
+
+.rdp-cell {
+  width: var(--rdp-cell-size);
+  height: var(--rdp-cell-size);
+  padding: 2px;
+}
+
+.rdp-day {
+  @apply w-full h-full rounded-lg flex items-center justify-center text-sm transition-colors cursor-pointer;
+  color: rgb(var(--foreground));
+}
+
+.rdp-day:hover:not(.rdp-day_selected):not(.rdp-day_disabled) {
+  background-color: rgb(var(--secondary));
+}
+
+.rdp-day_selected {
+  background-color: rgb(var(--primary)) !important;
+  color: white !important;
+  font-weight: 500;
+}
+
+.rdp-day_today:not(.rdp-day_selected) {
+  font-weight: 700;
+  color: rgb(var(--primary));
+}
+
+.rdp-day_disabled {
+  color: rgb(var(--muted-foreground));
+  opacity: 0.4;
+}
+
+.rdp-day_outside {
+  color: rgb(var(--muted-foreground));
+  opacity: 0.4;
 }

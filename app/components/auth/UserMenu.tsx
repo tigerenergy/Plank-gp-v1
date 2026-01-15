@@ -1,97 +1,79 @@
 'use client'
 
-import { createClient } from '@/lib/supabase/client'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useState, useRef, useEffect } from 'react'
+import { LogOut, ChevronDown, User as UserIcon } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
-import { motion, AnimatePresence } from 'framer-motion'
-import { LogOut, User as UserIcon, ChevronDown } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { useOutsideClick } from '@/hooks'
 
 interface UserMenuProps {
   user: User
 }
 
 export function UserMenu({ user }: UserMenuProps) {
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-  const router = useRouter()
-  const supabase = createClient()
+
+  useOutsideClick(menuRef, () => setIsOpen(false), isOpen)
 
   const handleLogout = async () => {
+    const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/login')
     router.refresh()
   }
 
-  // 외부 클릭 감지
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
   const avatarUrl = user.user_metadata?.avatar_url
-  const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || '사용자'
+  const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'
 
   return (
     <div ref={menuRef} className='relative'>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className='flex items-center gap-2 px-2 py-1.5 rounded-lg 
-                   hover:bg-gray-100 dark:hover:bg-white/10 transition-colors'
+        className='flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-[rgb(var(--secondary))] transition-colors'
       >
         {avatarUrl ? (
           <img
             src={avatarUrl}
-            alt={displayName}
+            alt=''
             referrerPolicy='no-referrer'
-            className='w-8 h-8 rounded-full ring-2 ring-gray-200 dark:ring-white/20'
+            className='w-9 h-9 rounded-full ring-2 ring-[rgb(var(--border))] shadow-sm'
           />
         ) : (
-          <div className='w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center'>
+          <div className='w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-sm'>
             <UserIcon className='w-4 h-4 text-white' />
           </div>
         )}
-        <span className='hidden sm:block text-sm text-gray-700 dark:text-white/90 font-medium max-w-[120px] truncate'>
+        <span className='hidden sm:block text-sm text-[rgb(var(--foreground))] font-semibold max-w-[100px] truncate'>
           {displayName}
         </span>
-        <ChevronDown
-          className={`w-4 h-4 text-gray-400 dark:text-white/60 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-        />
+        <ChevronDown className={`w-4 h-4 text-[rgb(var(--muted-foreground))] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            className='absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-xl shadow-xl overflow-hidden z-50'
-          >
-            {/* 유저 정보 */}
-            <div className='px-4 py-3 border-b border-gray-200 dark:border-white/10'>
-              <p className='text-sm font-medium text-gray-900 dark:text-white truncate'>{displayName}</p>
-              <p className='text-xs text-gray-500 dark:text-slate-400 truncate'>{user.email}</p>
-            </div>
+      {isOpen && (
+        <div className='absolute right-0 mt-2 w-56 py-1.5 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-xl shadow-lg z-50 animate-in fade-in slide-in-from-top-1 duration-150'>
+          {/* 유저 정보 */}
+          <div className='px-4 py-3 border-b border-[rgb(var(--border))]'>
+            <p className='text-sm font-semibold text-[rgb(var(--foreground))] truncate'>
+              {displayName}
+            </p>
+            <p className='text-xs text-[rgb(var(--muted-foreground))] truncate'>{user.email}</p>
+          </div>
 
-            {/* 메뉴 항목 */}
-            <div className='py-1'>
-              <button
-                onClick={handleLogout}
-                className='w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors'
-              >
-                <LogOut className='w-4 h-4' />
-                로그아웃
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          {/* 메뉴 */}
+          <div className='py-1'>
+            <button
+              onClick={handleLogout}
+              className='w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors'
+            >
+              <LogOut className='w-4 h-4' />
+              로그아웃
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -12,7 +12,6 @@ import { updateCard, deleteCard } from '@/app/actions/card'
 import { assignCard } from '@/app/actions/member'
 import { getComments } from '@/app/actions/comment'
 import { getChecklists } from '@/app/actions/checklist'
-import { createClient } from '@/lib/supabase/client'
 import { useEscapeClose } from '@/hooks'
 import { ConfirmModal } from './ConfirmModal'
 import { AssigneeSelect } from './card/AssigneeSelect'
@@ -21,12 +20,16 @@ import { ChecklistSection } from './card/ChecklistSection'
 import { LabelEditor } from './card/LabelEditor'
 import { DatePicker } from './ui/DatePicker'
 import { fadeIn, slideUp, zoomIn, easeTransition } from '@/lib/animations'
-import type { Profile, Comment, Checklist, Label } from '@/types'
+import type { Label } from '@/types'
 
-type TabType = 'details' | 'comments' | 'checklist'
+interface CardModalProps {
+  isOwner?: boolean
+}
 
-export function CardModal() {
+export function CardModal({ isOwner = false }: CardModalProps) {
   const modalRef = useRef<HTMLDivElement>(null)
+
+  // Zustand 스토어에서 상태 가져오기
   const {
     selectedCard,
     members,
@@ -35,57 +38,50 @@ export function CardModal() {
     deleteCard: deleteCardInStore,
     updateSelectedCard,
     isCardModalOpen,
+    // 카드 모달 관련 상태 (Zustand로 이관)
+    cardModalTab,
+    cardComments,
+    cardChecklists,
+    cardModalLoading,
+    currentUserId,
+    setCardModalTab,
+    setCardComments,
+    setCardChecklists,
+    setCardModalLoading,
   } = useBoardStore()
 
+  // 최소한의 로컬 상태 (UI 전용)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isAssigning, setIsAssigning] = useState(false)
 
-  // 탭 & 데이터
-  const [activeTab, setActiveTab] = useState<TabType>('details')
-  const [comments, setComments] = useState<Comment[]>([])
-  const [checklists, setChecklists] = useState<Checklist[]>([])
-  const [loadingComments, setLoadingComments] = useState(false)
-  const [loadingChecklists, setLoadingChecklists] = useState(false)
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-
   useEscapeClose(closeCardModal, isCardModalOpen)
 
-  // 현재 사용자 ID 가져오기
-  useEffect(() => {
-    const fetchUser = async () => {
-      const supabase = createClient()
-      const { data } = await supabase.auth.getUser()
-      setCurrentUserId(data.user?.id || null)
-    }
-    fetchUser()
-  }, [])
-
-  // 댓글 & 체크리스트 로드
+  // 댓글 & 체크리스트 로드 (Zustand 액션 사용)
   useEffect(() => {
     if (!selectedCard || !isCardModalOpen) return
 
     const loadComments = async () => {
-      setLoadingComments(true)
+      setCardModalLoading({ comments: true })
       const result = await getComments(selectedCard.id)
       if (result.success && result.data) {
-        setComments(result.data)
+        setCardComments(result.data)
       }
-      setLoadingComments(false)
+      setCardModalLoading({ comments: false })
     }
 
     const loadChecklists = async () => {
-      setLoadingChecklists(true)
+      setCardModalLoading({ checklists: true })
       const result = await getChecklists(selectedCard.id)
       if (result.success && result.data) {
-        setChecklists(result.data)
+        setCardChecklists(result.data)
       }
-      setLoadingChecklists(false)
+      setCardModalLoading({ checklists: false })
     }
 
     loadComments()
     loadChecklists()
-  }, [selectedCard?.id, isCardModalOpen])
+  }, [selectedCard?.id, isCardModalOpen, setCardComments, setCardChecklists, setCardModalLoading])
 
   // 담당자 할당
   const handleAssign = async (userId: string | null) => {
@@ -218,24 +214,24 @@ export function CardModal() {
               <div className='px-4 sm:px-6 pt-3 border-b border-gray-200 dark:border-white/5'>
                 <div className='flex gap-1'>
                   <TabButton
-                    active={activeTab === 'details'}
-                    onClick={() => setActiveTab('details')}
+                    active={cardModalTab === 'details'}
+                    onClick={() => setCardModalTab('details')}
                     icon={<FileText className='w-4 h-4' />}
                     label='상세'
                   />
                   <TabButton
-                    active={activeTab === 'comments'}
-                    onClick={() => setActiveTab('comments')}
+                    active={cardModalTab === 'comments'}
+                    onClick={() => setCardModalTab('comments')}
                     icon={<MessageSquare className='w-4 h-4' />}
                     label='댓글'
-                    count={comments.length}
+                    count={cardComments.length}
                   />
                   <TabButton
-                    active={activeTab === 'checklist'}
-                    onClick={() => setActiveTab('checklist')}
+                    active={cardModalTab === 'checklist'}
+                    onClick={() => setCardModalTab('checklist')}
                     icon={<CheckSquare2 className='w-4 h-4' />}
                     label='체크리스트'
-                    count={checklists.length}
+                    count={cardChecklists.length}
                   />
                 </div>
               </div>
@@ -243,60 +239,122 @@ export function CardModal() {
               {/* 컨텐츠 */}
               <div className='p-4 sm:p-6 space-y-5 min-h-[200px]'>
                 {/* 상세 탭 */}
-                {activeTab === 'details' && (
+                {cardModalTab === 'details' && (
                   <>
-                    {/* 라벨 */}
+                    {/* 라벨 (소유자만 편집) */}
                     <div>
                       <label className='block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2'>
                         라벨
                       </label>
-                      <LabelEditor
-                        labels={selectedCard.labels || []}
-                        onChange={handleLabelsChange}
-                      />
+                      {isOwner ? (
+                        <LabelEditor
+                          labels={selectedCard.labels || []}
+                          onChange={handleLabelsChange}
+                        />
+                      ) : (
+                        <div className='flex flex-wrap gap-1.5'>
+                          {selectedCard.labels?.length ? (
+                            selectedCard.labels.map((label, idx) => (
+                              <span key={idx} className='px-2.5 py-1 rounded-full text-xs font-semibold label-blue'>
+                                {label.name}
+                              </span>
+                            ))
+                          ) : (
+                            <span className='text-sm text-gray-400'>라벨 없음</span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
-                    {/* 담당자 */}
+                    {/* 담당자 (소유자만 변경) */}
                     <div>
                       <label className='block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2'>
                         담당자
                       </label>
-                      <AssigneeSelect
-                        members={members}
-                        currentAssignee={selectedCard.assignee || null}
-                        onAssign={handleAssign}
-                        disabled={isAssigning}
-                      />
+                      {isOwner ? (
+                        <AssigneeSelect
+                          members={members}
+                          currentAssignee={selectedCard.assignee || null}
+                          onAssign={handleAssign}
+                          disabled={isAssigning}
+                        />
+                      ) : (
+                        <div className='flex items-center gap-3 px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542]'>
+                          {selectedCard.assignee ? (
+                            <>
+                              {selectedCard.assignee.avatar_url ? (
+                                <img
+                                  src={selectedCard.assignee.avatar_url}
+                                  alt=''
+                                  referrerPolicy='no-referrer'
+                                  className='w-8 h-8 rounded-full'
+                                />
+                              ) : (
+                                <div className='w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center'>
+                                  <span className='text-xs font-bold text-white'>
+                                    {(selectedCard.assignee.username || selectedCard.assignee.email || '?')[0].toUpperCase()}
+                                  </span>
+                                </div>
+                              )}
+                              <span className='text-sm text-gray-900 dark:text-gray-100'>
+                                {selectedCard.assignee.username || selectedCard.assignee.email}
+                              </span>
+                            </>
+                          ) : (
+                            <span className='text-sm text-gray-400'>담당자 없음</span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
+                    {/* 마감일 (소유자만 변경) */}
                     <div>
                       <label className='block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2'>
                         마감일
                       </label>
-                      <DatePicker
-                        value={watch('due_date') || null}
-                        onChange={(value) => setValue('due_date', value || '')}
-                        placeholder='마감일을 선택하세요'
-                      />
+                      {isOwner ? (
+                        <DatePicker
+                          value={watch('due_date') || null}
+                          onChange={(value) => setValue('due_date', value || '')}
+                          placeholder='마감일을 선택하세요'
+                        />
+                      ) : (
+                        <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm'>
+                          {selectedCard.due_date ? (
+                            new Date(selectedCard.due_date).toLocaleString('ko-KR')
+                          ) : (
+                            <span className='text-gray-400'>마감일 없음</span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
+                    {/* 설명 (소유자만 편집) */}
                     <div>
                       <label className='block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2'>
                         설명
                       </label>
-                      <textarea
-                        {...register('description')}
-                        rows={4}
-                        className='w-full px-4 py-3 rounded-lg 
-                                 bg-gray-100 dark:bg-[#252542] 
-                                 border border-gray-300 dark:border-white/10 
-                                 text-gray-900 dark:text-gray-100
-                                 text-sm focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/50 
-                                 resize-none placeholder-gray-400 dark:placeholder-gray-500'
-                        placeholder='카드에 대한 설명을 입력하세요...'
-                      />
-                      {errors.description && (
-                        <p className='text-xs text-red-500 mt-1'>{errors.description.message}</p>
+                      {isOwner ? (
+                        <>
+                          <textarea
+                            {...register('description')}
+                            rows={4}
+                            className='w-full px-4 py-3 rounded-lg 
+                                     bg-gray-100 dark:bg-[#252542] 
+                                     border border-gray-300 dark:border-white/10 
+                                     text-gray-900 dark:text-gray-100
+                                     text-sm focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/50 
+                                     resize-none placeholder-gray-400 dark:placeholder-gray-500'
+                            placeholder='카드에 대한 설명을 입력하세요...'
+                          />
+                          {errors.description && (
+                            <p className='text-xs text-red-500 mt-1'>{errors.description.message}</p>
+                          )}
+                        </>
+                      ) : (
+                        <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm text-gray-900 dark:text-gray-100 min-h-[100px] whitespace-pre-wrap'>
+                          {selectedCard.description || <span className='text-gray-400'>설명 없음</span>}
+                        </div>
                       )}
                     </div>
 
@@ -309,40 +367,41 @@ export function CardModal() {
                 )}
 
                 {/* 댓글 탭 */}
-                {activeTab === 'comments' &&
-                  (loadingComments ? (
+                {cardModalTab === 'comments' &&
+                  (cardModalLoading.comments ? (
                     <div className='flex items-center justify-center py-8'>
                       <div className='animate-spin w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full' />
                     </div>
                   ) : (
                     <CommentList
                       cardId={selectedCard.id}
-                      comments={comments}
+                      comments={cardComments}
                       currentUserId={currentUserId}
-                      onCommentsChange={setComments}
+                      onCommentsChange={setCardComments}
                     />
                   ))}
 
                 {/* 체크리스트 탭 */}
-                {activeTab === 'checklist' &&
-                  (loadingChecklists ? (
+                {cardModalTab === 'checklist' &&
+                  (cardModalLoading.checklists ? (
                     <div className='flex items-center justify-center py-8'>
                       <div className='animate-spin w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full' />
                     </div>
                   ) : (
                     <ChecklistSection
                       cardId={selectedCard.id}
-                      checklists={checklists}
-                      onChecklistsChange={setChecklists}
+                      checklists={cardChecklists}
+                      onChecklistsChange={setCardChecklists}
+                      isOwner={isOwner}
                     />
                   ))}
               </div>
 
-              {/* 푸터 */}
+              {/* 푸터 (소유자만 수정/삭제 가능) */}
               <ModalFooter
                 isDeleting={isDeleting}
                 isSubmitting={isSubmitting}
-                canDelete={currentUserId === selectedCard.created_by}
+                isOwner={isOwner}
                 onDeleteClick={() => setShowDeleteConfirm(true)}
                 onClose={closeCardModal}
                 onSave={handleSubmit(onSubmit)}
@@ -434,7 +493,7 @@ function ModalHeader({ register, onClose }: ModalHeaderProps) {
 interface ModalFooterProps {
   isDeleting: boolean
   isSubmitting: boolean
-  canDelete: boolean // 삭제 권한 여부
+  isOwner: boolean // 보드 소유자 여부
   onDeleteClick: () => void
   onClose: () => void
   onSave: () => void
@@ -443,15 +502,15 @@ interface ModalFooterProps {
 function ModalFooter({
   isDeleting,
   isSubmitting,
-  canDelete,
+  isOwner,
   onDeleteClick,
   onClose,
   onSave,
 }: ModalFooterProps) {
   return (
     <div className='sticky bottom-0 px-4 sm:px-6 py-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 border-t border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-[#151525]'>
-      {/* 삭제 버튼: 본인 카드만 */}
-      {canDelete ? (
+      {/* 삭제 버튼: 소유자만 */}
+      {isOwner ? (
         <motion.button
           type='button'
           onClick={onDeleteClick}
@@ -464,7 +523,7 @@ function ModalFooter({
           {isDeleting ? '삭제 중...' : '삭제'}
         </motion.button>
       ) : (
-        <div /> // 빈 공간 유지
+        <div className='text-sm text-gray-400'>읽기 전용</div>
       )}
       <div className='flex items-center gap-2'>
         <motion.button
@@ -475,18 +534,21 @@ function ModalFooter({
                     hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-all text-sm'
           whileTap={{ scale: 0.95 }}
         >
-          취소
+          닫기
         </motion.button>
-        <motion.button
-          type='button'
-          onClick={onSave}
-          disabled={isSubmitting}
-          className='flex-1 sm:flex-none px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg 
-                   transition-all disabled:opacity-50 text-sm font-medium'
-          whileTap={{ scale: 0.95 }}
-        >
-          {isSubmitting ? '저장 중...' : '저장'}
-        </motion.button>
+        {/* 저장 버튼: 소유자만 */}
+        {isOwner && (
+          <motion.button
+            type='button'
+            onClick={onSave}
+            disabled={isSubmitting}
+            className='flex-1 sm:flex-none px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg 
+                     transition-all disabled:opacity-50 text-sm font-medium'
+            whileTap={{ scale: 0.95 }}
+          >
+            {isSubmitting ? '저장 중...' : '저장'}
+          </motion.button>
+        )}
       </div>
     </div>
   )

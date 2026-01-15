@@ -4,55 +4,56 @@ import { useState, useRef } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { toast } from 'sonner'
-import { motion, AnimatePresence } from 'framer-motion'
+import { MoreHorizontal, Plus, Pencil, Trash2 } from 'lucide-react'
 import type { ListWithCards } from '@/types'
-import { listColorClasses } from '@/lib/utils'
 import { useBoardStore } from '@/store/useBoardStore'
 import { updateList, deleteList } from '@/app/actions/list'
 import { useOutsideClick, useAutoFocus } from '@/hooks'
-import { easeTransition } from '@/lib/animations'
 import { Card } from './Card'
 import { AddCardForm } from './AddCardForm'
 import { ConfirmModal } from './ConfirmModal'
-import { ColumnHeader } from './column/ColumnHeader'
 
 interface ColumnProps {
   list: ListWithCards
+  isOwner?: boolean
 }
 
-export function Column({ list }: ColumnProps) {
-  // UI 상태
+// 컬럼 상태 아이콘 (인덱스 기반, 사무적 느낌)
+const columnIcons = [
+  { emoji: '📋', color: 'bg-slate-100 dark:bg-slate-800' }, // 할 일
+  { emoji: '🔄', color: 'bg-blue-100 dark:bg-blue-900/50' }, // 진행 중
+  { emoji: '👀', color: 'bg-amber-100 dark:bg-amber-900/50' }, // 검토 요청
+  { emoji: '✓', color: 'bg-emerald-100 dark:bg-emerald-900/50' }, // 완료
+  { emoji: '📌', color: 'bg-purple-100 dark:bg-purple-900/50' }, // 추가
+  { emoji: '🎯', color: 'bg-rose-100 dark:bg-rose-900/50' }, // 추가
+]
+
+export function Column({ list, isOwner = false }: ColumnProps) {
   const [isAddingCard, setIsAddingCard] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(list.title)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-  // Refs
   const menuRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Store 액션
-  const updateListInStore = useBoardStore((state) => state.updateList)
-  const deleteListInStore = useBoardStore((state) => state.deleteList)
+  const { lists, updateList: updateListInStore, deleteList: deleteListInStore } = useBoardStore()
+  const listIndex = lists.findIndex((l) => l.id === list.id)
+  const icon = columnIcons[listIndex % columnIcons.length]
 
-  // 훅
   useOutsideClick(menuRef, () => setIsMenuOpen(false), isMenuOpen)
   useAutoFocus(inputRef, isEditing, true)
 
-  // Droppable 설정
   const { setNodeRef, isOver } = useDroppable({
     id: list.id,
     data: { type: 'list', list },
   })
 
-  const colorClasses = listColorClasses[list.color]
   const cardIds = list.cards.map((card) => card.id)
 
-  // 제목 수정
   const handleUpdateTitle = async () => {
     const trimmedTitle = editTitle.trim()
-
     if (!trimmedTitle || trimmedTitle === list.title) {
       setEditTitle(list.title)
       setIsEditing(false)
@@ -66,12 +67,9 @@ export function Column({ list }: ColumnProps) {
     if (!result.success) {
       updateListInStore(list.id, { title: list.title })
       toast.error(result.error || '리스트 수정에 실패했습니다.')
-    } else {
-      toast.success('리스트가 수정되었습니다.')
     }
   }
 
-  // 리스트 삭제
   const handleDeleteConfirm = async () => {
     setShowDeleteConfirm(false)
     deleteListInStore(list.id)
@@ -84,7 +82,6 @@ export function Column({ list }: ColumnProps) {
     }
   }
 
-  // 키보드 핸들러
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleUpdateTitle()
     if (e.key === 'Escape') {
@@ -94,105 +91,128 @@ export function Column({ list }: ColumnProps) {
   }
 
   return (
-    <motion.div
+    <div
       className={`
         relative flex flex-col
-        w-full sm:w-72 sm:min-w-[288px] sm:flex-shrink-0
-        sm:max-h-[calc(100%-1rem)] h-fit
-        rounded-xl overflow-hidden
-        bg-white dark:bg-[#1a1a2e]/95
-        border border-gray-200 dark:border-white/10
-        shadow-lg dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)]
+        w-full sm:w-[340px] sm:min-w-[340px] sm:flex-shrink-0
+        max-h-[calc(100vh-160px)]
+        bg-[rgb(var(--card))] rounded-2xl
+        border border-[rgb(var(--border))]
         transition-shadow duration-200
+        ${isOver ? 'ring-2 ring-indigo-400 ring-offset-2 ring-offset-[rgb(var(--background))]' : ''}
       `}
-      style={{
-        borderTop: `3px solid ${colorClasses.accent}`,
-        boxShadow: isOver ? '0 0 0 2px rgba(139, 92, 246, 0.5)' : undefined,
-      }}
-      animate={{ scale: isOver ? 1.01 : 1 }}
-      transition={easeTransition}
+      style={{ boxShadow: 'var(--shadow)' }}
     >
       {/* 헤더 */}
-      <ColumnHeader
-        list={list}
-        colorClasses={colorClasses}
-        isEditing={isEditing}
-        editTitle={editTitle}
-        isMenuOpen={isMenuOpen}
-        menuRef={menuRef}
-        inputRef={inputRef}
-        onEditTitleChange={setEditTitle}
-        onUpdateTitle={handleUpdateTitle}
-        onKeyDown={handleKeyDown}
-        onMenuToggle={() => setIsMenuOpen(!isMenuOpen)}
-        onStartEdit={() => {
-          setIsMenuOpen(false)
-          setIsEditing(true)
-        }}
-        onDeleteClick={() => {
-          setIsMenuOpen(false)
-          setShowDeleteConfirm(true)
-        }}
-      />
+      <div className='flex items-center justify-between px-4 py-3.5'>
+        <div className='flex items-center gap-2.5 flex-1 min-w-0'>
+          <div
+            className={`w-7 h-7 rounded-lg ${icon.color} flex items-center justify-center text-sm`}
+          >
+            {icon.emoji}
+          </div>
+
+          {isEditing ? (
+            <input
+              ref={inputRef}
+              type='text'
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onBlur={handleUpdateTitle}
+              onKeyDown={handleKeyDown}
+              className='flex-1 px-2 py-1 rounded-lg input text-sm font-semibold'
+            />
+          ) : (
+            <h2 className='text-[15px] font-bold text-[rgb(var(--foreground))] truncate'>
+              {list.title}
+            </h2>
+          )}
+
+          <span className='flex-shrink-0 text-xs font-semibold text-[rgb(var(--muted-foreground))] bg-[rgb(var(--secondary))] px-2 py-0.5 rounded-full'>
+            {list.cards.length}
+          </span>
+        </div>
+
+        {/* 메뉴 (소유자만) */}
+        {isOwner && (
+          <div className='relative' ref={menuRef}>
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className='p-1.5 rounded-lg btn-ghost'
+            >
+              <MoreHorizontal className='w-4 h-4' />
+            </button>
+
+            {isMenuOpen && (
+              <div className='absolute right-0 top-full mt-1 w-44 py-1.5 z-50 rounded-xl border bg-[rgb(var(--card))] border-[rgb(var(--border))] shadow-lg animate-in fade-in slide-in-from-top-1 duration-150'>
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    setIsEditing(true)
+                  }}
+                  className='w-full px-3 py-2 text-left text-sm flex items-center gap-2.5 text-[rgb(var(--foreground))] hover:bg-[rgb(var(--secondary))] transition-colors'
+                >
+                  <Pencil className='w-4 h-4 text-[rgb(var(--muted-foreground))]' />
+                  이름 변경
+                </button>
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    setShowDeleteConfirm(true)
+                  }}
+                  className='w-full px-3 py-2 text-left text-sm flex items-center gap-2.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors'
+                >
+                  <Trash2 className='w-4 h-4' />
+                  삭제
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* 카드 목록 */}
-      <div
-        ref={setNodeRef}
-        className='flex-1 overflow-y-auto px-2 sm:px-2.5 py-2.5 space-y-2 column-scroll min-h-[80px]'
-      >
+      <div ref={setNodeRef} className='flex-1 overflow-y-auto px-3 pb-3 space-y-3 min-h-[120px]'>
         <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
           {list.cards.map((card) => (
             <Card key={card.id} card={card} />
           ))}
         </SortableContext>
 
-        <AnimatePresence mode='wait'>
-          {isAddingCard ? (
-            <motion.div
-              key='add-form'
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={easeTransition}
-            >
-              <AddCardForm listId={list.id} onClose={() => setIsAddingCard(false)} />
-            </motion.div>
-          ) : (
-            <motion.button
-              key='add-button'
-              onClick={() => setIsAddingCard(true)}
-              className='w-full flex items-center justify-center gap-2 px-3 py-2.5
-                         bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 
-                         border border-gray-200 dark:border-white/10 
-                         hover:border-gray-300 dark:hover:border-white/20 rounded-lg transition-colors
-                         text-gray-600 dark:text-white/70 hover:text-gray-800 dark:hover:text-white/90'
-              whileTap={{ scale: 0.95 }}
-            >
-              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M12 4v16m8-8H4'
-                />
-              </svg>
-              <span className='text-xs font-medium'>카드 추가</span>
-            </motion.button>
-          )}
-        </AnimatePresence>
+        {list.cards.length === 0 && !isAddingCard && (
+          <div className='py-8 text-center'>
+            <p className='text-sm text-[rgb(var(--muted-foreground))]'>카드가 없습니다</p>
+          </div>
+        )}
       </div>
 
-      {/* 삭제 확인 모달 */}
+      {/* 카드 추가 (소유자만) */}
+      {isOwner && (
+        <div className='px-3 pb-3'>
+          {isAddingCard ? (
+            <AddCardForm listId={list.id} onClose={() => setIsAddingCard(false)} />
+          ) : (
+            <button
+              onClick={() => setIsAddingCard(true)}
+              className='w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-[rgb(var(--border))] hover:border-indigo-300 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 text-[rgb(var(--muted-foreground))] hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-200'
+            >
+              <Plus className='w-4 h-4' />
+              <span className='text-sm font-medium'>카드 추가</span>
+            </button>
+          )}
+        </div>
+      )}
+
       <ConfirmModal
         isOpen={showDeleteConfirm}
         title='리스트 삭제'
-        message={`'${list.title}' 리스트와 ${list.cards.length}개의 카드를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`}
+        message={`'${list.title}' 리스트와 ${list.cards.length}개의 카드를 삭제하시겠습니까?`}
         confirmText='삭제'
         cancelText='취소'
         variant='danger'
         onConfirm={handleDeleteConfirm}
         onCancel={() => setShowDeleteConfirm(false)}
       />
-    </motion.div>
+    </div>
   )
 }

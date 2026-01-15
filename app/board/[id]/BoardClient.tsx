@@ -122,9 +122,9 @@ export default function BoardClient({ user }: BoardClientProps) {
       />
 
       <div className='flex-1 min-h-0 overflow-auto'>
-        {/* 소유자만 드래그앤드롭 가능 */}
+        {/* 드래그앤드롭 컨텍스트 */}
         <DndContext
-          sensors={isOwner ? sensors : []}
+          sensors={sensors}
           collisionDetection={closestCorners}
           onDragStart={isOwner ? handleDragStart : undefined}
           onDragOver={isOwner ? handleDragOver : undefined}

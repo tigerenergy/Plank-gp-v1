@@ -8,14 +8,14 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
+import { arrayMove } from '@dnd-kit/sortable'
 import { toast } from 'sonner'
 import { useBoardStore } from '@/store/useBoardStore'
 import { moveCard } from '@/app/actions/card'
-import { calculateNewPosition } from '@/lib/utils'
 import type { Card as CardType, ListWithCards } from '@/types'
 
 export function useBoardDragDrop() {
-  const { lists, saveState, rollback, moveCard: moveCardInStore } = useBoardStore()
+  const { lists, setLists, saveState, rollback, moveCard: moveCardInStore } = useBoardStore()
   const [activeCard, setActiveCard] = useState<CardType | null>(null)
 
   // 센서 설정
@@ -24,7 +24,7 @@ export function useBoardDragDrop() {
       activationConstraint: { distance: 5 },
     }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 250, tolerance: 5 },
+      activationConstraint: { delay: 200, tolerance: 5 },
     })
   )
 
@@ -33,10 +33,11 @@ export function useBoardDragDrop() {
     const activeData = event.active.data.current
     if (activeData?.type === 'card') {
       setActiveCard(activeData.card as CardType)
+      saveState() // 드래그 시작 시 상태 저장
     }
   }
 
-  // 드래그 중 (다른 리스트 위로 이동)
+  // 드래그 중 (실시간 순서 변경)
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event
     if (!over) return
@@ -50,76 +51,82 @@ export function useBoardDragDrop() {
     if (!activeData || activeData.type !== 'card') return
 
     const activeCardData = activeData.card as CardType
+    const sourceListId = activeCardData.list_id
 
-    // 리스트로 이동
+    // 리스트 위로 이동 (빈 리스트 또는 리스트 하단)
     if (overData?.type === 'list') {
       const targetListId = overId
-      if (activeCardData.list_id !== targetListId) {
+      if (sourceListId !== targetListId) {
         const targetList = lists.find((l) => l.id === targetListId)
         if (targetList) {
-          const newPosition = getLastPosition(targetList)
-          moveCardInStore(activeId, activeCardData.list_id, targetListId, newPosition)
+          const newPosition = getMaxPosition(targetList) + 1
+          moveCardInStore(activeId, sourceListId, targetListId, newPosition)
         }
       }
+      return
     }
 
     // 카드 위로 이동
     if (overData?.type === 'card') {
       const overCard = overData.card as CardType
-      if (activeCardData.list_id !== overCard.list_id) {
-        moveCardInStore(activeId, activeCardData.list_id, overCard.list_id, overCard.position)
+      const targetListId = overCard.list_id
+
+      // 같은 리스트 내에서 순서 변경
+      if (sourceListId === targetListId) {
+        setLists(
+          lists.map((list) => {
+            if (list.id !== sourceListId) return list
+
+            const oldIndex = list.cards.findIndex((c) => c.id === activeId)
+            const newIndex = list.cards.findIndex((c) => c.id === overId)
+
+            if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return list
+
+            const newCards = arrayMove(list.cards, oldIndex, newIndex)
+            // 포지션 재계산
+            const updatedCards = newCards.map((card, idx) => ({
+              ...card,
+              position: idx + 1,
+            }))
+
+            return { ...list, cards: updatedCards }
+          })
+        )
+      } else {
+        // 다른 리스트로 이동
+        moveCardInStore(activeId, sourceListId, targetListId, overCard.position)
       }
     }
   }
 
-  // 드래그 종료
+  // 드래그 종료 (서버 동기화)
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
     setActiveCard(null)
 
-    if (!over) return
+    if (!over) {
+      rollback()
+      return
+    }
 
     const activeId = active.id as string
-    const overId = over.id as string
-    if (activeId === overId) return
-
     const activeData = active.data.current
-    const overData = over.data.current
     if (!activeData || activeData.type !== 'card') return
 
-    saveState()
-
     // 현재 카드 위치 찾기
-    const { card: currentCard, listId: sourceListId } = findCardInLists(lists, activeId)
-    if (!currentCard || !sourceListId) return
-
-    let targetListId = sourceListId
-    let newPosition = currentCard.position
-
-    // 리스트 위에 드롭
-    if (overData?.type === 'list') {
-      targetListId = overId
-      const targetList = lists.find((l) => l.id === targetListId)
-      if (targetList) {
-        newPosition = getLastPosition(targetList)
-      }
+    const { card: currentCard, listId: currentListId } = findCardInLists(lists, activeId)
+    if (!currentCard || !currentListId) {
+      rollback()
+      return
     }
 
-    // 카드 위에 드롭
-    if (overData?.type === 'card') {
-      const overCard = overData.card as CardType
-      targetListId = overCard.list_id
+    // 서버에 새 위치 저장
+    const result = await moveCard({
+      cardId: activeId,
+      targetListId: currentListId,
+      newPosition: currentCard.position,
+    })
 
-      const targetList = lists.find((l) => l.id === targetListId)
-      if (targetList) {
-        const overIndex = targetList.cards.findIndex((c) => c.id === overId)
-        const beforePosition = overIndex > 0 ? targetList.cards[overIndex - 1].position : null
-        newPosition = calculateNewPosition(beforePosition, overCard.position)
-      }
-    }
-
-    // 서버 동기화
-    const result = await moveCard({ cardId: activeId, targetListId, newPosition })
     if (!result.success) {
       rollback()
       toast.error(result.error || '카드 이동에 실패했습니다.')
@@ -136,8 +143,9 @@ export function useBoardDragDrop() {
 }
 
 // 헬퍼 함수들
-function getLastPosition(list: ListWithCards): number {
-  return list.cards.length > 0 ? list.cards[list.cards.length - 1].position + 1 : 1
+function getMaxPosition(list: ListWithCards): number {
+  if (list.cards.length === 0) return 0
+  return Math.max(...list.cards.map((c) => c.position))
 }
 
 function findCardInLists(

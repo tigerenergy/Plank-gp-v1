@@ -69,6 +69,7 @@ export default function HomeClient({ user }: HomeClientProps) {
       toast.success('보드가 생성되었습니다!')
       clearNewBoardTitle()
       cancelCreating()
+      setNavigating(true)
       router.push(`/board/${result.data.id}`)
     } else {
       toast.error(result.error || '보드 생성에 실패했습니다.')
@@ -147,7 +148,10 @@ export default function HomeClient({ user }: HomeClientProps) {
                 board={board}
                 isEditing={editingBoardId === board.id}
                 editingTitle={editingTitle}
-                onNavigate={() => router.push(`/board/${board.id}`)}
+                onNavigate={() => {
+                  setNavigating(true)
+                  router.push(`/board/${board.id}`)
+                }}
                 onStartEdit={startEditing}
                 onCancelEdit={cancelEditing}
                 onEditingTitleChange={setEditingTitle}

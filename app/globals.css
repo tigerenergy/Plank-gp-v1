@@ -4,74 +4,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CSS 변수 - 폰트 */
 :root {
   --font-pretendard: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto,
     'Helvetica Neue', 'Segoe UI', 'Noto Sans KR', sans-serif;
-
-  /* 다크 모드 컬러 팔레트 */
-  --color-bg-primary: #0f0f1a;
-  --color-bg-secondary: #1a1a2e;
-  --color-bg-tertiary: #252542;
-  --color-bg-card: #2a2a45;
-  --color-bg-card-hover: #353555;
-
-  /* 텍스트 계층 */
-  --color-text-primary: #f3f4f6;
-  --color-text-secondary: #d1d5db;
-  --color-text-tertiary: #9ca3af;
-  --color-text-muted: #6b7280;
-
-  /* 파스텔 포인트 컬러 */
-  --pastel-rose: #f9a8d4;
-  --pastel-amber: #fcd34d;
-  --pastel-sky: #7dd3fc;
-  --pastel-emerald: #6ee7b7;
-  --pastel-violet: #c4b5fd;
 }
 
+/* 기본 HTML/Body 스타일 */
 html {
   font-family: var(--font-pretendard);
-  height: 100%;
   height: 100dvh;
 }
 
 body {
-  @apply antialiased;
+  @apply antialiased text-text-primary;
   height: 100%;
   min-height: 100dvh;
   background: radial-gradient(ellipse at 20% 0%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 100%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
-    linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+    linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 100%);
   background-attachment: fixed;
-  color: var(--color-text-primary);
   overflow-x: hidden;
 }
 
-/* 글래스 카드 */
-.glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-.glass-light {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.glass-dark {
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* 스크롤바 */
+/* 스크롤바 스타일 */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -89,17 +45,9 @@ body {
   @apply bg-white/40;
 }
 
-.column-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-  -webkit-overflow-scrolling: touch;
-}
-
 /* 보드 가로 스크롤 */
 .board-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-  -webkit-overflow-scrolling: touch;
+  @apply scrollbar-thin;
   scroll-snap-type: x proximity;
 }
 
@@ -113,240 +61,7 @@ body {
   }
 }
 
-/* 카드 스타일 */
-.card-dark {
-  background: var(--color-bg-card);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  @apply transition-all duration-200 ease-out;
-}
-
-.card-dark:hover {
-  background: var(--color-bg-card-hover);
-  border-color: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-}
-
-/* 드래그 커서 */
-.draggable {
-  cursor: grab;
-}
-
-.draggable:active {
-  cursor: grabbing;
-}
-
-/* 드래그 중인 카드 */
-.card-dragging {
-  @apply opacity-50 scale-[1.02];
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-/* 드래그 오버레이 */
-.drag-overlay {
-  @apply scale-105 rotate-[2deg];
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(139, 92, 246, 0.5);
-  z-index: 9999;
-}
-
-/* 드롭 플레이스홀더 */
-.drop-placeholder {
-  @apply rounded-xl border-2 border-dashed border-violet-400/50;
-  background: rgba(139, 92, 246, 0.1);
-  min-height: 60px;
-}
-
-/* 컬럼 스타일 - 다크 모드 + 파스텔 악센트 */
-.column-dark {
-  background: rgba(26, 26, 46, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
-.column-glass-rose {
-  background: linear-gradient(180deg, rgba(26, 26, 46, 0.9) 0%, rgba(26, 26, 46, 0.95) 100%);
-  border-top: 3px solid var(--pastel-rose);
-}
-
-.column-glass-amber {
-  background: linear-gradient(180deg, rgba(26, 26, 46, 0.9) 0%, rgba(26, 26, 46, 0.95) 100%);
-  border-top: 3px solid var(--pastel-amber);
-}
-
-.column-glass-sky {
-  background: linear-gradient(180deg, rgba(26, 26, 46, 0.9) 0%, rgba(26, 26, 46, 0.95) 100%);
-  border-top: 3px solid var(--pastel-sky);
-}
-
-.column-glass-emerald {
-  background: linear-gradient(180deg, rgba(26, 26, 46, 0.9) 0%, rgba(26, 26, 46, 0.95) 100%);
-  border-top: 3px solid var(--pastel-emerald);
-}
-
-.column-glass-violet {
-  background: linear-gradient(180deg, rgba(26, 26, 46, 0.9) 0%, rgba(26, 26, 46, 0.95) 100%);
-  border-top: 3px solid var(--pastel-violet);
-}
-
-/* 컬럼 헤더 배지 색상 */
-.badge-rose {
-  background: rgba(249, 168, 212, 0.2);
-  color: var(--pastel-rose);
-}
-.badge-amber {
-  background: rgba(252, 211, 77, 0.2);
-  color: var(--pastel-amber);
-}
-.badge-sky {
-  background: rgba(125, 211, 252, 0.2);
-  color: var(--pastel-sky);
-}
-.badge-emerald {
-  background: rgba(110, 231, 183, 0.2);
-  color: var(--pastel-emerald);
-}
-.badge-violet {
-  background: rgba(196, 181, 253, 0.2);
-  color: var(--pastel-violet);
-}
-
-/* 날짜 뱃지 - 다크 모드 (눈에 띄게) */
-.date-badge {
-  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold;
-  border: 1px solid transparent;
-}
-
-.date-badge-normal {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
-  border-color: rgba(99, 102, 241, 0.3);
-  color: #a5b4fc;
-}
-
-.date-badge-soon {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.15) 100%);
-  border-color: rgba(251, 191, 36, 0.4);
-  color: #fcd34d;
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-.date-badge-overdue {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.2) 100%);
-  border-color: rgba(239, 68, 68, 0.5);
-  color: #fca5a5;
-  animation: pulse-glow-red 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse-glow {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
-  }
-  50% {
-    box-shadow: 0 0 8px 2px rgba(251, 191, 36, 0.3);
-  }
-}
-
-@keyframes pulse-glow-red {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-  }
-  50% {
-    box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.4);
-  }
-}
-
-/* 카드 추가 버튼 */
-.add-card-btn {
-  @apply w-full py-2 rounded-lg flex items-center justify-center gap-2 transition-all duration-200;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px dashed rgba(255, 255, 255, 0.15);
-  color: var(--color-text-tertiary);
-}
-
-.add-card-btn:hover {
-  background: rgba(139, 92, 246, 0.1);
-  border-color: rgba(139, 92, 246, 0.3);
-  color: var(--pastel-violet);
-}
-
-.add-card-btn svg {
-  @apply w-4 h-4;
-}
-
-/* iOS 버튼 */
-.ios-button {
-  @apply px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
-.ios-button:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.ios-button-primary {
-  @apply px-4 py-2 rounded-xl font-medium text-sm text-white transition-all duration-200;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-}
-
-.ios-button-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
-}
-
-/* iOS 인풋 */
-.ios-input {
-  @apply w-full px-4 py-3 rounded-xl transition-all duration-200;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
-.ios-input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.ios-input:focus {
-  @apply outline-none;
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(99, 102, 241, 0.5);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-}
-
-/* 라이트 모드 인풋 (모달용) */
-.ios-input-light {
-  @apply w-full px-4 py-3 rounded-xl transition-all duration-200;
-  background: rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  color: #1f2937;
-}
-
-.ios-input-light::placeholder {
-  color: rgba(0, 0, 0, 0.4);
-}
-
-.ios-input-light:focus {
-  @apply outline-none;
-  background: white;
-  border-color: rgba(99, 102, 241, 0.5);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-/* 드롭다운 메뉴 애니메이션 */
-@keyframes fadeInSlideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-in {
-  animation: fadeInSlideDown 0.15s ease-out forwards;
+/* 컬럼 스크롤 */
+.column-scroll {
+  @apply scrollbar-thin;
 }

@@ -7,6 +7,8 @@ export const listColorClasses: Record<ListColor, {
   headerBg: string
   badge: string
   accent: string
+  dotPrimary: string
+  dotSecondary: string
 }> = {
   rose: {
     gradient: 'column-glass-rose',
@@ -14,6 +16,8 @@ export const listColorClasses: Record<ListColor, {
     headerBg: 'bg-[#f9a8d4]/5',
     badge: 'badge-rose',
     accent: '#f9a8d4',
+    dotPrimary: 'bg-[#f9a8d4]',
+    dotSecondary: 'bg-[#ec4899]',
   },
   amber: {
     gradient: 'column-glass-amber',
@@ -21,6 +25,8 @@ export const listColorClasses: Record<ListColor, {
     headerBg: 'bg-[#fcd34d]/5',
     badge: 'badge-amber',
     accent: '#fcd34d',
+    dotPrimary: 'bg-[#fcd34d]',
+    dotSecondary: 'bg-[#f59e0b]',
   },
   sky: {
     gradient: 'column-glass-sky',
@@ -28,6 +34,8 @@ export const listColorClasses: Record<ListColor, {
     headerBg: 'bg-[#7dd3fc]/5',
     badge: 'badge-sky',
     accent: '#7dd3fc',
+    dotPrimary: 'bg-[#7dd3fc]',
+    dotSecondary: 'bg-[#3b82f6]',
   },
   emerald: {
     gradient: 'column-glass-emerald',
@@ -35,6 +43,8 @@ export const listColorClasses: Record<ListColor, {
     headerBg: 'bg-[#6ee7b7]/5',
     badge: 'badge-emerald',
     accent: '#6ee7b7',
+    dotPrimary: 'bg-[#6ee7b7]',
+    dotSecondary: 'bg-[#22c55e]',
   },
   violet: {
     gradient: 'column-glass-violet',
@@ -42,6 +52,8 @@ export const listColorClasses: Record<ListColor, {
     headerBg: 'bg-[#c4b5fd]/5',
     badge: 'badge-violet',
     accent: '#c4b5fd',
+    dotPrimary: 'bg-[#c4b5fd]',
+    dotSecondary: 'bg-[#8b5cf6]',
   },
 }
 

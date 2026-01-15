@@ -2,9 +2,12 @@
 
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { motion } from 'framer-motion'
+import { MessageSquare, Paperclip, ListTodo, Calendar } from 'lucide-react'
 import type { Card as CardType } from '@/types'
 import { useBoardStore } from '@/store/useBoardStore'
-import { formatShortDate, getDueDateColorClass } from '@/lib/utils'
+import { formatShortDate } from '@/lib/utils'
+import { cardHover, easeTransition } from '@/lib/animations'
 
 interface CardProps {
   card: CardType
@@ -22,10 +25,7 @@ export function Card({ card }: CardProps) {
     isDragging,
   } = useSortable({
     id: card.id,
-    data: {
-      type: 'card',
-      card,
-    },
+    data: { type: 'card', card },
   })
 
   const style = {
@@ -33,46 +33,109 @@ export function Card({ card }: CardProps) {
     transition,
   }
 
+  const hasMetrics =
+    (card.comments_count && card.comments_count > 0) ||
+    (card.attachments_count && card.attachments_count > 0) ||
+    (card.checklist_total && card.checklist_total > 0)
+
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
       onClick={() => openCardModal(card)}
       className={`
-        group rounded-lg draggable card-dark
-        ${isDragging ? 'card-dragging' : ''}
+        group rounded-lg bg-white shadow-sm
+        border border-gray-200/50
+        cursor-grab active:cursor-grabbing
+        ${isDragging ? 'opacity-50 scale-[1.02] shadow-lg' : ''}
       `}
+      variants={cardHover}
+      initial='initial'
+      whileHover='hover'
+      whileTap='tap'
+      transition={easeTransition}
     >
-      <div className="p-3">
-        {/* 제목 */}
-        <h3 className="text-sm font-medium text-[#f3f4f6] mb-2 line-clamp-2 leading-relaxed 
-                       group-hover:text-white transition-colors">
+      {/* Cover Image */}
+      {card.cover_image && (
+        <div className='w-full h-32 rounded-t-lg overflow-hidden'>
+          <img src={card.cover_image} alt='' className='w-full h-full object-cover' />
+        </div>
+      )}
+
+      <div className='p-3'>
+        {/* Tags */}
+        {card.tags && card.tags.length > 0 && (
+          <div className='flex flex-wrap gap-1.5 mb-2'>
+            {card.tags.map((tag) => (
+              <span key={tag.id} className={`tag-pill tag-${tag.color}`}>
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Title */}
+        <h3 className='text-sm font-medium text-gray-800 mb-2 line-clamp-3 leading-relaxed group-hover:text-gray-900'>
           {card.title}
         </h3>
 
-        {/* 메타 정보 */}
-        <div className="flex items-center gap-2 flex-wrap mt-1">
-          {card.due_date && (
-            <div className={`date-badge ${getDueDateColorClass(card.due_date)}`}>
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span>{formatShortDate(card.due_date)}</span>
+        {/* Footer */}
+        <div className='flex items-center justify-between gap-2 mt-3'>
+          {/* Metrics */}
+          {hasMetrics && (
+            <div className='flex items-center gap-3'>
+              {card.due_date && (
+                <div className='flex items-center gap-1 text-gray-500 text-xs'>
+                  <Calendar className='w-3.5 h-3.5' />
+                  <span>{formatShortDate(card.due_date)}</span>
+                </div>
+              )}
+              {card.comments_count && card.comments_count > 0 && (
+                <div className='flex items-center gap-1 text-gray-500 text-xs'>
+                  <MessageSquare className='w-3.5 h-3.5' />
+                  <span>{card.comments_count}</span>
+                </div>
+              )}
+              {card.attachments_count && card.attachments_count > 0 && (
+                <div className='flex items-center gap-1 text-gray-500 text-xs'>
+                  <Paperclip className='w-3.5 h-3.5' />
+                  <span>{card.attachments_count}</span>
+                </div>
+              )}
+              {card.checklist_total && card.checklist_total > 0 && (
+                <div className='flex items-center gap-1 text-gray-500 text-xs'>
+                  <ListTodo className='w-3.5 h-3.5' />
+                  <span>
+                    {card.checklist_completed || 0}/{card.checklist_total}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
-          {card.description && (
-            <div className="flex items-center gap-1 text-[#6b7280] group-hover:text-[#9ca3af] transition-colors" 
-                 title="설명 있음">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-              </svg>
+          {/* Members */}
+          {card.members && card.members.length > 0 && (
+            <div className='flex -space-x-1.5 ml-auto'>
+              {card.members.slice(0, 3).map((member) => (
+                <div
+                  key={member.id}
+                  className='w-6 h-6 rounded-full border-2 border-white overflow-hidden'
+                  title={member.name}
+                >
+                  <img src={member.avatar} alt={member.name} className='w-full h-full object-cover' />
+                </div>
+              ))}
+              {card.members.length > 3 && (
+                <div className='w-6 h-6 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center'>
+                  <span className='text-[10px] font-medium text-gray-600'>+{card.members.length - 3}</span>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }

@@ -17,6 +17,20 @@ export interface List {
   updated_at: string
 }
 
+// 태그 타입
+export interface Tag {
+  id: string
+  name: string
+  color: 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'pink' | 'orange'
+}
+
+// 멤버 타입
+export interface Member {
+  id: string
+  name: string
+  avatar: string
+}
+
 export interface Card {
   id: string
   title: string
@@ -26,6 +40,14 @@ export interface Card {
   due_date: string | null
   created_at: string
   updated_at: string
+  // UI용 필드들 (DB에 없을 수 있음)
+  cover_image?: string | null
+  tags?: Tag[]
+  members?: Member[]
+  comments_count?: number
+  attachments_count?: number
+  checklist_completed?: number
+  checklist_total?: number
 }
 
 // 컬럼 색상 타입 (UI용 하드코딩)

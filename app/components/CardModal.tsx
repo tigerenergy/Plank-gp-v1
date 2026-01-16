@@ -31,7 +31,6 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
   // Zustand 스토어에서 상태 가져오기
   const {
     selectedCard,
-    members,
     closeCardModal,
     updateCard: updateCardInStore,
     deleteCard: deleteCardInStore,
@@ -52,7 +51,6 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
   // 최소한의 로컬 상태 (UI 전용)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [isAssigning, setIsAssigning] = useState(false)
 
   useEscapeClose(closeCardModal, isCardModalOpen)
 
@@ -81,35 +79,6 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
     loadComments()
     loadChecklists()
   }, [selectedCard?.id, isCardModalOpen, setCardComments, setCardChecklists, setCardModalLoading])
-
-  // 담당자 할당
-  const handleAssign = async (userId: string | null) => {
-    if (!selectedCard) return
-
-    setIsAssigning(true)
-    const result = await assignCard({
-      cardId: selectedCard.id,
-      assigneeId: userId,
-    })
-    setIsAssigning(false)
-
-    if (result.success) {
-      // 담당자 프로필 찾기
-      const assignee = userId ? members.find((m) => m.id === userId) || null : null
-
-      updateCardInStore(selectedCard.id, {
-        assignee_id: userId,
-        assignee,
-      })
-      updateSelectedCard({
-        assignee_id: userId,
-        assignee,
-      })
-      toast.success(userId ? '담당자가 할당되었습니다.' : '담당자가 해제되었습니다.')
-    } else {
-      toast.error(result.error || '담당자 할당에 실패했습니다.')
-    }
-  }
 
   // 라벨 변경
   const handleLabelsChange = async (labels: Label[]) => {

@@ -4,8 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import type { ActionResult, Board, ListWithCards, Card } from '@/types'
 import { getListColor } from '@/lib/utils'
 
-// 내가 참여한 보드 목록 조회 (생성자 프로필 포함)
-// = 내가 만든 보드 + 내가 멤버로 초대받은 보드
+// 모든 보드 목록 조회 (팀 전체 보드)
+// = 로그인한 사용자가 접근 가능한 모든 보드
 export async function getAllBoards(): Promise<ActionResult<Board[]>> {
   try {
     const supabase = await createClient()
@@ -15,22 +15,8 @@ export async function getAllBoards(): Promise<ActionResult<Board[]>> {
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    console.log('[getAllBoards] 현재 사용자:', user.id)
-
-    // 1. 내가 멤버로 참여한 보드 ID 목록 가져오기
-    const { data: memberBoards, error: memberError } = await supabase
-      .from('board_members')
-      .select('board_id')
-      .eq('user_id', user.id)
-
-    console.log('[getAllBoards] board_members 조회:', { memberBoards, memberError })
-
-    const memberBoardIds = memberBoards?.map(m => m.board_id) || []
-
-    console.log('[getAllBoards] 멤버인 보드 IDs:', memberBoardIds)
-
-    // 2. 내가 만들었거나 내가 멤버인 보드 가져오기
-    let query = supabase
+    // 모든 보드 가져오기 (RLS가 접근 제어)
+    const { data: boards, error } = await supabase
       .from('boards')
       .select(`
         *,
@@ -38,30 +24,12 @@ export async function getAllBoards(): Promise<ActionResult<Board[]>> {
       `)
       .order('created_at', { ascending: false })
 
-    // 내가 만든 보드 OR 내가 멤버인 보드
-    if (memberBoardIds.length > 0) {
-      query = query.or(`created_by.eq.${user.id},id.in.(${memberBoardIds.join(',')})`)
-    } else {
-      query = query.eq('created_by', user.id)
-    }
-
-    const { data: boards, error } = await query
-
-    console.log('[getAllBoards] 보드 목록:', { count: boards?.length, error })
-
     if (error) {
       console.error('보드 목록 조회 에러:', error)
       return { success: false, error: '보드 목록을 불러오는데 실패했습니다.' }
     }
 
-    // 중복 제거 (혹시 모를 중복)
-    const uniqueBoards = boards?.filter((board, index, self) =>
-      index === self.findIndex(b => b.id === board.id)
-    ) || []
-
-    console.log('[getAllBoards] 최종 보드:', uniqueBoards.map(b => ({ id: b.id, title: b.title, created_by: b.created_by })))
-
-    return { success: true, data: uniqueBoards }
+    return { success: true, data: boards || [] }
   } catch (error) {
     console.error('보드 목록 조회 에러:', error)
     return { success: false, error: '서버 연결에 실패했습니다.' }

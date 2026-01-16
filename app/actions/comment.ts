@@ -67,80 +67,78 @@ export async function createComment(input: {
       return { success: false, error: '댓글 작성에 실패했습니다.' }
     }
 
-    // 알림 보내기: 카드 담당자, 생성자, 보드 소유자에게
+    // 알림 보내기: 보드 소유자에게 (본인 제외)
     try {
-      // 카드 정보 가져오기
-      const { data: card } = await supabase
+      // 카드 → 리스트 → 보드 순서로 조회
+      const { data: card, error: cardError } = await supabase
         .from('cards')
-        .select('id, title, assignee_id, created_by, list_id')
+        .select('id, title, list_id')
         .eq('id', input.cardId)
         .single()
 
-      console.log('[댓글 알림] 카드 정보:', card)
+      if (cardError) {
+        console.error('[알림] 카드 조회 실패:', cardError)
+      }
 
-      if (card) {
-        // 리스트 정보 가져오기
-        const { data: list } = await supabase
+      if (!card?.list_id) {
+        console.error('[알림] 카드에 list_id 없음:', card)
+      }
+
+      if (card?.list_id) {
+        const { data: list, error: listError } = await supabase
           .from('lists')
           .select('board_id')
           .eq('id', card.list_id)
           .single()
 
-        console.log('[댓글 알림] 리스트 정보:', list)
+        if (listError) {
+          console.error('[알림] 리스트 조회 실패:', listError)
+        }
 
-        let boardOwnerId: string | null = null
         if (list?.board_id) {
-          // 보드 소유자 가져오기
-          const { data: board } = await supabase
+          const { data: board, error: boardError } = await supabase
             .from('boards')
             .select('created_by')
             .eq('id', list.board_id)
             .single()
 
-          console.log('[댓글 알림] 보드 정보:', board)
-          boardOwnerId = board?.created_by || null
-        }
+          if (boardError) {
+            console.error('[알림] 보드 조회 실패:', boardError)
+          }
 
-        const notifyUserIds = new Set<string>()
+          const boardOwnerId = board?.created_by
 
-        // 담당자에게 알림 (본인 제외)
-        if (card.assignee_id && card.assignee_id !== user.id) {
-          notifyUserIds.add(card.assignee_id)
-        }
+          // 보드 소유자에게 알림 (본인이 아닌 경우에만)
+          if (boardOwnerId && boardOwnerId !== user.id) {
+            console.log('[알림] 보드 소유자에게 알림 전송:', boardOwnerId)
+            
+            const { data: notifData, error: notifError } = await supabase
+              .from('notifications')
+              .insert({
+                user_id: boardOwnerId,
+                type: 'comment',
+                title: '새 댓글이 달렸습니다',
+                message: `"${card.title}" 카드에 댓글: ${input.content.slice(0, 50)}${input.content.length > 50 ? '...' : ''}`,
+                link: `/board/${list.board_id}`,
+                board_id: list.board_id,
+                card_id: input.cardId,
+                sender_id: user.id,
+              })
+              .select()
+              .single()
 
-        // 카드 생성자에게 알림 (본인 제외)
-        if (card.created_by && card.created_by !== user.id) {
-          notifyUserIds.add(card.created_by)
-        }
-
-        // 보드 소유자에게 알림 (본인 제외)
-        if (boardOwnerId && boardOwnerId !== user.id) {
-          notifyUserIds.add(boardOwnerId)
-        }
-
-        console.log('[댓글 알림] 알림 대상 목록:', Array.from(notifyUserIds))
-
-        // 알림 생성
-        for (const targetUserId of notifyUserIds) {
-          console.log('[댓글 알림] 알림 생성 시도:', targetUserId)
-          const result = await createNotification({
-            userId: targetUserId,
-            type: 'comment',
-            title: '새 댓글이 달렸습니다',
-            message: `"${card.title}" 카드에 댓글: ${input.content.slice(0, 50)}${
-              input.content.length > 50 ? '...' : ''
-            }`,
-            link: list?.board_id ? `/board/${list.board_id}` : undefined,
-            boardId: list?.board_id || undefined,
-            cardId: input.cardId,
-            senderId: user.id,
-          })
-          console.log('[댓글 알림] 생성 결과:', result)
+            if (notifError) {
+              console.error('[알림] 알림 생성 실패:', notifError)
+            } else {
+              console.log('[알림] 알림 생성 성공:', notifData)
+            }
+          } else {
+            console.log('[알림] 본인 보드라서 알림 안 보냄. 소유자:', boardOwnerId, '작성자:', user.id)
+          }
         }
       }
     } catch (notifyError) {
-      // 알림 실패해도 댓글은 성공으로 처리
-      console.error('댓글 알림 발송 에러:', notifyError)
+      console.error('[알림] 예외 발생:', notifyError)
     }
 
     return { success: true, data }

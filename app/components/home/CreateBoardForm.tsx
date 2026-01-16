@@ -1,18 +1,20 @@
 'use client'
 
-// 보드 이모지 옵션
-const BOARD_EMOJI_OPTIONS = [
-  { emoji: '📋', label: '할 일' },
-  { emoji: '💼', label: '업무' },
-  { emoji: '🚀', label: '프로젝트' },
-  { emoji: '🎯', label: '목표' },
-  { emoji: '💡', label: '아이디어' },
-  { emoji: '🔧', label: '개발' },
-  { emoji: '🎨', label: '디자인' },
-  { emoji: '📊', label: '분석' },
-  { emoji: '📝', label: '문서' },
-  { emoji: '🏠', label: '개인' },
-]
+import { useState, useRef, useEffect } from 'react'
+import { MoreHorizontal } from 'lucide-react'
+
+// 기본 이모지 (자주 사용)
+const DEFAULT_EMOJIS = ['📋', '💼', '🚀', '🎯', '💡', '🔧']
+
+// 전체 이모지 카테고리
+const ALL_EMOJIS = {
+  '업무': ['📋', '💼', '📝', '📊', '📈', '📉', '🗂️', '📁', '📂', '🗃️'],
+  '프로젝트': ['🚀', '🎯', '⭐', '🏆', '🎖️', '🥇', '✅', '☑️', '✨', '💎'],
+  '아이디어': ['💡', '🧠', '💭', '🔮', '🎲', '🎪', '🎨', '🖌️', '🎬', '📸'],
+  '개발': ['🔧', '⚙️', '🛠️', '💻', '🖥️', '⌨️', '🔌', '📱', '🌐', '🔒'],
+  '소통': ['💬', '📢', '📣', '🔔', '✉️', '📧', '📞', '🤝', '👥', '👋'],
+  '기타': ['🏠', '❤️', '🔥', '⚡', '🌈', '☀️', '🌙', '🎵', '🎮', '🎁'],
+}
 
 interface CreateBoardFormProps {
   title: string
@@ -33,6 +35,27 @@ export function CreateBoardForm({
   onSubmit, 
   onCancel 
 }: CreateBoardFormProps) {
+  const [showPicker, setShowPicker] = useState(false)
+  const pickerRef = useRef<HTMLDivElement>(null)
+
+  // 외부 클릭 시 피커 닫기
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setShowPicker(false)
+      }
+    }
+    if (showPicker) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showPicker])
+
+  const handleEmojiSelect = (selectedEmoji: string) => {
+    onEmojiChange(selectedEmoji)
+    setShowPicker(false)
+  }
+
   return (
     <form
       onSubmit={onSubmit}
@@ -41,25 +64,67 @@ export function CreateBoardForm({
     >
       <fieldset disabled={isSubmitting} className='space-y-3'>
         {/* 이모지 선택 */}
-        <div>
+        <div className='relative' ref={pickerRef}>
           <label className='block text-xs text-[rgb(var(--muted-foreground))] mb-2'>아이콘 선택</label>
-          <div className='flex flex-wrap gap-1.5'>
-            {BOARD_EMOJI_OPTIONS.map((option) => (
+          <div className='flex gap-1.5 items-center'>
+            {DEFAULT_EMOJIS.map((e) => (
               <button
-                key={option.emoji}
+                key={e}
                 type='button'
-                onClick={() => onEmojiChange(option.emoji)}
-                className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg transition-all
-                  ${emoji === option.emoji 
+                onClick={() => onEmojiChange(e)}
+                className={`w-9 h-9 flex-shrink-0 rounded-lg flex items-center justify-center text-lg transition-all
+                  ${emoji === e 
                     ? 'bg-indigo-100 dark:bg-indigo-500/20 ring-2 ring-indigo-500' 
                     : 'bg-[rgb(var(--secondary))] hover:bg-[rgb(var(--muted))]'
                   }`}
-                title={option.label}
               >
-                {option.emoji}
+                {e}
               </button>
             ))}
+            {/* 더보기 버튼 */}
+            <button
+              type='button'
+              onClick={() => setShowPicker(!showPicker)}
+              className={`w-9 h-9 flex-shrink-0 rounded-lg flex items-center justify-center transition-all
+                ${showPicker 
+                  ? 'bg-indigo-100 dark:bg-indigo-500/20 ring-2 ring-indigo-500' 
+                  : 'bg-[rgb(var(--secondary))] hover:bg-[rgb(var(--muted))] text-[rgb(var(--muted-foreground))]'
+                }`}
+              title='더 많은 아이콘'
+            >
+              <MoreHorizontal className='w-4 h-4' />
+            </button>
+            {/* 선택된 이모지가 기본에 없으면 표시 */}
+            {!DEFAULT_EMOJIS.includes(emoji) && (
+              <div className='w-9 h-9 flex-shrink-0 rounded-lg flex items-center justify-center text-lg bg-indigo-100 dark:bg-indigo-500/20 ring-2 ring-indigo-500'>
+                {emoji}
+              </div>
+            )}
           </div>
+
+          {/* 이모지 피커 드롭다운 */}
+          {showPicker && (
+            <div className='absolute top-full left-0 mt-2 z-50 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-xl shadow-lg p-3 w-72 max-h-64 overflow-y-auto'>
+              {Object.entries(ALL_EMOJIS).map(([category, emojis]) => (
+                <div key={category} className='mb-3 last:mb-0'>
+                  <div className='text-xs font-medium text-[rgb(var(--muted-foreground))] mb-1.5'>{category}</div>
+                  <div className='flex flex-wrap gap-1'>
+                    {emojis.map((e) => (
+                      <button
+                        key={e}
+                        type='button'
+                        onClick={() => handleEmojiSelect(e)}
+                        className={`w-8 h-8 rounded-md flex items-center justify-center text-base hover:bg-[rgb(var(--muted))] transition-colors
+                          ${emoji === e ? 'bg-indigo-100 dark:bg-indigo-500/20' : ''}`}
+                      >
+                        {e}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* 제목 입력 */}
@@ -96,4 +161,4 @@ export function CreateBoardForm({
   )
 }
 
-export { BOARD_EMOJI_OPTIONS }
+export { DEFAULT_EMOJIS, ALL_EMOJIS }

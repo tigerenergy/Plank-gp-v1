@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, X, Tag } from 'lucide-react'
+import { Plus, X, Check } from 'lucide-react'
 import type { Label, LabelColor } from '@/types'
 import { LABEL_COLORS } from '@/types'
 
@@ -49,21 +49,21 @@ export function LabelEditor({ labels, onChange }: LabelEditorProps) {
       {/* 현재 라벨 목록 */}
       <div className='flex flex-wrap gap-2'>
         {labels.map((label, idx) => {
-          const colorInfo = LABEL_COLORS.find((c) => c.color === label.color) || LABEL_COLORS[5]
+          const colorInfo = LABEL_COLORS.find((c) => c.color === label.color) || LABEL_COLORS[4]
           return (
             <motion.span
               key={idx}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${colorInfo.bg} ${colorInfo.text}`}
+              className={`group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${colorInfo.bg} ${colorInfo.text}`}
             >
               {label.name}
               <button
                 type='button'
                 onClick={() => handleRemoveLabel(idx)}
-                className='hover:opacity-70'
+                className='opacity-70 hover:opacity-100 transition-opacity'
               >
-                <X className='w-3 h-3' />
+                <X className='w-3.5 h-3.5' />
               </button>
             </motion.span>
           )
@@ -74,11 +74,11 @@ export function LabelEditor({ labels, onChange }: LabelEditorProps) {
           <button
             type='button'
             onClick={() => setIsAdding(true)}
-            className='inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium
-                     bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400
-                     hover:bg-gray-200 dark:hover:bg-white/20 transition-colors'
+            className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
+                     bg-[rgb(var(--secondary))] text-[rgb(var(--muted-foreground))]
+                     hover:bg-[rgb(var(--muted))] hover:text-[rgb(var(--foreground))] transition-colors'
           >
-            <Plus className='w-3 h-3' />
+            <Plus className='w-3.5 h-3.5' />
             라벨 추가
           </button>
         )}
@@ -91,7 +91,7 @@ export function LabelEditor({ labels, onChange }: LabelEditorProps) {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className='space-y-2 p-3 bg-gray-50 dark:bg-white/5 rounded-lg'
+            className='space-y-3 p-4 bg-[rgb(var(--secondary))] rounded-xl'
           >
             <input
               type='text'
@@ -99,26 +99,28 @@ export function LabelEditor({ labels, onChange }: LabelEditorProps) {
               onChange={(e) => setNewLabelName(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder='라벨 이름...'
-              className='w-full px-3 py-1.5 bg-white dark:bg-[#252542] border border-gray-300 dark:border-white/10 
-                       rounded text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400
-                       focus:outline-none focus:border-violet-500'
+              className='w-full px-4 py-2.5 rounded-xl input text-sm'
               autoFocus
             />
 
             {/* 색상 선택 */}
-            <div className='flex flex-wrap gap-1.5'>
+            <div className='flex gap-2'>
               {LABEL_COLORS.map((colorOption) => (
                 <button
                   key={colorOption.color}
                   type='button'
                   onClick={() => setSelectedColor(colorOption.color)}
-                  className={`w-6 h-6 rounded ${colorOption.bg} ${
+                  className={`w-8 h-8 rounded-lg ${colorOption.bg} flex items-center justify-center transition-all ${
                     selectedColor === colorOption.color
-                      ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-white/50 dark:ring-offset-gray-800'
-                      : ''
+                      ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-[rgb(var(--secondary))]'
+                      : 'hover:scale-110'
                   }`}
                   title={colorOption.name}
-                />
+                >
+                  {selectedColor === colorOption.color && (
+                    <Check className={`w-4 h-4 ${colorOption.text}`} />
+                  )}
+                </button>
               ))}
             </div>
 
@@ -128,8 +130,7 @@ export function LabelEditor({ labels, onChange }: LabelEditorProps) {
                 type='button'
                 onClick={handleAddLabel}
                 disabled={!newLabelName.trim()}
-                className='px-3 py-1 bg-violet-600 hover:bg-violet-500 text-white text-xs rounded
-                         disabled:opacity-50 disabled:cursor-not-allowed'
+                className='btn-primary px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed'
               >
                 추가
               </button>
@@ -139,7 +140,7 @@ export function LabelEditor({ labels, onChange }: LabelEditorProps) {
                   setIsAdding(false)
                   setNewLabelName('')
                 }}
-                className='px-3 py-1 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 text-xs'
+                className='btn-secondary px-4 py-2 text-sm'
               >
                 취소
               </button>

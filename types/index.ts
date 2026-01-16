@@ -44,17 +44,8 @@ export interface List {
   updated_at: string
 }
 
-// 라벨 색상
-export type LabelColor =
-  | 'red'
-  | 'orange'
-  | 'amber'
-  | 'green'
-  | 'teal'
-  | 'blue'
-  | 'indigo'
-  | 'purple'
-  | 'pink'
+// 라벨 색상 (핵심 6가지)
+export type LabelColor = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple'
 
 // 라벨 타입
 export interface Label {
@@ -62,17 +53,14 @@ export interface Label {
   color: LabelColor
 }
 
-// 기본 라벨 옵션
+// 기본 라벨 옵션 (핵심 6가지 색상)
 export const LABEL_COLORS: { color: LabelColor; name: string; bg: string; text: string }[] = [
   { color: 'red', name: '빨강', bg: 'bg-red-500', text: 'text-white' },
   { color: 'orange', name: '주황', bg: 'bg-orange-500', text: 'text-white' },
-  { color: 'amber', name: '노랑', bg: 'bg-amber-400', text: 'text-amber-900' },
+  { color: 'yellow', name: '노랑', bg: 'bg-yellow-400', text: 'text-yellow-900' },
   { color: 'green', name: '초록', bg: 'bg-green-500', text: 'text-white' },
-  { color: 'teal', name: '청록', bg: 'bg-teal-500', text: 'text-white' },
   { color: 'blue', name: '파랑', bg: 'bg-blue-500', text: 'text-white' },
-  { color: 'indigo', name: '남색', bg: 'bg-indigo-500', text: 'text-white' },
   { color: 'purple', name: '보라', bg: 'bg-purple-500', text: 'text-white' },
-  { color: 'pink', name: '분홍', bg: 'bg-pink-500', text: 'text-white' },
 ]
 
 export interface Card {

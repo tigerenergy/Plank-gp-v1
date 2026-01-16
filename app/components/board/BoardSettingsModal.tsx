@@ -3,8 +3,11 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Users } from 'lucide-react'
-import type { Profile } from '@/types'
+import { useParams } from 'next/navigation'
+import type { Profile, BoardInvitation } from '@/types'
 import { getTeamMembers } from '@/app/actions/member'
+import { getBoardInvitations } from '@/app/actions/invitation'
+import { useBoardStore } from '@/store/useBoardStore'
 import { MemberList } from './MemberList'
 
 interface BoardSettingsModalProps {
@@ -14,26 +17,46 @@ interface BoardSettingsModalProps {
 }
 
 export function BoardSettingsModal({ isOpen, currentUserId, onClose }: BoardSettingsModalProps) {
-  const [members, setMembers] = useState<Profile[]>([])
+  const params = useParams()
+  const boardId = params.id as string
+  const { members: boardMembers } = useBoardStore()
+  
+  const [allTeamMembers, setAllTeamMembers] = useState<Profile[]>([])
+  const [pendingInvitations, setPendingInvitations] = useState<BoardInvitation[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
-  // 팀원 목록 로드
-  const loadMembers = async () => {
+  // 팀원 목록 + 초대 목록 로드
+  const loadData = async () => {
     setIsLoading(true)
-    const result = await getTeamMembers()
-    if (result.success && result.data) {
-      setMembers(result.data)
+    
+    const [membersResult, invitationsResult] = await Promise.all([
+      getTeamMembers(),
+      getBoardInvitations(boardId),
+    ])
+    
+    if (membersResult.success && membersResult.data) {
+      setAllTeamMembers(membersResult.data)
     }
+    
+    if (invitationsResult.success && invitationsResult.data) {
+      setPendingInvitations(invitationsResult.data.filter(inv => inv.status === 'pending'))
+    }
+    
     setIsLoading(false)
   }
 
   useEffect(() => {
     if (isOpen) {
-      loadMembers()
+      loadData()
     }
-  }, [isOpen])
+  }, [isOpen, boardId])
 
   if (!isOpen) return null
+
+  // 보드 멤버 ID 목록
+  const boardMemberIds = boardMembers.map(m => m.id)
+  // 대기 중인 초대 대상 ID 목록
+  const pendingInviteeIds = pendingInvitations.map(inv => inv.invitee_id)
 
   return (
     <AnimatePresence>
@@ -49,19 +72,19 @@ export function BoardSettingsModal({ isOpen, currentUserId, onClose }: BoardSett
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           onClick={(e) => e.stopPropagation()}
-          className='w-full max-w-lg bg-white dark:bg-slate-800 rounded-xl shadow-xl overflow-hidden'
+          className='w-full max-w-lg bg-[rgb(var(--card))] rounded-2xl shadow-xl overflow-hidden'
         >
           {/* 헤더 */}
-          <div className='flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/10'>
-            <h2 className='text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2'>
+          <div className='flex items-center justify-between px-5 py-4 border-b border-[rgb(var(--border))]'>
+            <h2 className='text-lg font-bold text-[rgb(var(--foreground))] flex items-center gap-2'>
               <Users className='w-5 h-5' />
               팀원
             </h2>
             <button
               onClick={onClose}
-              className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors'
+              className='p-2 rounded-xl btn-ghost'
             >
-              <X className='w-5 h-5 text-gray-500 dark:text-gray-400' />
+              <X className='w-5 h-5' />
             </button>
           </div>
 
@@ -69,10 +92,17 @@ export function BoardSettingsModal({ isOpen, currentUserId, onClose }: BoardSett
           <div className='p-4 max-h-[60vh] overflow-y-auto'>
             {isLoading ? (
               <div className='flex items-center justify-center py-8'>
-                <div className='w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin' />
+                <div className='w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin' />
               </div>
             ) : (
-              <MemberList members={members} currentUserId={currentUserId} />
+              <MemberList 
+                members={allTeamMembers} 
+                boardMemberIds={boardMemberIds}
+                pendingInviteeIds={pendingInviteeIds}
+                currentUserId={currentUserId}
+                boardId={boardId}
+                onInviteSent={loadData}
+              />
             )}
           </div>
         </motion.div>

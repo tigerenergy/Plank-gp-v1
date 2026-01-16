@@ -22,7 +22,6 @@ import { BoardLoading } from '@/app/components/board/BoardLoading'
 import { BoardError } from '@/app/components/board/BoardError'
 import { AddListButton } from '@/app/components/board/AddListButton'
 import { BoardSettingsModal } from '@/app/components/board/BoardSettingsModal'
-import { InviteModal } from '@/app/components/board/InviteModal'
 
 interface BoardClientProps {
   user: User | null
@@ -49,7 +48,6 @@ export default function BoardClient({ user }: BoardClientProps) {
   } = useBoardStore()
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [isInviteOpen, setIsInviteOpen] = useState(false)
 
   // 보드 소유자인지 확인
   const isOwner = board?.created_by === user?.id
@@ -125,7 +123,6 @@ export default function BoardClient({ user }: BoardClientProps) {
         user={user}
         members={members}
         onSettingsClick={() => setIsSettingsOpen(true)}
-        onInviteClick={isOwner ? () => setIsInviteOpen(true) : undefined}
       />
 
       <div className='flex-1 min-h-0 overflow-auto'>
@@ -157,21 +154,12 @@ export default function BoardClient({ user }: BoardClientProps) {
 
       {isCardModalOpen && <CardModal isOwner={isOwner} />}
 
-      {/* 팀원 모달 */}
+      {/* 팀원 모달 (초대 기능 포함) */}
       <BoardSettingsModal
         isOpen={isSettingsOpen}
         currentUserId={user?.id || null}
         onClose={() => setIsSettingsOpen(false)}
       />
-
-      {/* 초대 모달 */}
-      {board && (
-        <InviteModal
-          isOpen={isInviteOpen}
-          boardId={board.id}
-          onClose={() => setIsInviteOpen(false)}
-        />
-      )}
     </div>
   )
 }

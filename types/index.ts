@@ -179,11 +179,12 @@ export interface BoardInvitation {
   id: string
   board_id: string
   inviter_id: string
-  invitee_email: string
+  invitee_id: string
   status: InvitationStatus
   created_at: string
   updated_at: string
   // 조인된 정보
   board?: Board | null
   inviter?: Profile | null
+  invitee?: Profile | null
 }

@@ -48,12 +48,12 @@ export function InvitationDropdown() {
     setProcessingId(invitation.id)
     const result = await acceptInvitation(invitation.id)
 
-    if (result.success) {
+    if (result.success && result.data) {
       toast.success('초대를 수락했습니다!')
       setInvitations((prev) => prev.filter((inv) => inv.id !== invitation.id))
       setIsOpen(false)
       // 해당 보드로 이동
-      router.push(`/board/${invitation.board_id}`)
+      router.push(`/board/${result.data.boardId}`)
     } else {
       toast.error(result.error || '초대 수락에 실패했습니다.')
     }

@@ -61,9 +61,13 @@ export function AddListButton() {
   }, [title, isSubmitting, boardId, lists.length, addList])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
+    if (e.key === 'Escape' && !isSubmitting) {
       setIsAdding(false)
       setTitle('')
+    }
+    // Enter 키 중복 방지: 이미 제출 중이면 무시
+    if (e.key === 'Enter' && isSubmitting) {
+      e.preventDefault()
     }
   }
 
@@ -75,35 +79,40 @@ export function AddListButton() {
           className='w-full sm:w-[340px] sm:min-w-[340px] p-4 bg-[rgb(var(--card))] rounded-2xl border border-[rgb(var(--border))]'
           style={{ boxShadow: 'var(--shadow)' }}
         >
-          <input
-            ref={inputRef}
-            type='text'
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder='리스트 이름...'
-            className='w-full px-4 py-3 mb-3 rounded-xl input'
-            disabled={isSubmitting}
-          />
-          <div className='flex items-center gap-2'>
-            <button
-              type='submit'
-              disabled={!title.trim() || isSubmitting}
-              className='flex-1 btn-primary py-2.5 text-sm'
-            >
-              {isSubmitting ? '추가 중...' : '리스트 추가'}
-            </button>
-            <button
-              type='button'
-              onClick={() => {
-                setIsAdding(false)
-                setTitle('')
-              }}
-              className='p-2.5 btn-ghost rounded-xl'
-            >
-              <X className='w-5 h-5' />
-            </button>
-          </div>
+          {/* 제출 중일 때 전체 폼에 오버레이 효과 */}
+          <fieldset disabled={isSubmitting} className='contents'>
+            <input
+              ref={inputRef}
+              type='text'
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder='리스트 이름...'
+              className='w-full px-4 py-3 mb-3 rounded-xl input disabled:opacity-60 disabled:cursor-not-allowed'
+            />
+            <div className='flex items-center gap-2'>
+              <button
+                type='submit'
+                disabled={!title.trim() || isSubmitting}
+                className='flex-1 btn-primary py-2.5 text-sm disabled:opacity-60 disabled:cursor-not-allowed'
+              >
+                {isSubmitting ? '추가 중...' : '리스트 추가'}
+              </button>
+              <button
+                type='button'
+                onClick={() => {
+                  if (!isSubmitting) {
+                    setIsAdding(false)
+                    setTitle('')
+                  }
+                }}
+                disabled={isSubmitting}
+                className='p-2.5 btn-ghost rounded-xl disabled:opacity-60 disabled:cursor-not-allowed'
+              >
+                <X className='w-5 h-5' />
+              </button>
+            </div>
+          </fieldset>
         </form>
       </div>
     )

@@ -1,15 +1,18 @@
--- 보드 초대 테이블
+-- 기존 테이블 및 정책 삭제 (스키마 변경을 위해)
+DROP TABLE IF EXISTS board_invitations CASCADE;
+
+-- 보드 초대 테이블 (팀원 직접 초대 방식)
 CREATE TABLE IF NOT EXISTS board_invitations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   board_id UUID NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
   inviter_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  invitee_email TEXT NOT NULL,
+  invitee_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   
-  -- 같은 보드에 같은 이메일로 중복 초대 방지
-  UNIQUE(board_id, invitee_email)
+  -- 같은 보드에 같은 사용자 중복 초대 방지
+  UNIQUE(board_id, invitee_id)
 );
 
 -- RLS 활성화
@@ -19,7 +22,7 @@ ALTER TABLE board_invitations ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "View invitations" ON board_invitations
 FOR SELECT USING (
   inviter_id = auth.uid() OR
-  invitee_email = (SELECT email FROM auth.users WHERE id = auth.uid()) OR
+  invitee_id = auth.uid() OR
   EXISTS (
     SELECT 1 FROM boards 
     WHERE boards.id = board_invitations.board_id 
@@ -41,7 +44,7 @@ FOR INSERT WITH CHECK (
 -- 초대 수정 정책 (초대받은 사람만 - 수락/거절)
 CREATE POLICY "Update invitations" ON board_invitations
 FOR UPDATE USING (
-  invitee_email = (SELECT email FROM auth.users WHERE id = auth.uid())
+  invitee_id = auth.uid()
 );
 
 -- 초대 삭제 정책 (초대한 사람 또는 보드 소유자)
@@ -117,5 +120,5 @@ FOR ALL USING (
 
 -- 인덱스 추가 (성능 최적화)
 CREATE INDEX IF NOT EXISTS idx_invitations_board_id ON board_invitations(board_id);
-CREATE INDEX IF NOT EXISTS idx_invitations_invitee_email ON board_invitations(invitee_email);
+CREATE INDEX IF NOT EXISTS idx_invitations_invitee_id ON board_invitations(invitee_id);
 CREATE INDEX IF NOT EXISTS idx_invitations_status ON board_invitations(status);

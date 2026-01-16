@@ -40,6 +40,27 @@ export const zoomIn: Variants = {
   exit: { opacity: 0, scale: 0.95 },
 }
 
+// 모달 오버레이
+export const overlayVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+}
+
+// 모달 컨텐츠
+export const modalVariants: Variants = {
+  hidden: { opacity: 0, scale: 0.95, y: 10 },
+  visible: { 
+    opacity: 1, 
+    scale: 1, 
+    y: 0,
+    transition: {
+      type: 'spring',
+      damping: 25,
+      stiffness: 300,
+    }
+  },
+}
+
 // 카드 호버
 export const cardHover: Variants = {
   initial: { y: 0, boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' },

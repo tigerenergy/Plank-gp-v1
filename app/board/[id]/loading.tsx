@@ -26,17 +26,17 @@ export default function BoardLoading() {
           <Image
             src='/blackLogo.png'
             alt='Plank'
-            width={100}
-            height={32}
-            className='h-8 w-auto dark:hidden'
+            width={120}
+            height={40}
+            className='h-10 w-auto dark:hidden'
             priority
           />
           <Image
             src='/whiteLogo.png'
             alt='Plank'
-            width={100}
-            height={32}
-            className='h-8 w-auto hidden dark:block'
+            width={120}
+            height={40}
+            className='h-10 w-auto hidden dark:block'
             priority
           />
           <div className='flex gap-1'>

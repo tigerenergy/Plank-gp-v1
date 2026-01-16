@@ -1,6 +1,6 @@
 'use client'
 
-import { Pencil, Trash2, LayoutGrid } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import type { Board } from '@/types'
 
 interface BoardCardProps {
@@ -17,6 +17,9 @@ interface BoardCardProps {
   creatorName?: string | null
   currentUserId?: string | null
 }
+
+// 보드 이모지 (제목 첫 글자 기반 또는 기본값)
+const BOARD_EMOJIS = ['📋', '📝', '🎯', '🚀', '💼', '📊', '🔧', '💡', '🎨', '📁']
 
 // 보드 색상 그라데이션 (세련된 파스텔)
 const boardColors = [
@@ -48,6 +51,8 @@ export function BoardCard({
   const isOwner = currentUserId && board.created_by === currentUserId
   const colorIndex = board.id.charCodeAt(0) % boardColors.length
   const gradientColor = boardColors[colorIndex]
+  const emojiIndex = board.id.charCodeAt(1) % BOARD_EMOJIS.length
+  const boardEmoji = BOARD_EMOJIS[emojiIndex]
 
   const handleStartEdit = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -110,7 +115,7 @@ export function BoardCard({
         <div
           className={`w-11 h-11 rounded-xl bg-gradient-to-br ${gradientColor} flex items-center justify-center shadow-md`}
         >
-          <LayoutGrid className='w-5 h-5 text-white' />
+          <span className='text-xl'>{boardEmoji}</span>
         </div>
 
         {/* 호버 시 액션 (생성자만 삭제 가능) */}

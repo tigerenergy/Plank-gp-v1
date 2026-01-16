@@ -207,8 +207,8 @@ export function Column({ list, isOwner = false }: ColumnProps) {
         isOpen={showDeleteConfirm}
         title='리스트 삭제'
         message={`'${list.title}' 리스트와 ${list.cards.length}개의 카드를 삭제하시겠습니까?`}
-        confirmText='삭제'
-        cancelText='취소'
+        confirmText='삭제하기'
+        cancelText='돌아가기'
         variant='danger'
         onConfirm={handleDeleteConfirm}
         onCancel={() => setShowDeleteConfirm(false)}

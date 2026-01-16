@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, MoreHorizontal, Pencil, Trash2, MessageSquare } from 'lucide-react'
+import { Send, Pencil, Trash2, MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Comment } from '@/types'
 import { createComment, updateComment, deleteComment } from '@/app/actions/comment'
@@ -29,7 +29,6 @@ export function CommentList({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editContent, setEditContent] = useState('')
-  const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // 댓글 입력 내용 자동 저장
@@ -108,7 +107,6 @@ export function CommentList({
     } else {
       toast.error(result.error || '댓글 삭제에 실패했습니다.')
     }
-    setMenuOpenId(null)
   }
 
   const formatDate = (dateString: string) => {
@@ -217,45 +215,28 @@ export function CommentList({
                 )}
               </div>
 
-              {/* 메뉴 (본인 댓글만) */}
+              {/* 액션 버튼 (본인 댓글만) - 더 나은 UX */}
               {currentUserId === comment.user_id && editingId !== comment.id && (
-                <div className='relative'>
+                <div className='flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity'>
+                  {/* 수정 버튼 */}
                   <button
-                    onClick={() => setMenuOpenId(menuOpenId === comment.id ? null : comment.id)}
-                    className='p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-gray-100 dark:hover:bg-white/5 transition-all'
+                    onClick={() => {
+                      setEditingId(comment.id)
+                      setEditContent(comment.content)
+                    }}
+                    className='p-2 rounded-lg text-gray-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-all'
+                    title='댓글 수정'
                   >
-                    <MoreHorizontal className='w-4 h-4 text-gray-400 dark:text-gray-500' />
+                    <Pencil className='w-4 h-4' />
                   </button>
-
-                  <AnimatePresence>
-                    {menuOpenId === comment.id && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className='absolute right-0 top-full mt-1 py-1 bg-white dark:bg-[#2a2a45] border border-gray-200 dark:border-white/10 rounded-lg shadow-lg z-10 min-w-[80px]'
-                      >
-                        <button
-                          onClick={() => {
-                            setEditingId(comment.id)
-                            setEditContent(comment.content)
-                            setMenuOpenId(null)
-                          }}
-                          className='w-full flex items-center gap-2 px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5'
-                        >
-                          <Pencil className='w-3 h-3' />
-                          수정
-                        </button>
-                        <button
-                          onClick={() => handleDelete(comment.id)}
-                          className='w-full flex items-center gap-2 px-3 py-1.5 text-xs text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10'
-                        >
-                          <Trash2 className='w-3 h-3' />
-                          삭제
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  {/* 삭제 버튼 - 더 잘 보이고 클릭하기 쉽게 */}
+                  <button
+                    onClick={() => handleDelete(comment.id)}
+                    className='p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all'
+                    title='댓글 삭제'
+                  >
+                    <Trash2 className='w-4 h-4' />
+                  </button>
                 </div>
               )}
             </motion.div>

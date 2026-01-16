@@ -170,3 +170,20 @@ export interface ChecklistItem {
   position: number
   created_at: string
 }
+
+// 초대 상태
+export type InvitationStatus = 'pending' | 'accepted' | 'rejected'
+
+// 보드 초대
+export interface BoardInvitation {
+  id: string
+  board_id: string
+  inviter_id: string
+  invitee_email: string
+  status: InvitationStatus
+  created_at: string
+  updated_at: string
+  // 조인된 정보
+  board?: Board | null
+  inviter?: Profile | null
+}

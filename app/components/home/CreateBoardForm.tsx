@@ -28,10 +28,10 @@ export function CreateBoardForm({ title, onTitleChange, onSubmit, onCancel }: Cr
         />
         <div className='flex gap-2 mt-auto'>
           <button type='submit' className='flex-1 btn-primary py-2.5 text-sm'>
-            생성
+            보드 만들기
           </button>
           <button type='button' onClick={onCancel} className='btn-secondary py-2.5 px-4 text-sm'>
-            취소
+            돌아가기
           </button>
         </div>
       </div>

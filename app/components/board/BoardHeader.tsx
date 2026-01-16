@@ -1,6 +1,6 @@
 'use client'
 
-import { Users } from 'lucide-react'
+import { Users, UserPlus } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import type { Profile } from '@/types'
 import { NavLink } from '../NavLink'
@@ -12,9 +12,10 @@ interface BoardHeaderProps {
   user: User | null
   members: Profile[]
   onSettingsClick?: () => void
+  onInviteClick?: () => void
 }
 
-export function BoardHeader({ title, user, members, onSettingsClick }: BoardHeaderProps) {
+export function BoardHeader({ title, user, members, onSettingsClick, onInviteClick }: BoardHeaderProps) {
   const displayMembers = members.slice(0, 4)
   const remainingCount = members.length - displayMembers.length
 
@@ -74,6 +75,18 @@ export function BoardHeader({ title, user, members, onSettingsClick }: BoardHead
                     </span>
                   </div>
                 )}
+              </button>
+            )}
+
+            {/* 초대 버튼 */}
+            {onInviteClick && (
+              <button
+                onClick={onInviteClick}
+                className='h-10 px-4 rounded-xl flex items-center justify-center gap-2 btn-primary text-sm font-medium'
+                title='팀원 초대'
+              >
+                <UserPlus className='w-4 h-4' />
+                <span className='hidden sm:inline'>초대</span>
               </button>
             )}
 

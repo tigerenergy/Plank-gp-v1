@@ -414,8 +414,8 @@ export function CardModal({ isOwner = false }: CardModalProps) {
             isOpen={showDeleteConfirm}
             title='카드 삭제'
             message='정말 이 카드를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.'
-            confirmText='삭제'
-            cancelText='취소'
+            confirmText='카드 삭제하기'
+            cancelText='돌아가기'
             variant='danger'
             onConfirm={handleDeleteConfirm}
             onCancel={() => setShowDeleteConfirm(false)}

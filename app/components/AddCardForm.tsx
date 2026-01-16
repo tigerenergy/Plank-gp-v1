@@ -18,7 +18,7 @@ interface AddCardFormProps {
 export function AddCardForm({ listId, onClose }: AddCardFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const addCard = useBoardStore((state) => state.addCard)
+  const { addCard, openCardModal } = useBoardStore()
   const { cardDrafts, setCardDraft, clearCardDraft } = useDraftStore()
 
   const {
@@ -53,10 +53,12 @@ export function AddCardForm({ listId, onClose }: AddCardFormProps) {
 
     if (result.success && result.data) {
       addCard(listId, result.data)
-      toast.success('카드가 추가되었습니다.')
+      toast.success('카드가 추가되었습니다. 상세 정보를 입력하세요.')
       reset()
       clearCardDraft(listId)
       onClose()
+      // 카드 생성 직후 모달 열기 (상세 편집)
+      openCardModal(result.data)
     } else {
       toast.error(result.error || '카드 추가에 실패했습니다.')
     }

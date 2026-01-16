@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { Plus, X } from 'lucide-react'
 import { useParams } from 'next/navigation'
@@ -18,6 +18,7 @@ export function AddListButton() {
   const [title, setTitle] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const isSubmittingRef = useRef(false) // 중복 방지용 ref
 
   useEffect(() => {
     if (isAdding && inputRef.current) {
@@ -25,12 +26,20 @@ export function AddListButton() {
     }
   }, [isAdding])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!title.trim() || isSubmitting) return
-
+  const handleSubmit = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault()
+    
+    // 이중 체크로 중복 제출 완전 방지
+    if (!title.trim() || isSubmitting || isSubmittingRef.current) return
+    
+    isSubmittingRef.current = true
     setIsSubmitting(true)
-    const result = await createList({ board_id: boardId, title: title.trim() })
+    
+    const trimmedTitle = title.trim()
+    // 즉시 입력 초기화하여 재제출 방지
+    setTitle('')
+    
+    const result = await createList({ board_id: boardId, title: trimmedTitle })
 
     if (result.success && result.data) {
       const newList: ListWithCards = {
@@ -40,13 +49,16 @@ export function AddListButton() {
       }
       addList(newList)
       toast.success('리스트가 추가되었습니다.')
-      setTitle('')
       setIsAdding(false)
     } else {
+      // 실패 시 제목 복원
+      setTitle(trimmedTitle)
       toast.error(result.error || '리스트 추가에 실패했습니다.')
     }
+    
     setIsSubmitting(false)
-  }
+    isSubmittingRef.current = false
+  }, [title, isSubmitting, boardId, lists.length, addList])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {

@@ -99,41 +99,43 @@ export function Card({ card }: CardProps) {
         </p>
       )}
 
-      {/* 하단: 마감일 + 아바타 */}
-      <div className='flex items-center justify-between mt-3 pt-3 border-t border-[rgb(var(--border))]'>
-        <div className='flex items-center gap-2'>
-          {/* 마감일 */}
-          {card.due_date && dueDateStatus && (
-            <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium ${getDueDateStyle(dueDateStatus)}`}>
-              <Calendar className='w-3.5 h-3.5' />
-              <span>{formatShortDate(card.due_date)}</span>
-            </div>
-          )}
-        </div>
-
-        {/* 담당자 아바타 */}
-        {displayUser && (
-          <div 
-            className='flex-shrink-0'
-            title={displayUser.username || displayUser.email || ''}
-          >
-            {displayUser.avatar_url ? (
-              <img
-                src={displayUser.avatar_url}
-                alt=''
-                referrerPolicy='no-referrer'
-                className='w-8 h-8 rounded-full ring-2 ring-white dark:ring-slate-700 shadow-sm'
-              />
-            ) : (
-              <div className='w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-sm'>
-                <span className='text-xs font-bold text-white'>
-                  {(displayUser.username || displayUser.email || '?')[0].toUpperCase()}
-                </span>
+      {/* 하단: 마감일 + 아바타 (선 대신 여백으로 구분) */}
+      {(card.due_date || displayUser) && (
+        <div className='flex items-center justify-between mt-4'>
+          <div className='flex items-center gap-2'>
+            {/* 마감일 */}
+            {card.due_date && dueDateStatus && (
+              <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium ${getDueDateStyle(dueDateStatus)}`}>
+                <Calendar className='w-3.5 h-3.5' />
+                <span>{formatShortDate(card.due_date)}</span>
               </div>
             )}
           </div>
-        )}
-      </div>
+
+          {/* 담당자 아바타 */}
+          {displayUser && (
+            <div 
+              className='flex-shrink-0'
+              title={displayUser.username || displayUser.email || ''}
+            >
+              {displayUser.avatar_url ? (
+                <img
+                  src={displayUser.avatar_url}
+                  alt=''
+                  referrerPolicy='no-referrer'
+                  className='w-8 h-8 rounded-full ring-2 ring-white dark:ring-slate-700 shadow-sm'
+                />
+              ) : (
+                <div className='w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-sm'>
+                  <span className='text-xs font-bold text-white'>
+                    {(displayUser.username || displayUser.email || '?')[0].toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 
 export default function BoardLoading() {
@@ -21,11 +22,28 @@ export default function BoardLoading() {
           animate={{ opacity: 1 }}
           className='flex flex-col items-center gap-4'
         >
+          {/* Plank 로고 */}
+          <Image
+            src='/blackLogo.png'
+            alt='Plank'
+            width={100}
+            height={32}
+            className='h-8 w-auto dark:hidden'
+            priority
+          />
+          <Image
+            src='/whiteLogo.png'
+            alt='Plank'
+            width={100}
+            height={32}
+            className='h-8 w-auto hidden dark:block'
+            priority
+          />
           <div className='flex gap-1'>
             {[0, 1, 2].map((i) => (
               <motion.div
                 key={i}
-                className='w-2 h-2 bg-violet-500 rounded-full'
+                className='w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full'
                 animate={{
                   y: [0, -8, 0],
                 }}

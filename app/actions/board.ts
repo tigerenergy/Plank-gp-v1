@@ -15,13 +15,19 @@ export async function getAllBoards(): Promise<ActionResult<Board[]>> {
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
+    console.log('[getAllBoards] 현재 사용자:', user.id)
+
     // 1. 내가 멤버로 참여한 보드 ID 목록 가져오기
-    const { data: memberBoards } = await supabase
+    const { data: memberBoards, error: memberError } = await supabase
       .from('board_members')
       .select('board_id')
       .eq('user_id', user.id)
 
+    console.log('[getAllBoards] board_members 조회:', { memberBoards, memberError })
+
     const memberBoardIds = memberBoards?.map(m => m.board_id) || []
+
+    console.log('[getAllBoards] 멤버인 보드 IDs:', memberBoardIds)
 
     // 2. 내가 만들었거나 내가 멤버인 보드 가져오기
     let query = supabase
@@ -41,6 +47,8 @@ export async function getAllBoards(): Promise<ActionResult<Board[]>> {
 
     const { data: boards, error } = await query
 
+    console.log('[getAllBoards] 보드 목록:', { count: boards?.length, error })
+
     if (error) {
       console.error('보드 목록 조회 에러:', error)
       return { success: false, error: '보드 목록을 불러오는데 실패했습니다.' }
@@ -50,6 +58,8 @@ export async function getAllBoards(): Promise<ActionResult<Board[]>> {
     const uniqueBoards = boards?.filter((board, index, self) =>
       index === self.findIndex(b => b.id === board.id)
     ) || []
+
+    console.log('[getAllBoards] 최종 보드:', uniqueBoards.map(b => ({ id: b.id, title: b.title, created_by: b.created_by })))
 
     return { success: true, data: uniqueBoards }
   } catch (error) {

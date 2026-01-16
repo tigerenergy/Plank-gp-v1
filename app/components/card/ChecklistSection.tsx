@@ -32,16 +32,21 @@ export function ChecklistSection({
   const [newItemInputs, setNewItemInputs] = useState<Record<string, string>>({})
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submittingItemId, setSubmittingItemId] = useState<string | null>(null)
 
   // 체크리스트 생성
   const handleCreateChecklist = async () => {
-    if (!newTitle.trim()) {
+    if (!newTitle.trim() || isSubmitting) {
       setNewTitle('')
       setIsCreating(false)
       return
     }
 
+    setIsSubmitting(true)
     const result = await createChecklist({ cardId, title: newTitle.trim() })
+    setIsSubmitting(false)
+
     if (result.success && result.data) {
       onChecklistsChange([...checklists, result.data])
       setNewTitle('')
@@ -84,13 +89,15 @@ export function ChecklistSection({
   // 항목 추가
   const handleAddItem = async (checklistId: string) => {
     const content = newItemInputs[checklistId]?.trim()
-    if (!content) return
+    if (!content || submittingItemId === checklistId) return
 
     // 입력창 즉시 초기화
     setNewItemInputs((prev) => ({ ...prev, [checklistId]: '' }))
+    setSubmittingItemId(checklistId)
 
     // 서버에 저장 먼저 (낙관적 업데이트 대신 확실한 방식)
     const result = await addChecklistItem({ checklistId, content })
+    setSubmittingItemId(null)
 
     if (result.success && result.data) {
       // 서버 응답으로 UI 업데이트 - 기존 items에 새 항목 추가
@@ -291,11 +298,13 @@ export function ChecklistSection({
                   />
                   <button
                     onClick={() => handleAddItem(checklist.id)}
-                    disabled={!newItemInputs[checklist.id]?.trim()}
+                    disabled={
+                      !newItemInputs[checklist.id]?.trim() || submittingItemId === checklist.id
+                    }
                     className='px-2 py-1.5 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 
                              disabled:opacity-50 disabled:cursor-not-allowed'
                   >
-                    추가
+                    {submittingItemId === checklist.id ? '추가 중...' : '추가'}
                   </button>
                 </div>
               )}
@@ -327,9 +336,10 @@ export function ChecklistSection({
             />
             <button
               onClick={handleCreateChecklist}
-              className='px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm rounded-lg'
+              disabled={isSubmitting || !newTitle.trim()}
+              className='px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed'
             >
-              추가
+              {isSubmitting ? '추가 중...' : '추가'}
             </button>
             <button
               onClick={() => {

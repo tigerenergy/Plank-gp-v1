@@ -67,23 +67,32 @@ export async function createComment(input: {
       return { success: false, error: '댓글 작성에 실패했습니다.' }
     }
 
-    // 알림 보내기: 카드 담당자 & 생성자에게
+    // 알림 보내기: 카드 담당자, 생성자, 보드 소유자에게
     try {
-      // 카드 정보 가져오기 (담당자, 생성자, 보드 ID)
+      // 카드 정보 가져오기 (담당자, 생성자, 보드 ID, 보드 소유자)
       const { data: card } = await supabase
         .from('cards')
         .select(
           `
           id, title, assignee_id, created_by,
-          list:lists!cards_list_id_fkey(board_id)
+          list:lists!cards_list_id_fkey(
+            board_id,
+            board:boards!lists_board_id_fkey(created_by)
+          )
         `
         )
         .eq('id', input.cardId)
         .single()
 
+      console.log('[댓글 알림] 카드 정보:', JSON.stringify(card, null, 2))
+
       if (card) {
-        const listData = card.list as unknown as { board_id: string } | null
+        const listData = card.list as unknown as {
+          board_id: string
+          board: { created_by: string } | null
+        } | null
         const boardId = listData?.board_id
+        const boardOwnerId = listData?.board?.created_by
         const notifyUserIds = new Set<string>()
 
         // 담당자에게 알림 (본인 제외)
@@ -91,14 +100,21 @@ export async function createComment(input: {
           notifyUserIds.add(card.assignee_id)
         }
 
-        // 생성자에게 알림 (본인 제외)
+        // 카드 생성자에게 알림 (본인 제외)
         if (card.created_by && card.created_by !== user.id) {
           notifyUserIds.add(card.created_by)
         }
 
+        // 보드 소유자에게 알림 (본인 제외)
+        if (boardOwnerId && boardOwnerId !== user.id) {
+          notifyUserIds.add(boardOwnerId)
+        }
+
+        console.log('[댓글 알림] 알림 대상:', Array.from(notifyUserIds))
+
         // 알림 생성
         for (const userId of notifyUserIds) {
-          await createNotification({
+          const result = await createNotification({
             userId,
             type: 'comment',
             title: '새 댓글이 달렸습니다',
@@ -110,6 +126,7 @@ export async function createComment(input: {
             cardId: input.cardId,
             senderId: user.id,
           })
+          console.log('[댓글 알림] 생성 결과:', result)
         }
       }
     } catch (notifyError) {

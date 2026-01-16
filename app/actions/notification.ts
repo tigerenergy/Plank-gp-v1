@@ -7,19 +7,23 @@ import type { ActionResult, Notification, NotificationType } from '@/types'
 export async function getMyNotifications(): Promise<ActionResult<Notification[]>> {
   try {
     const supabase = await createClient()
-    
-    const { data: { user } } = await supabase.auth.getUser()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) {
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
     const { data, error } = await supabase
       .from('notifications')
-      .select(`
+      .select(
+        `
         *,
         sender:profiles!notifications_sender_id_fkey(id, email, username, avatar_url),
         board:boards!notifications_board_id_fkey(id, title)
-      `)
+      `
+      )
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(50)
@@ -50,29 +54,36 @@ export async function createNotification(input: {
   try {
     const supabase = await createClient()
 
+    console.log('[createNotification] 입력값:', input)
+
+    const insertData = {
+      user_id: input.userId,
+      type: input.type,
+      title: input.title,
+      message: input.message || null,
+      link: input.link || null,
+      board_id: input.boardId || null,
+      card_id: input.cardId || null,
+      sender_id: input.senderId || null,
+    }
+
+    console.log('[createNotification] INSERT 데이터:', insertData)
+
     const { data, error } = await supabase
       .from('notifications')
-      .insert({
-        user_id: input.userId,
-        type: input.type,
-        title: input.title,
-        message: input.message || null,
-        link: input.link || null,
-        board_id: input.boardId || null,
-        card_id: input.cardId || null,
-        sender_id: input.senderId || null,
-      })
+      .insert(insertData)
       .select()
       .single()
 
     if (error) {
-      console.error('알림 생성 에러:', error)
+      console.error('[createNotification] 에러:', error)
       return { success: false, error: '알림 생성에 실패했습니다.' }
     }
 
+    console.log('[createNotification] 성공:', data)
     return { success: true, data }
   } catch (error) {
-    console.error('알림 생성 에러:', error)
+    console.error('[createNotification] 예외:', error)
     return { success: false, error: '서버 연결에 실패했습니다.' }
   }
 }
@@ -103,8 +114,10 @@ export async function markAsRead(notificationId: string): Promise<ActionResult> 
 export async function markAllAsRead(): Promise<ActionResult> {
   try {
     const supabase = await createClient()
-    
-    const { data: { user } } = await supabase.auth.getUser()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) {
       return { success: false, error: '로그인이 필요합니다.' }
     }
@@ -132,10 +145,7 @@ export async function deleteNotification(notificationId: string): Promise<Action
   try {
     const supabase = await createClient()
 
-    const { error } = await supabase
-      .from('notifications')
-      .delete()
-      .eq('id', notificationId)
+    const { error } = await supabase.from('notifications').delete().eq('id', notificationId)
 
     if (error) {
       console.error('알림 삭제 에러:', error)
@@ -153,8 +163,10 @@ export async function deleteNotification(notificationId: string): Promise<Action
 export async function getUnreadCount(): Promise<ActionResult<number>> {
   try {
     const supabase = await createClient()
-    
-    const { data: { user } } = await supabase.auth.getUser()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) {
       return { success: true, data: 0 }
     }

@@ -27,9 +27,10 @@ export async function checkBoardMembership(
     const isOwner = board?.created_by === user.id
 
     // 멤버 확인 (maybeSingle로 에러 방지)
+    // board_members 테이블에는 id 컬럼이 없음 (PK: board_id, user_id)
     const { data: membership } = await supabase
       .from('board_members')
-      .select('id')
+      .select('user_id')
       .eq('board_id', boardId)
       .eq('user_id', user.id)
       .maybeSingle()
@@ -53,12 +54,13 @@ export async function checkBoardMembership(
   }
 }
 
-// 특정 보드의 실제 멤버 목록 (board_members 테이블 기준)
+// 특정 보드의 실제 멤버 목록 (board_members 테이블 + 보드 소유자)
 export async function getBoardMembers(boardId: string): Promise<ActionResult<Profile[]>> {
   try {
     const supabase = await createClient()
 
-    const { data, error } = await supabase
+    // 1. board_members에서 멤버 가져오기
+    const { data: memberData, error: memberError } = await supabase
       .from('board_members')
       .select(
         `
@@ -68,18 +70,43 @@ export async function getBoardMembers(boardId: string): Promise<ActionResult<Pro
       )
       .eq('board_id', boardId)
 
-    if (error) {
-      console.error('보드 멤버 목록 조회 에러:', error)
+    if (memberError) {
+      console.error('보드 멤버 목록 조회 에러:', memberError)
       return { success: false, error: '보드 멤버 목록을 불러오는데 실패했습니다.' }
     }
 
+    // 2. 보드 소유자 가져오기
+    const { data: boardData } = await supabase
+      .from('boards')
+      .select(
+        `
+        created_by,
+        creator:profiles!boards_created_by_fkey(*)
+      `
+      )
+      .eq('id', boardId)
+      .single()
+
     // profile 데이터 추출 (Supabase 조인 결과 타입 처리)
+    const memberIds = new Set<string>()
     const members: Profile[] = []
-    if (data) {
-      for (const item of data) {
+
+    // 보드 소유자 먼저 추가
+    if (boardData?.creator) {
+      const creator = boardData.creator as unknown as Profile
+      if (creator) {
+        members.push(creator)
+        memberIds.add(creator.id)
+      }
+    }
+
+    // board_members 추가 (중복 제외)
+    if (memberData) {
+      for (const item of memberData) {
         const profile = item.profile as unknown as Profile | null
-        if (profile) {
+        if (profile && !memberIds.has(profile.id)) {
           members.push(profile)
+          memberIds.add(profile.id)
         }
       }
     }

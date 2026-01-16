@@ -21,8 +21,16 @@ export async function getBoardMembers(boardId: string): Promise<ActionResult<Pro
       return { success: false, error: '보드 멤버 목록을 불러오는데 실패했습니다.' }
     }
 
-    // profile 데이터 추출
-    const members = data?.map(item => item.profile).filter(Boolean) as Profile[] || []
+    // profile 데이터 추출 (Supabase 조인 결과 타입 처리)
+    const members: Profile[] = []
+    if (data) {
+      for (const item of data) {
+        const profile = item.profile as unknown as Profile | null
+        if (profile) {
+          members.push(profile)
+        }
+      }
+    }
 
     return { success: true, data: members }
   } catch (error) {

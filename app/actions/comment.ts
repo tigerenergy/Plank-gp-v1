@@ -80,7 +80,8 @@ export async function createComment(input: {
         .single()
 
       if (card) {
-        const boardId = (card.list as { board_id: string } | null)?.board_id
+        const listData = card.list as unknown as { board_id: string } | null
+        const boardId = listData?.board_id
         const notifyUserIds = new Set<string>()
         
         // 담당자에게 알림 (본인 제외)

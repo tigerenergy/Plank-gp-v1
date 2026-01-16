@@ -111,14 +111,16 @@ export async function createComment(input: {
           // 보드 소유자에게 알림 (본인이 아닌 경우에만)
           if (boardOwnerId && boardOwnerId !== user.id) {
             console.log('[알림] 보드 소유자에게 알림 전송:', boardOwnerId)
-            
+
             const { data: notifData, error: notifError } = await supabase
               .from('notifications')
               .insert({
                 user_id: boardOwnerId,
                 type: 'comment',
                 title: '새 댓글이 달렸습니다',
-                message: `"${card.title}" 카드에 댓글: ${input.content.slice(0, 50)}${input.content.length > 50 ? '...' : ''}`,
+                message: `"${card.title}" 카드에 댓글: ${input.content.slice(0, 50)}${
+                  input.content.length > 50 ? '...' : ''
+                }`,
                 link: `/board/${list.board_id}`,
                 board_id: list.board_id,
                 card_id: input.cardId,
@@ -133,7 +135,12 @@ export async function createComment(input: {
               console.log('[알림] 알림 생성 성공:', notifData)
             }
           } else {
-            console.log('[알림] 본인 보드라서 알림 안 보냄. 소유자:', boardOwnerId, '작성자:', user.id)
+            console.log(
+              '[알림] 본인 보드라서 알림 안 보냄. 소유자:',
+              boardOwnerId,
+              '작성자:',
+              user.id
+            )
           }
         }
       }

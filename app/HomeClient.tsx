@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
@@ -44,6 +44,9 @@ export default function HomeClient({ user }: HomeClientProps) {
   const { newBoardTitle, setNewBoardTitle, clearNewBoardTitle } = useDraftStore()
   const setNavigating = useNavigationStore((s) => s.setNavigating)
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const isSubmittingRef = useRef(false)
+
   useEffect(() => {
     const loadBoards = async () => {
       setLoading(true)
@@ -57,24 +60,44 @@ export default function HomeClient({ user }: HomeClientProps) {
     loadBoards()
   }, [setBoards, setLoading])
 
-  const handleCreateBoard = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newBoardTitle.trim()) {
-      toast.error('보드 제목을 입력해주세요.')
-      return
-    }
+  const handleCreateBoard = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault()
 
-    const result = await createBoard(newBoardTitle.trim())
-    if (result.success && result.data) {
-      toast.success('보드가 생성되었습니다!')
+      // 중복 제출 방지
+      if (isSubmittingRef.current) return
+
+      const title = newBoardTitle.trim()
+      if (!title) {
+        toast.error('보드 제목을 입력해주세요.')
+        return
+      }
+
+      isSubmittingRef.current = true
+      setIsSubmitting(true)
+
+      // 입력값 즉시 초기화 (중복 제출 방지)
       clearNewBoardTitle()
-      cancelCreating()
-      setNavigating(true)
-      router.push(`/board/${result.data.id}`)
-    } else {
-      toast.error(result.error || '보드 생성에 실패했습니다.')
-    }
-  }
+
+      try {
+        const result = await createBoard(title)
+        if (result.success && result.data) {
+          toast.success('보드가 생성되었습니다!')
+          cancelCreating()
+          setNavigating(true)
+          router.push(`/board/${result.data.id}`)
+        } else {
+          // 실패 시 입력값 복원
+          setNewBoardTitle(title)
+          toast.error(result.error || '보드 생성에 실패했습니다.')
+        }
+      } finally {
+        isSubmittingRef.current = false
+        setIsSubmitting(false)
+      }
+    },
+    [newBoardTitle, clearNewBoardTitle, setNewBoardTitle, cancelCreating, setNavigating, router]
+  )
 
   const handleUpdateBoard = async (e: React.FormEvent, boardId: string) => {
     e.preventDefault()
@@ -166,6 +189,7 @@ export default function HomeClient({ user }: HomeClientProps) {
             {isCreating && (
               <CreateBoardForm
                 title={newBoardTitle}
+                isSubmitting={isSubmitting}
                 onTitleChange={setNewBoardTitle}
                 onSubmit={handleCreateBoard}
                 onCancel={cancelCreating}

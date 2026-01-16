@@ -5,9 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Users } from 'lucide-react'
 import { useParams } from 'next/navigation'
 import type { Profile, BoardInvitation } from '@/types'
-import { getTeamMembers } from '@/app/actions/member'
+import { getTeamMembers, getBoardMembers } from '@/app/actions/member'
 import { getBoardInvitations } from '@/app/actions/invitation'
-import { useBoardStore } from '@/store/useBoardStore'
 import { MemberList } from './MemberList'
 
 interface BoardSettingsModalProps {
@@ -19,23 +18,28 @@ interface BoardSettingsModalProps {
 export function BoardSettingsModal({ isOpen, currentUserId, onClose }: BoardSettingsModalProps) {
   const params = useParams()
   const boardId = params.id as string
-  const { members: boardMembers } = useBoardStore()
   
   const [allTeamMembers, setAllTeamMembers] = useState<Profile[]>([])
+  const [actualBoardMembers, setActualBoardMembers] = useState<Profile[]>([])
   const [pendingInvitations, setPendingInvitations] = useState<BoardInvitation[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
-  // 팀원 목록 + 초대 목록 로드
+  // 팀원 목록 + 보드 멤버 + 초대 목록 로드
   const loadData = async () => {
     setIsLoading(true)
     
-    const [membersResult, invitationsResult] = await Promise.all([
+    const [allMembersResult, boardMembersResult, invitationsResult] = await Promise.all([
       getTeamMembers(),
+      getBoardMembers(boardId),
       getBoardInvitations(boardId),
     ])
     
-    if (membersResult.success && membersResult.data) {
-      setAllTeamMembers(membersResult.data)
+    if (allMembersResult.success && allMembersResult.data) {
+      setAllTeamMembers(allMembersResult.data)
+    }
+    
+    if (boardMembersResult.success && boardMembersResult.data) {
+      setActualBoardMembers(boardMembersResult.data)
     }
     
     if (invitationsResult.success && invitationsResult.data) {
@@ -53,8 +57,8 @@ export function BoardSettingsModal({ isOpen, currentUserId, onClose }: BoardSett
 
   if (!isOpen) return null
 
-  // 보드 멤버 ID 목록
-  const boardMemberIds = boardMembers.map(m => m.id)
+  // 실제 보드 멤버 ID 목록
+  const boardMemberIds = actualBoardMembers.map(m => m.id)
   // 대기 중인 초대 대상 ID 목록
   const pendingInviteeIds = pendingInvitations.map(inv => inv.invitee_id)
 

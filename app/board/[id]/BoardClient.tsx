@@ -12,7 +12,7 @@ import type { DropAnimation } from '@dnd-kit/core'
 import type { User } from '@supabase/supabase-js'
 import { useBoardStore } from '@/store/useBoardStore'
 import { getBoardData, getBoard } from '@/app/actions/board'
-import { getTeamMembers, checkBoardMembership } from '@/app/actions/member'
+import { getTeamMembers, checkBoardMembership, getBoardMembers } from '@/app/actions/member'
 import { useBoardDragDrop } from '@/hooks/useBoardDragDrop'
 import { Column } from '@/app/components/Column'
 import { Card } from '@/app/components/Card'
@@ -50,6 +50,7 @@ export default function BoardClient({ user }: BoardClientProps) {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [canEdit, setCanEdit] = useState(false)
+  const [boardMembers, setBoardMembers] = useState<typeof members>([])
 
   // 보드 소유자인지 확인 (삭제 권한)
   const isOwner = board?.created_by === user?.id
@@ -97,10 +98,16 @@ export default function BoardClient({ user }: BoardClientProps) {
       setError(listsResult.error || '데이터를 불러올 수 없습니다.')
     }
 
-    // 팀원 로드
-    const membersResult = await getTeamMembers()
-    if (membersResult.success && membersResult.data) {
-      setMembers(membersResult.data)
+    // 실제 보드 멤버 로드 (헤더 아바타용)
+    const boardMembersResult = await getBoardMembers(boardId)
+    if (boardMembersResult.success && boardMembersResult.data) {
+      setBoardMembers(boardMembersResult.data)
+    }
+
+    // 전체 팀원 로드 (초대 모달, 담당자 선택용)
+    const allMembersResult = await getTeamMembers()
+    if (allMembersResult.success && allMembersResult.data) {
+      setMembers(allMembersResult.data)
     }
 
     setLoading(false)
@@ -132,7 +139,7 @@ export default function BoardClient({ user }: BoardClientProps) {
       <BoardHeader
         title={board?.title || '보드'}
         user={user}
-        members={members}
+        members={boardMembers}
         onSettingsClick={() => setIsSettingsOpen(true)}
       />
 

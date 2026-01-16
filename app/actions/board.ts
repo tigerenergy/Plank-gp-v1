@@ -4,26 +4,54 @@ import { createClient } from '@/lib/supabase/server'
 import type { ActionResult, Board, ListWithCards, Card } from '@/types'
 import { getListColor } from '@/lib/utils'
 
-// 모든 보드 목록 조회 (생성자 프로필 포함)
+// 내가 참여한 보드 목록 조회 (생성자 프로필 포함)
+// = 내가 만든 보드 + 내가 멤버로 초대받은 보드
 export async function getAllBoards(): Promise<ActionResult<Board[]>> {
   try {
     const supabase = await createClient()
-    const { data: boards, error } = await supabase
+    
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
+    // 1. 내가 멤버로 참여한 보드 ID 목록 가져오기
+    const { data: memberBoards } = await supabase
+      .from('board_members')
+      .select('board_id')
+      .eq('user_id', user.id)
+
+    const memberBoardIds = memberBoards?.map(m => m.board_id) || []
+
+    // 2. 내가 만들었거나 내가 멤버인 보드 가져오기
+    let query = supabase
       .from('boards')
-      .select(
-        `
+      .select(`
         *,
         creator:profiles!boards_created_by_fkey(id, email, username, avatar_url)
-      `
-      )
+      `)
       .order('created_at', { ascending: false })
+
+    // 내가 만든 보드 OR 내가 멤버인 보드
+    if (memberBoardIds.length > 0) {
+      query = query.or(`created_by.eq.${user.id},id.in.(${memberBoardIds.join(',')})`)
+    } else {
+      query = query.eq('created_by', user.id)
+    }
+
+    const { data: boards, error } = await query
 
     if (error) {
       console.error('보드 목록 조회 에러:', error)
       return { success: false, error: '보드 목록을 불러오는데 실패했습니다.' }
     }
 
-    return { success: true, data: boards || [] }
+    // 중복 제거 (혹시 모를 중복)
+    const uniqueBoards = boards?.filter((board, index, self) =>
+      index === self.findIndex(b => b.id === board.id)
+    ) || []
+
+    return { success: true, data: uniqueBoards }
   } catch (error) {
     console.error('보드 목록 조회 에러:', error)
     return { success: false, error: '서버 연결에 실패했습니다.' }

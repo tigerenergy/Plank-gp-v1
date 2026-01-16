@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, Check, X, Inbox, MessageSquare, UserPlus, CheckCheck } from 'lucide-react'
 import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 import { getMyNotifications, markAsRead, markAllAsRead } from '@/app/actions/notification'
 import { getMyInvitations, acceptInvitation, rejectInvitation } from '@/app/actions/invitation'
 import type { Notification, BoardInvitation } from '@/types'
@@ -19,24 +20,21 @@ export function NotificationDropdown() {
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // 데이터 로드
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true)
-    
-    const [notifResult, invResult] = await Promise.all([
-      getMyNotifications(),
-      getMyInvitations(),
-    ])
-    
+
+    const [notifResult, invResult] = await Promise.all([getMyNotifications(), getMyInvitations()])
+
     if (notifResult.success && notifResult.data) {
       setNotifications(notifResult.data)
     }
-    
+
     if (invResult.success && invResult.data) {
       setInvitations(invResult.data)
     }
-    
+
     setIsLoading(false)
-  }
+  }, [])
 
   // 외부 클릭 감지
   useEffect(() => {
@@ -50,10 +48,72 @@ export function NotificationDropdown() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // 컴포넌트 마운트 시 로드
+  // 컴포넌트 마운트 시 로드 + 실시간 구독
   useEffect(() => {
     loadData()
-  }, [])
+
+    // Supabase 실시간 구독 설정
+    const supabase = createClient()
+
+    const setupRealtimeSubscription = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
+
+      // notifications 테이블 구독
+      const notifChannel = supabase
+        .channel('notifications-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            // 새 알림이 들어오면 목록에 추가
+            const newNotification = payload.new as Notification
+            setNotifications((prev) => [newNotification, ...prev])
+            // 토스트 알림 표시
+            toast.info(newNotification.title, {
+              description: newNotification.message || undefined,
+            })
+          }
+        )
+        .subscribe()
+
+      // board_invitations 테이블 구독
+      const invChannel = supabase
+        .channel('invitations-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'board_invitations',
+            filter: `invitee_id=eq.${user.id}`,
+          },
+          () => {
+            // 새 초대가 들어오면 목록 새로고침
+            loadData()
+          }
+        )
+        .subscribe()
+
+      return () => {
+        supabase.removeChannel(notifChannel)
+        supabase.removeChannel(invChannel)
+      }
+    }
+
+    const cleanup = setupRealtimeSubscription()
+
+    return () => {
+      cleanup.then((fn) => fn?.())
+    }
+  }, [loadData])
 
   // 초대 수락
   const handleAcceptInvitation = async (invitation: BoardInvitation) => {
@@ -93,7 +153,7 @@ export function NotificationDropdown() {
         prev.map((n) => (n.id === notification.id ? { ...n, is_read: true } : n))
       )
     }
-    
+
     if (notification.link) {
       setIsOpen(false)
       router.push(notification.link)
@@ -169,9 +229,7 @@ export function NotificationDropdown() {
                     모두 읽음
                   </button>
                 )}
-                <span className='text-xs text-[rgb(var(--muted-foreground))]'>
-                  {totalCount}개
-                </span>
+                <span className='text-xs text-[rgb(var(--muted-foreground))]'>{totalCount}개</span>
               </div>
             </div>
 
@@ -331,6 +389,6 @@ function formatTimeAgo(dateString: string): string {
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}분 전`
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}시간 전`
   if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}일 전`
-  
+
   return date.toLocaleDateString('ko-KR')
 }

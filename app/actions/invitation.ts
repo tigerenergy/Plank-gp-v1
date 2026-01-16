@@ -25,15 +25,25 @@ export async function sendInvitation(input: {
       return { success: false, error: '자기 자신은 초대할 수 없습니다.' }
     }
 
+    // 보드 소유자인지 확인
+    const { data: board } = await supabase
+      .from('boards')
+      .select('created_by')
+      .eq('id', input.boardId)
+      .maybeSingle()
+
+    const isOwner = board?.created_by === user.id
+
     // 보드 멤버인지 확인
     const { data: membership } = await supabase
       .from('board_members')
       .select('user_id')
       .eq('board_id', input.boardId)
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
-    if (!membership) {
+    // 소유자도 아니고 멤버도 아니면 초대 불가
+    if (!isOwner && !membership) {
       return { success: false, error: '보드 멤버만 초대할 수 있습니다.' }
     }
 
@@ -72,12 +82,14 @@ export async function sendInvitation(input: {
         invitee_id: input.inviteeId,
         status: 'pending',
       })
-      .select(`
+      .select(
+        `
         *,
         board:boards(id, title),
         inviter:profiles!inviter_id(id, username, email, avatar_url),
         invitee:profiles!invitee_id(id, username, email, avatar_url)
-      `)
+      `
+      )
       .single()
 
     if (error) {
@@ -107,11 +119,13 @@ export async function getMyInvitations(): Promise<ActionResult<BoardInvitation[]
 
     const { data, error } = await supabase
       .from('board_invitations')
-      .select(`
+      .select(
+        `
         *,
         board:boards(id, title, description),
         inviter:profiles!inviter_id(id, username, email, avatar_url)
-      `)
+      `
+      )
       .eq('invitee_id', user.id)
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
@@ -129,7 +143,9 @@ export async function getMyInvitations(): Promise<ActionResult<BoardInvitation[]
 }
 
 // 초대 수락
-export async function acceptInvitation(invitationId: string): Promise<ActionResult<{ boardId: string }>> {
+export async function acceptInvitation(
+  invitationId: string
+): Promise<ActionResult<{ boardId: string }>> {
   try {
     const supabase = await createClient()
 
@@ -221,7 +237,9 @@ export async function rejectInvitation(invitationId: string): Promise<ActionResu
 }
 
 // 보드의 초대 목록 조회 (보드 관리자용)
-export async function getBoardInvitations(boardId: string): Promise<ActionResult<BoardInvitation[]>> {
+export async function getBoardInvitations(
+  boardId: string
+): Promise<ActionResult<BoardInvitation[]>> {
   try {
     const supabase = await createClient()
 
@@ -235,11 +253,13 @@ export async function getBoardInvitations(boardId: string): Promise<ActionResult
 
     const { data, error } = await supabase
       .from('board_invitations')
-      .select(`
+      .select(
+        `
         *,
         inviter:profiles!inviter_id(id, username, email, avatar_url),
         invitee:profiles!invitee_id(id, username, email, avatar_url)
-      `)
+      `
+      )
       .eq('board_id', boardId)
       .order('created_at', { ascending: false })
 

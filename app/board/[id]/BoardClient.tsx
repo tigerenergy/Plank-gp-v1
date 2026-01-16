@@ -84,10 +84,20 @@ export default function BoardClient({ user }: BoardClientProps) {
 
     setBoard(boardResult.data)
 
-    // 멤버십 확인 (편집 권한)
-    const membershipResult = await checkBoardMembership(boardId)
-    if (membershipResult.success && membershipResult.data) {
-      setCanEdit(membershipResult.data.isMember)
+    // 소유자인 경우 즉시 편집 권한 부여
+    const boardOwnerId = boardResult.data.created_by
+    const isCurrentUserOwner = boardOwnerId === user?.id
+
+    if (isCurrentUserOwner) {
+      setCanEdit(true)
+    } else {
+      // 멤버십 확인 (편집 권한)
+      const membershipResult = await checkBoardMembership(boardId)
+      console.log('[BoardClient] 멤버십 결과:', membershipResult)
+
+      if (membershipResult.success && membershipResult.data) {
+        setCanEdit(membershipResult.data.isMember)
+      }
     }
 
     // 리스트 & 카드 로드

@@ -4,11 +4,15 @@ import { createClient } from '@/lib/supabase/server'
 import type { ActionResult, Profile } from '@/types'
 
 // 현재 사용자가 특정 보드의 멤버인지 확인
-export async function checkBoardMembership(boardId: string): Promise<ActionResult<{ isMember: boolean; isOwner: boolean }>> {
+export async function checkBoardMembership(
+  boardId: string
+): Promise<ActionResult<{ isMember: boolean; isOwner: boolean }>> {
   try {
     const supabase = await createClient()
-    
-    const { data: { user } } = await supabase.auth.getUser()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) {
       return { success: true, data: { isMember: false, isOwner: false } }
     }
@@ -18,24 +22,34 @@ export async function checkBoardMembership(boardId: string): Promise<ActionResul
       .from('boards')
       .select('created_by')
       .eq('id', boardId)
-      .single()
+      .maybeSingle()
 
     const isOwner = board?.created_by === user.id
 
-    // 멤버 확인
+    // 멤버 확인 (maybeSingle로 에러 방지)
     const { data: membership } = await supabase
       .from('board_members')
       .select('id')
       .eq('board_id', boardId)
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
-    const isMember = !!membership || isOwner
+    // 소유자이거나 멤버 테이블에 있으면 멤버
+    const isMember = isOwner || !!membership
+
+    console.log('[멤버십 확인]', {
+      userId: user.id,
+      boardId,
+      isOwner,
+      hasMembership: !!membership,
+      isMember,
+    })
 
     return { success: true, data: { isMember, isOwner } }
   } catch (error) {
     console.error('멤버십 확인 에러:', error)
-    return { success: false, error: '멤버십 확인에 실패했습니다.' }
+    // 에러가 나도 기본값 반환 (읽기 전용으로 처리되지 않도록)
+    return { success: true, data: { isMember: false, isOwner: false } }
   }
 }
 
@@ -46,10 +60,12 @@ export async function getBoardMembers(boardId: string): Promise<ActionResult<Pro
 
     const { data, error } = await supabase
       .from('board_members')
-      .select(`
+      .select(
+        `
         user_id,
         profile:profiles!user_id(*)
-      `)
+      `
+      )
       .eq('board_id', boardId)
 
     if (error) {
@@ -80,9 +96,7 @@ export async function getTeamMembers(): Promise<ActionResult<Profile[]>> {
   try {
     const supabase = await createClient()
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
+    const { data, error } = await supabase.from('profiles').select('*')
 
     if (error) {
       console.error('팀원 목록 조회 에러:', error)

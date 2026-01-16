@@ -75,9 +75,14 @@ export default function HomeClient({ user }: HomeClientProps) {
 
     switch (filter) {
       case 'owned':
+        // 내가 만든 보드
         return boards.filter((board) => board.created_by === user.id)
       case 'joined':
-        return boards.filter((board) => board.created_by !== user.id)
+        // 내가 멤버로 참여 중인 보드 (내가 만든 보드 제외)
+        return boards.filter(
+          (board) =>
+            board.created_by !== user.id && (board as { isMember?: boolean }).isMember === true
+        )
       default:
         return boards
     }
@@ -88,7 +93,10 @@ export default function HomeClient({ user }: HomeClientProps) {
     if (!user) return { all: boards.length, owned: 0, joined: 0 }
 
     const owned = boards.filter((board) => board.created_by === user.id).length
-    const joined = boards.filter((board) => board.created_by !== user.id).length
+    // 참여 중: 내가 만든 게 아니면서, isMember가 true인 보드
+    const joined = boards.filter(
+      (board) => board.created_by !== user.id && (board as { isMember?: boolean }).isMember === true
+    ).length
 
     return { all: boards.length, owned, joined }
   }, [boards, user])

@@ -6,7 +6,7 @@ import { getListColor } from '@/lib/utils'
 
 // 모든 보드 목록 조회 (팀 전체 보드)
 // = 로그인한 사용자가 접근 가능한 모든 보드
-export async function getAllBoards(): Promise<ActionResult<Board[]>> {
+export async function getAllBoards(): Promise<ActionResult<(Board & { isMember?: boolean })[]>> {
   try {
     const supabase = await createClient()
     
@@ -20,7 +20,8 @@ export async function getAllBoards(): Promise<ActionResult<Board[]>> {
       .from('boards')
       .select(`
         *,
-        creator:profiles!boards_created_by_fkey(id, email, username, avatar_url)
+        creator:profiles!boards_created_by_fkey(id, email, username, avatar_url),
+        board_members(user_id)
       `)
       .order('created_at', { ascending: false })
 
@@ -29,7 +30,16 @@ export async function getAllBoards(): Promise<ActionResult<Board[]>> {
       return { success: false, error: '보드 목록을 불러오는데 실패했습니다.' }
     }
 
-    return { success: true, data: boards || [] }
+    // 현재 사용자가 멤버인지 확인하는 플래그 추가
+    const boardsWithMembership = (boards || []).map((board) => {
+      const members = board.board_members as { user_id: string }[] | null
+      const isMember = members?.some((m) => m.user_id === user.id) || false
+      // board_members 필드는 제거하고 isMember만 포함
+      const { board_members, ...rest } = board
+      return { ...rest, isMember }
+    })
+
+    return { success: true, data: boardsWithMembership }
   } catch (error) {
     console.error('보드 목록 조회 에러:', error)
     return { success: false, error: '서버 연결에 실패했습니다.' }

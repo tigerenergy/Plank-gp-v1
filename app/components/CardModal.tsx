@@ -23,10 +23,11 @@ import { fadeIn, slideUp, zoomIn, easeTransition } from '@/lib/animations'
 import type { Label } from '@/types'
 
 interface CardModalProps {
+  canEdit?: boolean
   isOwner?: boolean
 }
 
-export function CardModal({ isOwner = false }: CardModalProps) {
+export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) {
   const modalRef = useRef<HTMLDivElement>(null)
 
   // Zustand 스토어에서 상태 가져오기
@@ -241,12 +242,12 @@ export function CardModal({ isOwner = false }: CardModalProps) {
                 {/* 상세 탭 */}
                 {cardModalTab === 'details' && (
                   <>
-                    {/* 라벨 (소유자만 편집) */}
+                    {/* 라벨 (편집 권한 있는 멤버) */}
                     <div>
                       <label className='block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2'>
                         라벨
                       </label>
-                      {isOwner ? (
+                      {canEdit ? (
                         <LabelEditor
                           labels={selectedCard.labels || []}
                           onChange={handleLabelsChange}
@@ -266,12 +267,12 @@ export function CardModal({ isOwner = false }: CardModalProps) {
                       )}
                     </div>
 
-                    {/* 담당자 (소유자만 변경) */}
+                    {/* 담당자 (편집 권한 있는 멤버) */}
                     <div>
                       <label className='block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2'>
                         담당자
                       </label>
-                      {isOwner ? (
+                      {canEdit ? (
                         <AssigneeSelect
                           members={members}
                           currentAssignee={selectedCard.assignee || null}
@@ -307,12 +308,12 @@ export function CardModal({ isOwner = false }: CardModalProps) {
                       )}
                     </div>
 
-                    {/* 마감일 (소유자만 변경) */}
+                    {/* 마감일 (편집 권한 있는 멤버) */}
                     <div>
                       <label className='block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2'>
                         마감일
                       </label>
-                      {isOwner ? (
+                      {canEdit ? (
                         <DatePicker
                           value={watch('due_date') || null}
                           onChange={(value) => setValue('due_date', value || '')}
@@ -329,12 +330,12 @@ export function CardModal({ isOwner = false }: CardModalProps) {
                       )}
                     </div>
 
-                    {/* 설명 (소유자만 편집) */}
+                    {/* 설명 (편집 권한 있는 멤버) */}
                     <div>
                       <label className='block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2'>
                         설명
                       </label>
-                      {isOwner ? (
+                      {canEdit ? (
                         <>
                           <textarea
                             {...register('description')}
@@ -392,15 +393,16 @@ export function CardModal({ isOwner = false }: CardModalProps) {
                       cardId={selectedCard.id}
                       checklists={cardChecklists}
                       onChecklistsChange={setCardChecklists}
-                      isOwner={isOwner}
+                      canEdit={canEdit}
                     />
                   ))}
               </div>
 
-              {/* 푸터 (소유자만 수정/삭제 가능) */}
+              {/* 푸터 (편집 권한자: 수정 가능, 소유자만: 삭제 가능) */}
               <ModalFooter
                 isDeleting={isDeleting}
                 isSubmitting={isSubmitting}
+                canEdit={canEdit}
                 isOwner={isOwner}
                 onDeleteClick={() => setShowDeleteConfirm(true)}
                 onClose={closeCardModal}
@@ -493,7 +495,8 @@ function ModalHeader({ register, onClose }: ModalHeaderProps) {
 interface ModalFooterProps {
   isDeleting: boolean
   isSubmitting: boolean
-  isOwner: boolean // 보드 소유자 여부
+  canEdit: boolean // 편집 권한 여부
+  isOwner: boolean // 보드 소유자 여부 (삭제 권한)
   onDeleteClick: () => void
   onClose: () => void
   onSave: () => void
@@ -502,6 +505,7 @@ interface ModalFooterProps {
 function ModalFooter({
   isDeleting,
   isSubmitting,
+  canEdit,
   isOwner,
   onDeleteClick,
   onClose,
@@ -522,6 +526,8 @@ function ModalFooter({
         >
           {isDeleting ? '삭제 중...' : '삭제'}
         </motion.button>
+      ) : canEdit ? (
+        <div />
       ) : (
         <div className='text-sm text-gray-400'>읽기 전용</div>
       )}
@@ -536,8 +542,8 @@ function ModalFooter({
         >
           닫기
         </motion.button>
-        {/* 저장 버튼: 소유자만 */}
-        {isOwner && (
+        {/* 저장 버튼: 편집 권한자 */}
+        {canEdit && (
           <motion.button
             type='button'
             onClick={onSave}

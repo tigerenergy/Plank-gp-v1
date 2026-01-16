@@ -4,7 +4,7 @@ import type { User } from '@supabase/supabase-js'
 import { NavLink } from '../NavLink'
 import { ThemeToggle } from '../ui/ThemeToggle'
 import { UserMenu } from '../auth/UserMenu'
-import { InvitationDropdown } from '../auth/InvitationDropdown'
+import { NotificationDropdown } from '../auth/NotificationDropdown'
 
 interface HeaderProps {
   user: User | null
@@ -36,7 +36,7 @@ export function Header({ user, title, showBack }: HeaderProps) {
         </div>
 
         <div className='flex items-center gap-2'>
-          {user && <InvitationDropdown />}
+          {user && <NotificationDropdown />}
           <ThemeToggle />
           {user && <UserMenu user={user} />}
         </div>

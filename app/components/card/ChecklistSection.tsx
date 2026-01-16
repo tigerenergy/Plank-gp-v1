@@ -18,14 +18,14 @@ interface ChecklistSectionProps {
   cardId: string
   checklists: Checklist[]
   onChecklistsChange: (checklists: Checklist[]) => void
-  isOwner?: boolean
+  canEdit?: boolean
 }
 
 export function ChecklistSection({
   cardId,
   checklists,
   onChecklistsChange,
-  isOwner = false,
+  canEdit = false,
 }: ChecklistSectionProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [newTitle, setNewTitle] = useState('')
@@ -167,7 +167,7 @@ export function ChecklistSection({
             >
               {/* 헤더 */}
               <div className='flex items-center justify-between'>
-                {editingTitleId === checklist.id && isOwner ? (
+                {editingTitleId === checklist.id && canEdit ? (
                   <input
                     type='text'
                     value={editTitle}
@@ -184,13 +184,13 @@ export function ChecklistSection({
                 ) : (
                   <h4
                     onClick={() => {
-                      if (isOwner) {
+                      if (canEdit) {
                         setEditingTitleId(checklist.id)
                         setEditTitle(checklist.title)
                       }
                     }}
                     className={`text-sm font-medium text-gray-900 dark:text-gray-100 ${
-                      isOwner
+                      canEdit
                         ? 'cursor-pointer hover:text-violet-600 dark:hover:text-violet-400'
                         : ''
                     }`}
@@ -199,7 +199,7 @@ export function ChecklistSection({
                   </h4>
                 )}
 
-                {isOwner && (
+                {canEdit && (
                   <button
                     onClick={() => handleDeleteChecklist(checklist.id)}
                     className='p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors'
@@ -228,7 +228,7 @@ export function ChecklistSection({
               <div className='space-y-1'>
                 {checklist.items?.map((item) => (
                   <div key={item.id} className='flex items-center gap-2 group py-1'>
-                    {isOwner ? (
+                    {canEdit ? (
                       <button
                         onClick={() => handleToggleItem(checklist.id, item)}
                         className='flex-shrink-0'
@@ -257,7 +257,7 @@ export function ChecklistSection({
                     >
                       {item.content}
                     </span>
-                    {isOwner && (
+                    {canEdit && (
                       <button
                         onClick={() => handleDeleteItem(checklist.id, item.id)}
                         className='p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-all'
@@ -270,7 +270,7 @@ export function ChecklistSection({
               </div>
 
               {/* 항목 추가 입력 (소유자만) */}
-              {isOwner && (
+              {canEdit && (
                 <div className='flex gap-2'>
                   <input
                     type='text'
@@ -305,7 +305,7 @@ export function ChecklistSection({
       </AnimatePresence>
 
       {/* 체크리스트 추가 (소유자만) */}
-      {isOwner &&
+      {canEdit &&
         (isCreating ? (
           <div className='flex gap-2'>
             <input
@@ -354,7 +354,7 @@ export function ChecklistSection({
         ))}
 
       {/* 비소유자용 안내 */}
-      {!isOwner && checklists.length === 0 && (
+      {!canEdit && checklists.length === 0 && (
         <p className='text-center text-sm text-gray-400 py-4'>체크리스트가 없습니다.</p>
       )}
     </div>

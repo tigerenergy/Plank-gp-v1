@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import type { ActionResult, Comment } from '@/types'
+import { createNotification } from './notification'
 
 // 카드의 댓글 목록 조회
 export async function getComments(cardId: string): Promise<ActionResult<Comment[]>> {
@@ -64,6 +65,51 @@ export async function createComment(input: {
     if (error) {
       console.error('댓글 작성 에러:', error)
       return { success: false, error: '댓글 작성에 실패했습니다.' }
+    }
+
+    // 알림 보내기: 카드 담당자 & 생성자에게
+    try {
+      // 카드 정보 가져오기 (담당자, 생성자, 보드 ID)
+      const { data: card } = await supabase
+        .from('cards')
+        .select(`
+          id, title, assignee_id, created_by,
+          list:lists!cards_list_id_fkey(board_id)
+        `)
+        .eq('id', input.cardId)
+        .single()
+
+      if (card) {
+        const boardId = (card.list as { board_id: string } | null)?.board_id
+        const notifyUserIds = new Set<string>()
+        
+        // 담당자에게 알림 (본인 제외)
+        if (card.assignee_id && card.assignee_id !== user.id) {
+          notifyUserIds.add(card.assignee_id)
+        }
+        
+        // 생성자에게 알림 (본인 제외)
+        if (card.created_by && card.created_by !== user.id) {
+          notifyUserIds.add(card.created_by)
+        }
+
+        // 알림 생성
+        for (const userId of notifyUserIds) {
+          await createNotification({
+            userId,
+            type: 'comment',
+            title: '새 댓글이 달렸습니다',
+            message: `"${card.title}" 카드에 댓글: ${input.content.slice(0, 50)}${input.content.length > 50 ? '...' : ''}`,
+            link: boardId ? `/board/${boardId}` : undefined,
+            boardId: boardId || undefined,
+            cardId: input.cardId,
+            senderId: user.id,
+          })
+        }
+      }
+    } catch (notifyError) {
+      // 알림 실패해도 댓글은 성공으로 처리
+      console.error('댓글 알림 발송 에러:', notifyError)
     }
 
     return { success: true, data }

@@ -188,3 +188,24 @@ export interface BoardInvitation {
   inviter?: Profile | null
   invitee?: Profile | null
 }
+
+// 알림 타입
+export type NotificationType = 'invitation' | 'comment' | 'mention' | 'due_date'
+
+// 알림
+export interface Notification {
+  id: string
+  user_id: string
+  type: NotificationType
+  title: string
+  message: string | null
+  link: string | null
+  is_read: boolean
+  board_id: string | null
+  card_id: string | null
+  sender_id: string | null
+  created_at: string
+  // 조인된 정보
+  sender?: Profile | null
+  board?: Board | null
+}

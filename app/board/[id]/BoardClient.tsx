@@ -12,7 +12,7 @@ import type { DropAnimation } from '@dnd-kit/core'
 import type { User } from '@supabase/supabase-js'
 import { useBoardStore } from '@/store/useBoardStore'
 import { getBoardData, getBoard } from '@/app/actions/board'
-import { getTeamMembers } from '@/app/actions/member'
+import { getTeamMembers, checkBoardMembership } from '@/app/actions/member'
 import { useBoardDragDrop } from '@/hooks/useBoardDragDrop'
 import { Column } from '@/app/components/Column'
 import { Card } from '@/app/components/Card'
@@ -49,8 +49,9 @@ export default function BoardClient({ user }: BoardClientProps) {
   } = useBoardStore()
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [canEdit, setCanEdit] = useState(false)
 
-  // 보드 소유자인지 확인
+  // 보드 소유자인지 확인 (삭제 권한)
   const isOwner = board?.created_by === user?.id
 
   const { sensors, activeCard, handleDragStart, handleDragOver, handleDragEnd } = useBoardDragDrop()
@@ -81,6 +82,12 @@ export default function BoardClient({ user }: BoardClientProps) {
     }
 
     setBoard(boardResult.data)
+
+    // 멤버십 확인 (편집 권한)
+    const membershipResult = await checkBoardMembership(boardId)
+    if (membershipResult.success && membershipResult.data) {
+      setCanEdit(membershipResult.data.isMember)
+    }
 
     // 리스트 & 카드 로드
     const listsResult = await getBoardData(boardResult.data.id)
@@ -134,16 +141,16 @@ export default function BoardClient({ user }: BoardClientProps) {
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
-          onDragStart={isOwner ? handleDragStart : undefined}
-          onDragOver={isOwner ? handleDragOver : undefined}
-          onDragEnd={isOwner ? handleDragEnd : undefined}
+          onDragStart={canEdit ? handleDragStart : undefined}
+          onDragOver={canEdit ? handleDragOver : undefined}
+          onDragEnd={canEdit ? handleDragEnd : undefined}
         >
           <div className='flex flex-col sm:flex-row gap-4 p-4 sm:p-6 sm:h-full sm:overflow-x-auto sm:items-start board-scroll'>
             {lists.map((list) => (
-              <Column key={list.id} list={list} isOwner={isOwner} />
+              <Column key={list.id} list={list} canEdit={canEdit} isOwner={isOwner} />
             ))}
-            {/* 소유자만 리스트 추가 가능 */}
-            {isOwner && <AddListButton />}
+            {/* 멤버도 리스트 추가 가능 */}
+            {canEdit && <AddListButton />}
           </div>
 
           <DragOverlay dropAnimation={dropAnimation}>
@@ -156,7 +163,7 @@ export default function BoardClient({ user }: BoardClientProps) {
         </DndContext>
       </div>
 
-      {isCardModalOpen && <CardModal isOwner={isOwner} />}
+      {isCardModalOpen && <CardModal canEdit={canEdit} isOwner={isOwner} />}
 
       {/* 팀원 모달 (초대 기능 포함) */}
       <BoardSettingsModal

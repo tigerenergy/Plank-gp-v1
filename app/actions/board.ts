@@ -47,7 +47,7 @@ export async function getAllBoards(): Promise<ActionResult<(Board & { isMember?:
 }
 
 // 보드 생성
-export async function createBoard(title: string): Promise<ActionResult<Board>> {
+export async function createBoard(title: string, emoji: string = '📋'): Promise<ActionResult<Board>> {
   try {
     const supabase = await createClient()
 
@@ -64,6 +64,7 @@ export async function createBoard(title: string): Promise<ActionResult<Board>> {
       .from('boards')
       .insert({
         title,
+        emoji,
         created_by: user.id,
       })
       .select()

@@ -27,6 +27,7 @@ export interface Board {
   title: string
   description: string | null
   background_image: string | null
+  emoji: string | null
   is_private: boolean
   created_by: string | null
   created_at: string

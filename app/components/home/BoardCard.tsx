@@ -18,9 +18,6 @@ interface BoardCardProps {
   currentUserId?: string | null
 }
 
-// 보드 이모지 (제목 첫 글자 기반 또는 기본값)
-const BOARD_EMOJIS = ['📋', '📝', '🎯', '🚀', '💼', '📊', '🔧', '💡', '🎨', '📁']
-
 // 보드 색상 그라데이션 (세련된 파스텔)
 const boardColors = [
   'from-indigo-400 to-indigo-600',
@@ -51,8 +48,8 @@ export function BoardCard({
   const isOwner = currentUserId && board.created_by === currentUserId
   const colorIndex = board.id.charCodeAt(0) % boardColors.length
   const gradientColor = boardColors[colorIndex]
-  const emojiIndex = board.id.charCodeAt(1) % BOARD_EMOJIS.length
-  const boardEmoji = BOARD_EMOJIS[emojiIndex]
+  // 저장된 이모지 사용, 없으면 기본값
+  const boardEmoji = board.emoji || '📋'
 
   const handleStartEdit = (e: React.MouseEvent) => {
     e.stopPropagation()

@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Plus } from 'lucide-react'
+import { Plus, LayoutGrid, Crown, Users } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import { useHomeStore } from '@/store/useHomeStore'
 import { useDraftStore } from '@/store/useDraftStore'
@@ -15,6 +15,14 @@ import { CreateBoardForm } from './components/home/CreateBoardForm'
 import { EmptyState } from './components/home/EmptyState'
 import { Header } from './components/layout/Header'
 import { BoardCardSkeleton } from './components/ui/Skeleton'
+
+type FilterType = 'all' | 'owned' | 'joined'
+
+const FILTERS: { key: FilterType; label: string; icon: React.ReactNode }[] = [
+  { key: 'all', label: '전체', icon: <LayoutGrid className='w-4 h-4' /> },
+  { key: 'owned', label: '내가 만든', icon: <Crown className='w-4 h-4' /> },
+  { key: 'joined', label: '참여 중', icon: <Users className='w-4 h-4' /> },
+]
 
 interface HomeClientProps {
   user: User | null
@@ -45,6 +53,7 @@ export default function HomeClient({ user }: HomeClientProps) {
   const setNavigating = useNavigationStore((s) => s.setNavigating)
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [filter, setFilter] = useState<FilterType>('all')
   const isSubmittingRef = useRef(false)
 
   useEffect(() => {
@@ -59,6 +68,30 @@ export default function HomeClient({ user }: HomeClientProps) {
     }
     loadBoards()
   }, [setBoards, setLoading])
+
+  // 필터링된 보드 목록
+  const filteredBoards = useMemo(() => {
+    if (!user) return boards
+
+    switch (filter) {
+      case 'owned':
+        return boards.filter((board) => board.created_by === user.id)
+      case 'joined':
+        return boards.filter((board) => board.created_by !== user.id)
+      default:
+        return boards
+    }
+  }, [boards, filter, user])
+
+  // 필터별 개수
+  const filterCounts = useMemo(() => {
+    if (!user) return { all: boards.length, owned: 0, joined: 0 }
+
+    const owned = boards.filter((board) => board.created_by === user.id).length
+    const joined = boards.filter((board) => board.created_by !== user.id).length
+
+    return { all: boards.length, owned, joined }
+  }, [boards, user])
 
   const handleCreateBoard = useCallback(
     async (e: React.FormEvent) => {
@@ -139,11 +172,13 @@ export default function HomeClient({ user }: HomeClientProps) {
 
       <div className='max-w-6xl mx-auto px-4 sm:px-6 py-10'>
         {/* 헤더 */}
-        <div className='flex items-center justify-between mb-8'>
+        <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6'>
           <div>
-            <h2 className='text-2xl font-bold text-[rgb(var(--foreground))]'>내 보드</h2>
+            <h2 className='text-2xl font-bold tracking-tight text-[rgb(var(--foreground))]'>
+              워크스페이스
+            </h2>
             <p className='text-sm text-[rgb(var(--muted-foreground))] mt-1'>
-              {boards.length}개의 보드
+              총 {boards.length}개의 보드
             </p>
           </div>
 
@@ -154,6 +189,46 @@ export default function HomeClient({ user }: HomeClientProps) {
           )}
         </div>
 
+        {/* 필터 탭 */}
+        {boards.length > 0 && (
+          <div className='flex items-center gap-2 mb-6 p-1 bg-[rgb(var(--secondary))] rounded-xl w-fit'>
+            {FILTERS.map(({ key, label, icon }) => {
+              const count = filterCounts[key]
+              const isActive = filter === key
+
+              return (
+                <button
+                  key={key}
+                  onClick={() => setFilter(key)}
+                  className={`
+                    flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
+                    ${
+                      isActive
+                        ? 'bg-[rgb(var(--card))] text-[rgb(var(--foreground))] shadow-sm'
+                        : 'text-[rgb(var(--muted-foreground))] hover:text-[rgb(var(--foreground))]'
+                    }
+                  `}
+                >
+                  {icon}
+                  <span>{label}</span>
+                  <span
+                    className={`
+                    px-1.5 py-0.5 text-xs rounded-md
+                    ${
+                      isActive
+                        ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                        : 'bg-[rgb(var(--muted))]/50 text-[rgb(var(--muted-foreground))]'
+                    }
+                  `}
+                  >
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
         {/* 로딩 */}
         {isLoading ? (
           <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5'>
@@ -163,9 +238,36 @@ export default function HomeClient({ user }: HomeClientProps) {
           </div>
         ) : boards.length === 0 && !isCreating ? (
           <EmptyState onCreateClick={startCreating} />
+        ) : filteredBoards.length === 0 && !isCreating ? (
+          // 필터 결과가 없을 때
+          <div className='flex flex-col items-center justify-center py-16 text-center'>
+            <div className='w-16 h-16 rounded-2xl bg-[rgb(var(--secondary))] flex items-center justify-center mb-4'>
+              {filter === 'owned' ? (
+                <Crown className='w-8 h-8 text-[rgb(var(--muted-foreground))]' />
+              ) : (
+                <Users className='w-8 h-8 text-[rgb(var(--muted-foreground))]' />
+              )}
+            </div>
+            <h3 className='text-lg font-semibold text-[rgb(var(--foreground))] mb-2'>
+              {filter === 'owned' ? '직접 만든 보드가 없습니다' : '참여 중인 보드가 없습니다'}
+            </h3>
+            <p className='text-sm text-[rgb(var(--muted-foreground))] mb-6'>
+              {filter === 'owned'
+                ? '새 보드를 만들어 프로젝트를 시작해보세요'
+                : '다른 팀원의 보드에 초대를 받으면 여기에 표시됩니다'}
+            </p>
+            {filter === 'owned' && (
+              <button
+                onClick={startCreating}
+                className='btn-primary inline-flex items-center gap-2'
+              >
+                <Plus className='w-4 h-4' />새 보드 만들기
+              </button>
+            )}
+          </div>
         ) : (
           <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5'>
-            {boards.map((board) => (
+            {filteredBoards.map((board) => (
               <BoardCard
                 key={board.id}
                 board={board}

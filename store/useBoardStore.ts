@@ -66,6 +66,9 @@ interface BoardState {
   // 롤백 액션
   saveState: () => void
   rollback: () => void
+  
+  // 보드 전환 시 초기화
+  resetBoard: () => void
 }
 
 export const useBoardStore = create<BoardState>()(
@@ -264,6 +267,22 @@ export const useBoardStore = create<BoardState>()(
           state.lists = state._previousLists
           state._previousLists = null
         }
+      }),
+    
+    // 보드 전환 시 초기화 (새 보드 진입 전 호출)
+    resetBoard: () =>
+      set((state) => {
+        state.board = null
+        state.lists = []
+        state.members = []
+        state.isLoading = true
+        state.error = null
+        state.selectedCard = null
+        state.isCardModalOpen = false
+        state.cardModalTab = 'details'
+        state.cardComments = []
+        state.cardChecklists = []
+        state._previousLists = null
       }),
   }))
 )

@@ -45,6 +45,7 @@ export default function BoardClient({ user }: BoardClientProps) {
     setError,
     setCurrentUserId,
     isCardModalOpen,
+    resetBoard,
   } = useBoardStore()
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -103,7 +104,10 @@ export default function BoardClient({ user }: BoardClientProps) {
     setCurrentUserId(user?.id || null)
   }, [user?.id, setCurrentUserId])
 
+  // 보드 전환 시 초기화 후 데이터 로드
   useEffect(() => {
+    // 이전 보드 데이터 초기화 (스켈레톤 표시)
+    resetBoard()
     loadData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardId])

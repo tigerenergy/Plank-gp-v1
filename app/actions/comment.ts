@@ -68,84 +68,45 @@ export async function createComment(input: {
     }
 
     // 알림 보내기: 보드 소유자에게 (본인 제외)
-    try {
-      // 카드 → 리스트 → 보드 순서로 조회
-      const { data: card, error: cardError } = await supabase
-        .from('cards')
-        .select('id, title, list_id')
-        .eq('id', input.cardId)
+    // 카드 정보 조회
+    const { data: cardForNotif } = await supabase
+      .from('cards')
+      .select('id, title, list_id')
+      .eq('id', input.cardId)
+      .single()
+
+    if (cardForNotif?.list_id) {
+      // 리스트 정보 조회
+      const { data: listForNotif } = await supabase
+        .from('lists')
+        .select('board_id')
+        .eq('id', cardForNotif.list_id)
         .single()
 
-      if (cardError) {
-        console.error('[알림] 카드 조회 실패:', cardError)
-      }
-
-      if (!card?.list_id) {
-        console.error('[알림] 카드에 list_id 없음:', card)
-      }
-
-      if (card?.list_id) {
-        const { data: list, error: listError } = await supabase
-          .from('lists')
-          .select('board_id')
-          .eq('id', card.list_id)
+      if (listForNotif?.board_id) {
+        // 보드 소유자 조회
+        const { data: boardForNotif } = await supabase
+          .from('boards')
+          .select('created_by')
+          .eq('id', listForNotif.board_id)
           .single()
 
-        if (listError) {
-          console.error('[알림] 리스트 조회 실패:', listError)
-        }
+        const ownerId = boardForNotif?.created_by
 
-        if (list?.board_id) {
-          const { data: board, error: boardError } = await supabase
-            .from('boards')
-            .select('created_by')
-            .eq('id', list.board_id)
-            .single()
-
-          if (boardError) {
-            console.error('[알림] 보드 조회 실패:', boardError)
-          }
-
-          const boardOwnerId = board?.created_by
-
-          // 보드 소유자에게 알림 (본인이 아닌 경우에만)
-          if (boardOwnerId && boardOwnerId !== user.id) {
-            console.log('[알림] 보드 소유자에게 알림 전송:', boardOwnerId)
-
-            const { data: notifData, error: notifError } = await supabase
-              .from('notifications')
-              .insert({
-                user_id: boardOwnerId,
-                type: 'comment',
-                title: '새 댓글이 달렸습니다',
-                message: `"${card.title}" 카드에 댓글: ${input.content.slice(0, 50)}${
-                  input.content.length > 50 ? '...' : ''
-                }`,
-                link: `/board/${list.board_id}`,
-                board_id: list.board_id,
-                card_id: input.cardId,
-                sender_id: user.id,
-              })
-              .select()
-              .single()
-
-            if (notifError) {
-              console.error('[알림] 알림 생성 실패:', notifError)
-            } else {
-              console.log('[알림] 알림 생성 성공:', notifData)
-            }
-          } else {
-            console.log(
-              '[알림] 본인 보드라서 알림 안 보냄. 소유자:',
-              boardOwnerId,
-              '작성자:',
-              user.id
-            )
-          }
+        // 보드 소유자에게 알림 (본인이 아닌 경우에만)
+        if (ownerId && ownerId !== user.id) {
+          await supabase.from('notifications').insert({
+            user_id: ownerId,
+            type: 'comment',
+            title: '새 댓글이 달렸습니다',
+            message: `"${cardForNotif.title}" 카드에 댓글: ${input.content.slice(0, 50)}${input.content.length > 50 ? '...' : ''}`,
+            link: `/board/${listForNotif.board_id}`,
+            board_id: listForNotif.board_id,
+            card_id: input.cardId,
+            sender_id: user.id,
+          })
         }
       }
-    } catch (notifyError) {
-      console.error('[알림] 예외 발생:', notifyError)
     }
 
     return { success: true, data }

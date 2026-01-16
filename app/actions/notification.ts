@@ -15,15 +15,10 @@ export async function getMyNotifications(): Promise<ActionResult<Notification[]>
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    const { data, error } = await supabase
+    // 알림 목록 조회 (조인 없이)
+    const { data: notifications, error } = await supabase
       .from('notifications')
-      .select(
-        `
-        *,
-        sender:profiles!notifications_sender_id_fkey(id, email, username, avatar_url),
-        board:boards!notifications_board_id_fkey(id, title)
-      `
-      )
+      .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(50)
@@ -33,7 +28,50 @@ export async function getMyNotifications(): Promise<ActionResult<Notification[]>
       return { success: false, error: '알림을 불러오는데 실패했습니다.' }
     }
 
-    return { success: true, data: data || [] }
+    if (!notifications || notifications.length === 0) {
+      return { success: true, data: [] }
+    }
+
+    // 발신자 ID 목록 추출
+    const senderIds = [...new Set(notifications.map((n) => n.sender_id).filter(Boolean))]
+
+    // 발신자 프로필 조회
+    let senderMap: Record<
+      string,
+      { id: string; email: string; username: string | null; avatar_url: string | null }
+    > = {}
+    if (senderIds.length > 0) {
+      const { data: senders } = await supabase
+        .from('profiles')
+        .select('id, email, username, avatar_url')
+        .in('id', senderIds)
+
+      if (senders) {
+        senderMap = Object.fromEntries(senders.map((s) => [s.id, s]))
+      }
+    }
+
+    // 보드 ID 목록 추출
+    const boardIds = [...new Set(notifications.map((n) => n.board_id).filter(Boolean))]
+
+    // 보드 정보 조회
+    let boardMap: Record<string, { id: string; title: string }> = {}
+    if (boardIds.length > 0) {
+      const { data: boards } = await supabase.from('boards').select('id, title').in('id', boardIds)
+
+      if (boards) {
+        boardMap = Object.fromEntries(boards.map((b) => [b.id, b]))
+      }
+    }
+
+    // 알림에 발신자, 보드 정보 추가
+    const notificationsWithDetails = notifications.map((n) => ({
+      ...n,
+      sender: n.sender_id ? senderMap[n.sender_id] || null : null,
+      board: n.board_id ? boardMap[n.board_id] || null : null,
+    }))
+
+    return { success: true, data: notificationsWithDetails }
   } catch (error) {
     console.error('알림 조회 에러:', error)
     return { success: false, error: '서버 연결에 실패했습니다.' }

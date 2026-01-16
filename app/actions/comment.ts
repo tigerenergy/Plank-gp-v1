@@ -72,10 +72,12 @@ export async function createComment(input: {
       // 카드 정보 가져오기 (담당자, 생성자, 보드 ID)
       const { data: card } = await supabase
         .from('cards')
-        .select(`
+        .select(
+          `
           id, title, assignee_id, created_by,
           list:lists!cards_list_id_fkey(board_id)
-        `)
+        `
+        )
         .eq('id', input.cardId)
         .single()
 
@@ -83,12 +85,12 @@ export async function createComment(input: {
         const listData = card.list as unknown as { board_id: string } | null
         const boardId = listData?.board_id
         const notifyUserIds = new Set<string>()
-        
+
         // 담당자에게 알림 (본인 제외)
         if (card.assignee_id && card.assignee_id !== user.id) {
           notifyUserIds.add(card.assignee_id)
         }
-        
+
         // 생성자에게 알림 (본인 제외)
         if (card.created_by && card.created_by !== user.id) {
           notifyUserIds.add(card.created_by)
@@ -100,7 +102,9 @@ export async function createComment(input: {
             userId,
             type: 'comment',
             title: '새 댓글이 달렸습니다',
-            message: `"${card.title}" 카드에 댓글: ${input.content.slice(0, 50)}${input.content.length > 50 ? '...' : ''}`,
+            message: `"${card.title}" 카드에 댓글: ${input.content.slice(0, 50)}${
+              input.content.length > 50 ? '...' : ''
+            }`,
             link: boardId ? `/board/${boardId}` : undefined,
             boardId: boardId || undefined,
             cardId: input.cardId,

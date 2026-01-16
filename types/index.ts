@@ -54,14 +54,14 @@ export interface Label {
   color: LabelColor
 }
 
-// 기본 라벨 옵션 (핵심 6가지 색상)
-export const LABEL_COLORS: { color: LabelColor; name: string; bg: string; text: string }[] = [
-  { color: 'red', name: '빨강', bg: 'bg-red-500', text: 'text-white' },
-  { color: 'orange', name: '주황', bg: 'bg-orange-500', text: 'text-white' },
-  { color: 'yellow', name: '노랑', bg: 'bg-yellow-400', text: 'text-yellow-900' },
-  { color: 'green', name: '초록', bg: 'bg-green-500', text: 'text-white' },
-  { color: 'blue', name: '파랑', bg: 'bg-blue-500', text: 'text-white' },
-  { color: 'purple', name: '보라', bg: 'bg-purple-500', text: 'text-white' },
+// 기본 라벨 옵션 (핵심 6가지 색상) - hex 값으로 직접 지정
+export const LABEL_COLORS: { color: LabelColor; name: string; bg: string; text: string; hex: string }[] = [
+  { color: 'red', name: '빨강', bg: 'bg-red-500', text: 'text-white', hex: '#ef4444' },
+  { color: 'orange', name: '주황', bg: 'bg-orange-500', text: 'text-white', hex: '#f97316' },
+  { color: 'yellow', name: '노랑', bg: 'bg-yellow-400', text: 'text-yellow-900', hex: '#facc15' },
+  { color: 'green', name: '초록', bg: 'bg-green-500', text: 'text-white', hex: '#22c55e' },
+  { color: 'blue', name: '파랑', bg: 'bg-blue-500', text: 'text-white', hex: '#3b82f6' },
+  { color: 'purple', name: '보라', bg: 'bg-purple-500', text: 'text-white', hex: '#a855f7' },
 ]
 
 export interface Card {

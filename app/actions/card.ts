@@ -142,7 +142,7 @@ export async function createCard(input: {
   }
 }
 
-// 카드 수정 (보드 멤버)
+// 카드 수정 (카드 생성자 또는 보드 소유자만)
 export async function updateCard(input: {
   id: string
   title?: string
@@ -173,10 +173,27 @@ export async function updateCard(input: {
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    // 보드 멤버 확인 (소유자 또는 멤버)
-    const membership = await checkCardMembership(supabase, input.id, user.id)
+    // 카드 정보 조회 (생성자 확인)
+    const { data: card, error: cardError } = await supabase
+      .from('cards')
+      .select('created_by, list_id')
+      .eq('id', input.id)
+      .single()
+
+    if (cardError || !card) {
+      return { success: false, error: '카드를 찾을 수 없습니다.' }
+    }
+
+    // 보드 멤버/소유자 확인
+    const membership = await checkBoardMembership(supabase, card.list_id, user.id)
     if (!membership.isMember) {
       return { success: false, error: '보드 멤버만 카드를 수정할 수 있습니다.' }
+    }
+
+    // 카드 생성자이거나 보드 소유자만 수정 가능
+    const isCardCreator = card.created_by === user.id
+    if (!isCardCreator && !membership.isOwner) {
+      return { success: false, error: '본인이 만든 카드만 수정할 수 있습니다.' }
     }
 
     const updates: Record<string, unknown> = {}
@@ -204,7 +221,7 @@ export async function updateCard(input: {
   }
 }
 
-// 카드 삭제 (보드 멤버)
+// 카드 삭제 (카드 생성자 또는 보드 소유자만)
 export async function deleteCard(id: string): Promise<ActionResult> {
   try {
     const supabase = await createClient()
@@ -218,10 +235,27 @@ export async function deleteCard(id: string): Promise<ActionResult> {
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    // 보드 멤버 확인 (소유자 또는 멤버)
-    const membership = await checkCardMembership(supabase, id, user.id)
+    // 카드 정보 조회 (생성자 확인)
+    const { data: card, error: cardError } = await supabase
+      .from('cards')
+      .select('created_by, list_id')
+      .eq('id', id)
+      .single()
+
+    if (cardError || !card) {
+      return { success: false, error: '카드를 찾을 수 없습니다.' }
+    }
+
+    // 보드 멤버/소유자 확인
+    const membership = await checkBoardMembership(supabase, card.list_id, user.id)
     if (!membership.isMember) {
       return { success: false, error: '보드 멤버만 카드를 삭제할 수 있습니다.' }
+    }
+
+    // 카드 생성자이거나 보드 소유자만 삭제 가능
+    const isCardCreator = card.created_by === user.id
+    if (!isCardCreator && !membership.isOwner) {
+      return { success: false, error: '본인이 만든 카드만 삭제할 수 있습니다.' }
     }
 
     const { error } = await supabase.from('cards').delete().eq('id', id)

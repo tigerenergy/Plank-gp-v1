@@ -3,7 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Calendar, CheckSquare } from 'lucide-react'
-import type { Card as CardType, Label } from '@/types'
+import type { Card as CardType } from '@/types'
 import { useBoardStore } from '@/store/useBoardStore'
 import { formatShortDate, getDueDateStatus } from '@/lib/utils'
 
@@ -11,17 +11,18 @@ interface CardProps {
   card: CardType
 }
 
-// 라벨 색상 매핑
-const labelColorMap: Record<string, string> = {
-  red: 'label-red',
-  orange: 'label-orange',
-  amber: 'label-amber',
-  green: 'label-green',
-  teal: 'label-teal',
-  blue: 'label-blue',
-  indigo: 'label-indigo',
-  purple: 'label-purple',
-  pink: 'label-pink',
+// 라벨 색상 매핑 (hex 값으로 직접 지정)
+const labelColorHex: Record<string, { bg: string; text: string }> = {
+  red: { bg: '#ef4444', text: 'white' },
+  orange: { bg: '#f97316', text: 'white' },
+  yellow: { bg: '#facc15', text: '#713f12' },
+  amber: { bg: '#f59e0b', text: 'white' },
+  green: { bg: '#22c55e', text: 'white' },
+  teal: { bg: '#14b8a6', text: 'white' },
+  blue: { bg: '#3b82f6', text: 'white' },
+  indigo: { bg: '#6366f1', text: 'white' },
+  purple: { bg: '#a855f7', text: 'white' },
+  pink: { bg: '#ec4899', text: 'white' },
 }
 
 // 마감일 스타일
@@ -71,14 +72,18 @@ export function Card({ card }: CardProps) {
       {/* 라벨 */}
       {card.labels && card.labels.length > 0 && (
         <div className='flex flex-wrap gap-1.5 mb-3'>
-          {card.labels.slice(0, 4).map((label, idx) => (
-            <span
-              key={idx}
-              className={`px-2.5 py-1 rounded-full text-xs font-semibold ${labelColorMap[label.color] || 'label-blue'}`}
-            >
-              {label.name}
-            </span>
-          ))}
+          {card.labels.slice(0, 4).map((label, idx) => {
+            const colorInfo = labelColorHex[label.color] || labelColorHex.blue
+            return (
+              <span
+                key={idx}
+                style={{ backgroundColor: colorInfo.bg, color: colorInfo.text }}
+                className='px-2.5 py-1 rounded-full text-xs font-semibold'
+              >
+                {label.name}
+              </span>
+            )
+          })}
           {card.labels.length > 4 && (
             <span className='px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'>
               +{card.labels.length - 4}

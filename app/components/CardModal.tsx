@@ -9,12 +9,10 @@ import { MessageSquare, CheckSquare2, FileText } from 'lucide-react'
 import { useBoardStore } from '@/store/useBoardStore'
 import { updateCardSchema, type UpdateCardInput } from '@/schema/validation'
 import { updateCard, deleteCard } from '@/app/actions/card'
-import { assignCard } from '@/app/actions/member'
 import { getComments } from '@/app/actions/comment'
 import { getChecklists } from '@/app/actions/checklist'
 import { useEscapeClose } from '@/hooks'
 import { ConfirmModal } from './ConfirmModal'
-import { AssigneeSelect } from './card/AssigneeSelect'
 import { CommentList } from './card/CommentList'
 import { ChecklistSection } from './card/ChecklistSection'
 import { LabelEditor } from './card/LabelEditor'
@@ -267,45 +265,43 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                       )}
                     </div>
 
-                    {/* 담당자 (편집 권한 있는 멤버) */}
+                    {/* 담당자 (카드 생성자 = 담당자, 고정) */}
                     <div>
                       <label className='block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2'>
                         담당자
                       </label>
-                      {canEdit ? (
-                        <AssigneeSelect
-                          members={members}
-                          currentAssignee={selectedCard.assignee || null}
-                          onAssign={handleAssign}
-                          disabled={isAssigning}
-                        />
-                      ) : (
-                        <div className='flex items-center gap-3 px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542]'>
-                          {selectedCard.assignee ? (
-                            <>
-                              {selectedCard.assignee.avatar_url ? (
-                                <img
-                                  src={selectedCard.assignee.avatar_url}
-                                  alt=''
-                                  referrerPolicy='no-referrer'
-                                  className='w-8 h-8 rounded-full'
-                                />
-                              ) : (
-                                <div className='w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center'>
-                                  <span className='text-xs font-bold text-white'>
-                                    {(selectedCard.assignee.username || selectedCard.assignee.email || '?')[0].toUpperCase()}
-                                  </span>
-                                </div>
-                              )}
-                              <span className='text-sm text-gray-900 dark:text-gray-100'>
-                                {selectedCard.assignee.username || selectedCard.assignee.email}
+                      <div className='flex items-center gap-3 px-4 py-3 rounded-xl bg-[rgb(var(--secondary))]'>
+                        {selectedCard.assignee ? (
+                          <>
+                            {selectedCard.assignee.avatar_url ? (
+                              <img
+                                src={selectedCard.assignee.avatar_url}
+                                alt=''
+                                referrerPolicy='no-referrer'
+                                className='w-8 h-8 rounded-full ring-2 ring-white dark:ring-slate-700'
+                              />
+                            ) : (
+                              <div className='w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-700'>
+                                <span className='text-xs font-bold text-white'>
+                                  {(selectedCard.assignee.username || selectedCard.assignee.email || '?')[0].toUpperCase()}
+                                </span>
+                              </div>
+                            )}
+                            <div>
+                              <span className='text-sm font-medium text-[rgb(var(--foreground))]'>
+                                {selectedCard.assignee.username || selectedCard.assignee.email?.split('@')[0]}
                               </span>
-                            </>
-                          ) : (
-                            <span className='text-sm text-gray-400'>담당자 없음</span>
-                          )}
-                        </div>
-                      )}
+                              {selectedCard.assignee.email && (
+                                <p className='text-xs text-[rgb(var(--muted-foreground))]'>
+                                  {selectedCard.assignee.email}
+                                </p>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <span className='text-sm text-[rgb(var(--muted-foreground))]'>담당자 없음</span>
+                        )}
+                      </div>
                     </div>
 
                     {/* 마감일 (편집 권한 있는 멤버) */}

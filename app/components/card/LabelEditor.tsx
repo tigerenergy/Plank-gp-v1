@@ -50,12 +50,14 @@ export function LabelEditor({ labels, onChange }: LabelEditorProps) {
       <div className='flex flex-wrap gap-2'>
         {labels.map((label, idx) => {
           const colorInfo = LABEL_COLORS.find((c) => c.color === label.color) || LABEL_COLORS[4]
+          const isLightColor = label.color === 'yellow'
           return (
             <motion.span
               key={idx}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className={`group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${colorInfo.bg} ${colorInfo.text}`}
+              style={{ backgroundColor: colorInfo.hex }}
+              className={`group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${isLightColor ? 'text-yellow-900' : 'text-white'}`}
             >
               {label.name}
               <button
@@ -110,7 +112,8 @@ export function LabelEditor({ labels, onChange }: LabelEditorProps) {
                   key={colorOption.color}
                   type='button'
                   onClick={() => setSelectedColor(colorOption.color)}
-                  className={`w-8 h-8 rounded-lg ${colorOption.bg} flex items-center justify-center transition-all ${
+                  style={{ backgroundColor: colorOption.hex }}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
                     selectedColor === colorOption.color
                       ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-[rgb(var(--secondary))]'
                       : 'hover:scale-110'
@@ -118,7 +121,7 @@ export function LabelEditor({ labels, onChange }: LabelEditorProps) {
                   title={colorOption.name}
                 >
                   {selectedColor === colorOption.color && (
-                    <Check className={`w-4 h-4 ${colorOption.text}`} />
+                    <Check className='w-4 h-4 text-white' />
                   )}
                 </button>
               ))}

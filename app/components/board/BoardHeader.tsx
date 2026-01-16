@@ -30,12 +30,9 @@ export function BoardHeader({ title, user, members, onSettingsClick }: BoardHead
               </svg>
             </NavLink>
             
-            <div className='flex items-center gap-2.5'>
-              <span className='text-xl'>⭐</span>
-              <h1 className='text-lg font-bold text-[rgb(var(--foreground))] truncate'>
-                {title}
-              </h1>
-            </div>
+            <h1 className='text-lg font-bold text-[rgb(var(--foreground))] truncate'>
+              {title}
+            </h1>
           </div>
 
           {/* 오른쪽: 멤버 + 설정 */}

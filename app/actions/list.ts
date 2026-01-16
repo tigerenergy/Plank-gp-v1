@@ -4,8 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import type { ActionResult, List } from '@/types'
 import { createListSchema, updateListSchema } from '@/schema/validation'
 
-// 보드 소유자인지 확인
-async function checkBoardOwnershipByBoardId(
+// 보드 멤버인지 확인 (소유자 OR board_members)
+async function checkBoardMembershipByBoardId(
   supabase: Awaited<ReturnType<typeof createClient>>,
   boardId: string,
   userId: string
@@ -16,11 +16,22 @@ async function checkBoardOwnershipByBoardId(
     .eq('id', boardId)
     .single()
 
-  return board?.created_by === userId
+  // 소유자인 경우
+  if (board?.created_by === userId) return true
+
+  // board_members에서 확인
+  const { data: membership } = await supabase
+    .from('board_members')
+    .select('user_id')
+    .eq('board_id', boardId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  return !!membership
 }
 
-// 리스트 ID로 보드 소유자 확인
-async function checkBoardOwnershipByListId(
+// 리스트 ID로 보드 멤버 확인
+async function checkBoardMembershipByListId(
   supabase: Awaited<ReturnType<typeof createClient>>,
   listId: string,
   userId: string
@@ -29,10 +40,10 @@ async function checkBoardOwnershipByListId(
 
   if (!list) return false
 
-  return checkBoardOwnershipByBoardId(supabase, list.board_id, userId)
+  return checkBoardMembershipByBoardId(supabase, list.board_id, userId)
 }
 
-// 리스트 생성 (보드 소유자만)
+// 리스트 생성 (보드 멤버)
 export async function createList(input: {
   board_id: string
   title: string
@@ -55,10 +66,10 @@ export async function createList(input: {
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    // 보드 소유자 확인
-    const isOwner = await checkBoardOwnershipByBoardId(supabase, input.board_id, user.id)
-    if (!isOwner) {
-      return { success: false, error: '보드 소유자만 리스트를 생성할 수 있습니다.' }
+    // 보드 멤버 확인 (소유자 또는 멤버)
+    const isMember = await checkBoardMembershipByBoardId(supabase, input.board_id, user.id)
+    if (!isMember) {
+      return { success: false, error: '보드 멤버만 리스트를 생성할 수 있습니다.' }
     }
 
     // 기존 리스트의 최대 position 값 조회
@@ -94,7 +105,7 @@ export async function createList(input: {
   }
 }
 
-// 리스트 수정 (보드 소유자만)
+// 리스트 수정 (보드 멤버)
 export async function updateList(input: {
   id: string
   title?: string
@@ -117,10 +128,10 @@ export async function updateList(input: {
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    // 보드 소유자 확인
-    const isOwner = await checkBoardOwnershipByListId(supabase, input.id, user.id)
-    if (!isOwner) {
-      return { success: false, error: '보드 소유자만 리스트를 수정할 수 있습니다.' }
+    // 보드 멤버 확인 (소유자 또는 멤버)
+    const isMember = await checkBoardMembershipByListId(supabase, input.id, user.id)
+    if (!isMember) {
+      return { success: false, error: '보드 멤버만 리스트를 수정할 수 있습니다.' }
     }
 
     const updates: Partial<List> = {}
@@ -145,7 +156,7 @@ export async function updateList(input: {
   }
 }
 
-// 리스트 삭제 (보드 소유자만)
+// 리스트 삭제 (보드 멤버)
 export async function deleteList(id: string): Promise<ActionResult> {
   try {
     const supabase = await createClient()
@@ -159,10 +170,10 @@ export async function deleteList(id: string): Promise<ActionResult> {
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    // 보드 소유자 확인
-    const isOwner = await checkBoardOwnershipByListId(supabase, id, user.id)
-    if (!isOwner) {
-      return { success: false, error: '보드 소유자만 리스트를 삭제할 수 있습니다.' }
+    // 보드 멤버 확인 (소유자 또는 멤버)
+    const isMember = await checkBoardMembershipByListId(supabase, id, user.id)
+    if (!isMember) {
+      return { success: false, error: '보드 멤버만 리스트를 삭제할 수 있습니다.' }
     }
 
     const { error } = await supabase.from('lists').delete().eq('id', id)

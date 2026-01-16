@@ -4,12 +4,12 @@ import { createClient } from '@/lib/supabase/server'
 import type { ActionResult, Card, Label } from '@/types'
 import { createCardSchema, updateCardSchema, moveCardSchema } from '@/schema/validation'
 
-// 보드 소유자인지 확인하는 헬퍼 함수
-async function checkBoardOwnership(
+// 보드 멤버인지 확인하는 헬퍼 함수 (소유자 OR board_members)
+async function checkBoardMembership(
   supabase: Awaited<ReturnType<typeof createClient>>,
   listId: string,
   userId: string
-): Promise<{ isOwner: boolean; error?: string }> {
+): Promise<{ isMember: boolean; isOwner: boolean; error?: string }> {
   // 리스트 → 보드 조회
   const { data: list, error: listError } = await supabase
     .from('lists')
@@ -18,7 +18,7 @@ async function checkBoardOwnership(
     .single()
 
   if (listError || !list) {
-    return { isOwner: false, error: '리스트를 찾을 수 없습니다.' }
+    return { isMember: false, isOwner: false, error: '리스트를 찾을 수 없습니다.' }
   }
 
   // 보드 소유자 확인
@@ -29,18 +29,33 @@ async function checkBoardOwnership(
     .single()
 
   if (boardError || !board) {
-    return { isOwner: false, error: '보드를 찾을 수 없습니다.' }
+    return { isMember: false, isOwner: false, error: '보드를 찾을 수 없습니다.' }
   }
 
-  return { isOwner: board.created_by === userId }
+  const isOwner = board.created_by === userId
+
+  // 소유자면 바로 멤버
+  if (isOwner) {
+    return { isMember: true, isOwner: true }
+  }
+
+  // board_members에서 확인
+  const { data: membership } = await supabase
+    .from('board_members')
+    .select('user_id')
+    .eq('board_id', list.board_id)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  return { isMember: !!membership, isOwner: false }
 }
 
-// 카드 ID로 보드 소유자 확인
-async function checkCardOwnership(
+// 카드 ID로 보드 멤버 확인
+async function checkCardMembership(
   supabase: Awaited<ReturnType<typeof createClient>>,
   cardId: string,
   userId: string
-): Promise<{ isOwner: boolean; error?: string }> {
+): Promise<{ isMember: boolean; isOwner: boolean; error?: string }> {
   const { data: card, error: cardError } = await supabase
     .from('cards')
     .select('list_id')
@@ -48,13 +63,13 @@ async function checkCardOwnership(
     .single()
 
   if (cardError || !card) {
-    return { isOwner: false, error: '카드를 찾을 수 없습니다.' }
+    return { isMember: false, isOwner: false, error: '카드를 찾을 수 없습니다.' }
   }
 
-  return checkBoardOwnership(supabase, card.list_id, userId)
+  return checkBoardMembership(supabase, card.list_id, userId)
 }
 
-// 카드 생성 (보드 소유자만)
+// 카드 생성 (보드 멤버)
 export async function createCard(input: {
   list_id: string
   title: string
@@ -79,10 +94,10 @@ export async function createCard(input: {
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    // 보드 소유자 확인
-    const ownership = await checkBoardOwnership(supabase, input.list_id, user.id)
-    if (!ownership.isOwner) {
-      return { success: false, error: '보드 소유자만 카드를 생성할 수 있습니다.' }
+    // 보드 멤버 확인 (소유자 또는 멤버)
+    const membership = await checkBoardMembership(supabase, input.list_id, user.id)
+    if (!membership.isMember) {
+      return { success: false, error: '보드 멤버만 카드를 생성할 수 있습니다.' }
     }
 
     // 기존 카드의 최대 position 값 조회
@@ -127,7 +142,7 @@ export async function createCard(input: {
   }
 }
 
-// 카드 수정 (보드 소유자만)
+// 카드 수정 (보드 멤버)
 export async function updateCard(input: {
   id: string
   title?: string
@@ -158,10 +173,10 @@ export async function updateCard(input: {
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    // 보드 소유자 확인
-    const ownership = await checkCardOwnership(supabase, input.id, user.id)
-    if (!ownership.isOwner) {
-      return { success: false, error: '보드 소유자만 카드를 수정할 수 있습니다.' }
+    // 보드 멤버 확인 (소유자 또는 멤버)
+    const membership = await checkCardMembership(supabase, input.id, user.id)
+    if (!membership.isMember) {
+      return { success: false, error: '보드 멤버만 카드를 수정할 수 있습니다.' }
     }
 
     const updates: Record<string, unknown> = {}
@@ -189,7 +204,7 @@ export async function updateCard(input: {
   }
 }
 
-// 카드 삭제 (보드 소유자만)
+// 카드 삭제 (보드 멤버)
 export async function deleteCard(id: string): Promise<ActionResult> {
   try {
     const supabase = await createClient()
@@ -203,10 +218,10 @@ export async function deleteCard(id: string): Promise<ActionResult> {
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    // 보드 소유자 확인
-    const ownership = await checkCardOwnership(supabase, id, user.id)
-    if (!ownership.isOwner) {
-      return { success: false, error: '보드 소유자만 카드를 삭제할 수 있습니다.' }
+    // 보드 멤버 확인 (소유자 또는 멤버)
+    const membership = await checkCardMembership(supabase, id, user.id)
+    if (!membership.isMember) {
+      return { success: false, error: '보드 멤버만 카드를 삭제할 수 있습니다.' }
     }
 
     const { error } = await supabase.from('cards').delete().eq('id', id)
@@ -223,7 +238,7 @@ export async function deleteCard(id: string): Promise<ActionResult> {
   }
 }
 
-// 카드 이동 (보드 소유자만)
+// 카드 이동 (보드 멤버)
 export async function moveCard(input: {
   cardId: string
   targetListId: string
@@ -247,10 +262,10 @@ export async function moveCard(input: {
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    // 보드 소유자 확인 (대상 리스트 기준)
-    const ownership = await checkBoardOwnership(supabase, input.targetListId, user.id)
-    if (!ownership.isOwner) {
-      return { success: false, error: '보드 소유자만 카드를 이동할 수 있습니다.' }
+    // 보드 멤버 확인 (대상 리스트 기준)
+    const membership = await checkBoardMembership(supabase, input.targetListId, user.id)
+    if (!membership.isMember) {
+      return { success: false, error: '보드 멤버만 카드를 이동할 수 있습니다.' }
     }
 
     const { error } = await supabase
@@ -273,7 +288,7 @@ export async function moveCard(input: {
   }
 }
 
-// 담당자 변경 (보드 소유자만)
+// 담당자 변경 (보드 멤버)
 export async function assignCard(
   cardId: string,
   assigneeId: string | null
@@ -290,10 +305,10 @@ export async function assignCard(
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    // 보드 소유자 확인
-    const ownership = await checkCardOwnership(supabase, cardId, user.id)
-    if (!ownership.isOwner) {
-      return { success: false, error: '보드 소유자만 담당자를 변경할 수 있습니다.' }
+    // 보드 멤버 확인 (소유자 또는 멤버)
+    const membership = await checkCardMembership(supabase, cardId, user.id)
+    if (!membership.isMember) {
+      return { success: false, error: '보드 멤버만 담당자를 변경할 수 있습니다.' }
     }
 
     const { data, error } = await supabase

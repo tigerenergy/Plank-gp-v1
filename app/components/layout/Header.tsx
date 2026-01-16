@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import type { User } from '@supabase/supabase-js'
 import { NavLink } from '../NavLink'
 import { ThemeToggle } from '../ui/ThemeToggle'
@@ -20,18 +21,35 @@ export function Header({ user, title, showBack }: HeaderProps) {
           {showBack && (
             <NavLink href='/' className='p-2 rounded-xl btn-ghost'>
               <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 19l-7-7 7-7' />
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M15 19l-7-7 7-7'
+                />
               </svg>
             </NavLink>
           )}
-          
-          <NavLink href='/' className='flex items-center gap-2.5'>
-            <div className='w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md'>
-              <span className='text-lg'>📋</span>
-            </div>
-            <span className='text-lg font-bold text-[rgb(var(--foreground))]'>
-              {title || 'Plank'}
-            </span>
+
+          <NavLink href='/' className='flex items-center'>
+            {/* 라이트 모드 로고 (다크모드에서 숨김) */}
+            <Image
+              src='/blackLogo.png'
+              alt='Plank'
+              width={100}
+              height={32}
+              className='h-8 w-auto dark:hidden'
+              priority
+            />
+            {/* 다크 모드 로고 (라이트모드에서 숨김) */}
+            <Image
+              src='/whiteLogo.png'
+              alt='Plank'
+              width={100}
+              height={32}
+              className='h-8 w-auto hidden dark:block'
+              priority
+            />
           </NavLink>
         </div>
 

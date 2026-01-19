@@ -15,13 +15,16 @@ export async function getAllBoards(): Promise<ActionResult<(Board & { isMember?:
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    // 모든 보드 가져오기 (RLS가 접근 제어)
+    // 모든 보드 가져오기 (RLS가 접근 제어) - 멤버 프로필 정보 포함
     const { data: boards, error } = await supabase
       .from('boards')
       .select(`
         *,
         creator:profiles!boards_created_by_fkey(id, email, username, avatar_url),
-        board_members(user_id)
+        board_members(
+          user_id,
+          profile:profiles(id, email, username, avatar_url)
+        )
       `)
       .order('created_at', { ascending: false })
 
@@ -30,13 +33,20 @@ export async function getAllBoards(): Promise<ActionResult<(Board & { isMember?:
       return { success: false, error: '보드 목록을 불러오는데 실패했습니다.' }
     }
 
-    // 현재 사용자가 멤버인지 확인하는 플래그 추가
+    // 현재 사용자가 멤버인지 확인하는 플래그 추가 + 멤버 프로필 목록 추가
     const boardsWithMembership = (boards || []).map((board) => {
-      const members = board.board_members as { user_id: string }[] | null
-      const isMember = members?.some((m) => m.user_id === user.id) || false
-      // board_members 필드는 제거하고 isMember만 포함
+      const boardMembers = board.board_members as { user_id: string; profile: { id: string; email: string | null; username: string | null; avatar_url: string | null } | null }[] | null
+      const isMember = boardMembers?.some((m) => m.user_id === user.id) || false
+      // 멤버 프로필 정보 추출 (생성자 제외, 중복 제거)
+      const members = boardMembers
+        ?.filter((m) => m.profile && m.user_id !== board.created_by)
+        .map((m) => m.profile!)
+        .filter((profile, index, self) => 
+          index === self.findIndex((p) => p.id === profile.id)
+        ) || []
+      // board_members 필드는 제거하고 isMember와 members만 포함
       const { board_members, ...rest } = board
-      return { ...rest, isMember }
+      return { ...rest, isMember, members }
     })
 
     return { success: true, data: boardsWithMembership }

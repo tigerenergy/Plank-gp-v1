@@ -297,6 +297,7 @@ export default function HomeClient({ user }: HomeClientProps) {
                 creatorAvatar={board.creator?.avatar_url}
                 creatorName={board.creator?.username || board.creator?.email?.split('@')[0]}
                 currentUserId={user?.id}
+                members={board.members}
               />
             ))}
 

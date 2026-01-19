@@ -1,7 +1,7 @@
 'use client'
 
 import { Pencil, Trash2 } from 'lucide-react'
-import type { Board } from '@/types'
+import type { Board, Profile } from '@/types'
 
 interface BoardCardProps {
   board: Board
@@ -16,6 +16,7 @@ interface BoardCardProps {
   creatorAvatar?: string | null
   creatorName?: string | null
   currentUserId?: string | null
+  members?: Profile[]
 }
 
 // 보드 색상 그라데이션 (세련된 파스텔)
@@ -43,6 +44,7 @@ export function BoardCard({
   creatorAvatar,
   creatorName,
   currentUserId,
+  members = [],
 }: BoardCardProps) {
   // 현재 사용자가 보드 생성자인지 확인
   const isOwner = currentUserId && board.created_by === currentUserId
@@ -152,20 +154,58 @@ export function BoardCard({
         })}
       </p>
 
-      {/* 하단: 보드 생성자 아바타 */}
-      <div className='absolute bottom-4 right-4'>
+      {/* 하단: 보드 멤버 아바타들 (생성자 + 초대된 멤버) */}
+      <div className='absolute bottom-4 right-4 flex items-center -space-x-2'>
+        {/* 생성자 아바타 */}
         {creatorAvatar ? (
           <img
             src={creatorAvatar}
             alt=''
             referrerPolicy='no-referrer'
-            className='w-8 h-8 rounded-full ring-2 ring-white dark:ring-slate-700 shadow-sm'
+            className='w-7 h-7 rounded-full ring-2 ring-white dark:ring-slate-700 shadow-sm'
+            title={creatorName || '생성자'}
           />
         ) : creatorName ? (
-          <div className='w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-sm'>
+          <div 
+            className='w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-sm'
+            title={creatorName}
+          >
             <span className='text-xs font-bold text-white'>{creatorName[0].toUpperCase()}</span>
           </div>
         ) : null}
+        
+        {/* 초대된 멤버 아바타들 (최대 3명까지 표시) */}
+        {members.slice(0, 3).map((member) => (
+          member.avatar_url ? (
+            <img
+              key={member.id}
+              src={member.avatar_url}
+              alt=''
+              referrerPolicy='no-referrer'
+              className='w-7 h-7 rounded-full ring-2 ring-white dark:ring-slate-700 shadow-sm'
+              title={member.username || member.email?.split('@')[0] || '멤버'}
+            />
+          ) : (
+            <div 
+              key={member.id}
+              className='w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-sm'
+              title={member.username || member.email?.split('@')[0] || '멤버'}
+            >
+              <span className='text-xs font-bold text-white'>
+                {(member.username || member.email?.split('@')[0] || 'M')[0].toUpperCase()}
+              </span>
+            </div>
+          )
+        ))}
+        
+        {/* 추가 멤버가 있으면 +N 표시 */}
+        {members.length > 3 && (
+          <div className='w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-sm'>
+            <span className='text-xs font-bold text-slate-600 dark:text-slate-300'>
+              +{members.length - 3}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   )

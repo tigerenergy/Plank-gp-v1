@@ -34,6 +34,8 @@ export interface Board {
   updated_at: string
   // 조인된 생성자 정보 (getAllBoards에서 포함)
   creator?: Profile | null
+  // 조인된 멤버 정보 (getAllBoards에서 포함)
+  members?: Profile[]
 }
 
 export interface List {

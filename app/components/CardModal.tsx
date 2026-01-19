@@ -118,6 +118,12 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
   if (!selectedCard) return null
 
   const onSubmit = async (data: UpdateCardInput) => {
+    // 마감일 필수 체크
+    if (!data.due_date) {
+      toast.error('마감일을 입력해주세요.')
+      return
+    }
+
     const result = await updateCard(data)
     if (result.success && result.data) {
       updateCardInStore(selectedCard.id, result.data)
@@ -282,7 +288,7 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                         <DatePicker
                           value={watch('due_date') || null}
                           onChange={(value) => setValue('due_date', value || '')}
-                          placeholder='마감일 없음'
+                          placeholder='마감일을 선택해주세요'
                         />
                       ) : (
                         <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm'>
@@ -479,16 +485,9 @@ function ModalFooter({
   onClose,
   onSave,
 }: ModalFooterProps) {
-  // 저장 버튼은 "상세" 탭에서만 표시 (댓글/체크리스트는 별도 저장)
-  const showSaveButton = currentTab === 'details'
-  
-  // 저장 버튼 클릭 시 권한 체크
-  const handleSave = () => {
-    if (!canEdit) {
-      return // 권한 없으면 무시
-    }
-    onSave()
-  }
+  // 저장 버튼은 "상세" 탭 + 편집 권한이 있을 때만 표시
+  // 댓글/체크리스트는 각각 자체 저장 버튼이 있으므로 푸터에 저장 버튼 불필요
+  const showSaveButton = currentTab === 'details' && canEdit
   
   return (
     <div className='sticky bottom-0 px-4 sm:px-6 py-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 border-t border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-[#151525]'>
@@ -505,35 +504,27 @@ function ModalFooter({
         >
           {isDeleting ? '삭제 중...' : '삭제'}
         </motion.button>
-      ) : canEdit ? (
-        <div />
       ) : (
-        <div className='text-sm text-gray-400'>읽기 전용</div>
+        <div />
       )}
       <div className='flex items-center gap-2'>
+        {/* 닫기 버튼: 항상 보라색으로 */}
         <motion.button
           type='button'
           onClick={onClose}
-          className='flex-1 sm:flex-none px-4 py-2.5 text-gray-600 dark:text-gray-400 
-                    hover:text-gray-800 dark:hover:text-gray-200 
-                    hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-all text-sm'
+          className='flex-1 sm:flex-none px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-all text-sm font-medium'
           whileTap={{ scale: 0.95 }}
         >
           닫기
         </motion.button>
-        {/* 저장 버튼: 상세 탭에서만 표시, 권한 없으면 비활성화 */}
+        {/* 저장 버튼: 상세 탭 + 편집 권한 있을 때만 */}
         {showSaveButton && (
           <motion.button
             type='button'
-            onClick={handleSave}
-            disabled={isSubmitting || !canEdit}
-            className={`flex-1 sm:flex-none px-5 py-2.5 rounded-lg transition-all text-sm font-medium
-              ${canEdit 
-                ? 'bg-violet-600 hover:bg-violet-500 text-white' 
-                : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-              }
-              disabled:opacity-50`}
-            whileTap={canEdit ? { scale: 0.95 } : undefined}
+            onClick={onSave}
+            disabled={isSubmitting}
+            className='flex-1 sm:flex-none px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-all disabled:opacity-50 text-sm font-medium'
+            whileTap={{ scale: 0.95 }}
           >
             {isSubmitting ? '저장 중...' : '저장'}
           </motion.button>

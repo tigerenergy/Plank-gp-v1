@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import {
   DndContext,
   DragOverlay,
@@ -16,12 +17,18 @@ import { getTeamMembers, checkBoardMembership, getBoardMembers } from '@/app/act
 import { useBoardDragDrop } from '@/hooks/useBoardDragDrop'
 import { Column } from '@/app/components/Column'
 import { Card } from '@/app/components/Card'
-import { CardModal } from '@/app/components/CardModal'
 import { BoardHeader } from '@/app/components/board/BoardHeader'
 import { BoardLoading } from '@/app/components/board/BoardLoading'
 import { BoardError } from '@/app/components/board/BoardError'
 import { AddListButton } from '@/app/components/board/AddListButton'
-import { BoardSettingsModal } from '@/app/components/board/BoardSettingsModal'
+
+// 🚀 Dynamic imports - 모달은 필요할 때만 로드 (코드 스플리팅)
+const CardModal = dynamic(() => import('@/app/components/CardModal').then(mod => ({ default: mod.CardModal })), {
+  ssr: false,
+})
+const BoardSettingsModal = dynamic(() => import('@/app/components/board/BoardSettingsModal').then(mod => ({ default: mod.BoardSettingsModal })), {
+  ssr: false,
+})
 
 interface BoardClientProps {
   user: User | null
@@ -70,11 +77,12 @@ export default function BoardClient({ user }: BoardClientProps) {
     easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
   }
 
-  // 데이터 로드
-  const loadData = async () => {
+  // 🚀 데이터 로드 (Parallel Data Fetching으로 최적화)
+  const loadData = useCallback(async () => {
     setLoading(true)
     setError(null)
 
+    // Step 1: 보드 정보 먼저 로드 (필수)
     const boardResult = await getBoard(boardId)
     if (!boardResult.success || !boardResult.data) {
       setError(boardResult.error || '보드를 불러올 수 없습니다.')
@@ -88,40 +96,40 @@ export default function BoardClient({ user }: BoardClientProps) {
     const boardOwnerId = boardResult.data.created_by
     const isCurrentUserOwner = boardOwnerId === user?.id
 
+    // Step 2: 나머지 데이터는 병렬로 로드 (성능 최적화)
+    const [listsResult, boardMembersResult, allMembersResult, membershipResult] = await Promise.all([
+      getBoardData(boardResult.data.id),
+      getBoardMembers(boardId),
+      getTeamMembers(),
+      isCurrentUserOwner ? Promise.resolve(null) : checkBoardMembership(boardId),
+    ])
+
+    // 권한 설정
     if (isCurrentUserOwner) {
       setCanEdit(true)
-    } else {
-      // 멤버십 확인 (편집 권한)
-      const membershipResult = await checkBoardMembership(boardId)
-      console.log('[BoardClient] 멤버십 결과:', membershipResult)
-
-      if (membershipResult.success && membershipResult.data) {
-        setCanEdit(membershipResult.data.isMember)
-      }
+    } else if (membershipResult?.success && membershipResult.data) {
+      setCanEdit(membershipResult.data.isMember)
     }
 
-    // 리스트 & 카드 로드
-    const listsResult = await getBoardData(boardResult.data.id)
+    // 리스트 & 카드 설정
     if (listsResult.success && listsResult.data) {
       setLists(listsResult.data)
     } else {
       setError(listsResult.error || '데이터를 불러올 수 없습니다.')
     }
 
-    // 실제 보드 멤버 로드 (헤더 아바타용)
-    const boardMembersResult = await getBoardMembers(boardId)
+    // 보드 멤버 설정
     if (boardMembersResult.success && boardMembersResult.data) {
       setBoardMembers(boardMembersResult.data)
     }
 
-    // 전체 팀원 로드 (초대 모달, 담당자 선택용)
-    const allMembersResult = await getTeamMembers()
+    // 전체 팀원 설정
     if (allMembersResult.success && allMembersResult.data) {
       setMembers(allMembersResult.data)
     }
 
     setLoading(false)
-  }
+  }, [boardId, user?.id, setBoard, setLists, setMembers, setLoading, setError])
 
   // 현재 사용자 ID 설정
   useEffect(() => {
@@ -133,8 +141,7 @@ export default function BoardClient({ user }: BoardClientProps) {
     // 이전 보드 데이터 초기화 (스켈레톤 표시)
     resetBoard()
     loadData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [boardId])
+  }, [boardId, resetBoard, loadData])
 
   if (isLoading) {
     return <BoardLoading />

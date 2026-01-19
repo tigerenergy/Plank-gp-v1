@@ -2,7 +2,7 @@
 
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Calendar, CheckSquare } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 import type { Card as CardType } from '@/types'
 import { useBoardStore } from '@/store/useBoardStore'
 import { formatShortDate, getDueDateStatus } from '@/lib/utils'
@@ -39,6 +39,7 @@ function getDueDateStyle(status: string) {
   }
 }
 
+// React Compiler가 자동으로 memoization 처리 (reactCompiler: true)
 export function Card({ card }: CardProps) {
   const openCardModal = useBoardStore((state) => state.openCardModal)
 

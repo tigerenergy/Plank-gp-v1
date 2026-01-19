@@ -1,8 +1,10 @@
 'use server'
 
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 
-export async function getUser() {
+// 🚀 React.cache(): 동일 요청 내에서 중복 호출 방지 (per-request deduplication)
+export const getUser = cache(async () => {
   const supabase = await createClient()
   const {
     data: { user },
@@ -14,4 +16,4 @@ export async function getUser() {
   }
 
   return user
-}
+})

@@ -29,6 +29,7 @@ const columnIcons = [
   { emoji: '🎯', color: 'bg-rose-100 dark:bg-rose-900/50' }, // 추가
 ]
 
+// React Compiler가 자동으로 memoization 처리 (reactCompiler: true)
 export function Column({ list, canEdit = false, isOwner = false }: ColumnProps) {
   const [isAddingCard, setIsAddingCard] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -226,7 +227,7 @@ export function Column({ list, canEdit = false, isOwner = false }: ColumnProps) 
       <ConfirmModal
         isOpen={showDeleteConfirm}
         title='리스트 삭제'
-        message={`'${list.title}' 리스트와 ${list.cards.length}개의 카드를 삭제하시겠습니까?`}
+        message={`'${list.title}' 리스트와 ${list.cards.length}개의 카드를 삭제하시겠습니다?`}
         confirmText='삭제하기'
         cancelText='돌아가기'
         variant='danger'

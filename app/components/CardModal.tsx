@@ -54,30 +54,30 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
 
   useEscapeClose(closeCardModal, isCardModalOpen)
 
-  // 댓글 & 체크리스트 로드 (Zustand 액션 사용)
+  // 🚀 댓글 & 체크리스트 병렬 로드 (async-parallel)
   useEffect(() => {
     if (!selectedCard || !isCardModalOpen) return
 
-    const loadComments = async () => {
-      setCardModalLoading({ comments: true })
-      const result = await getComments(selectedCard.id)
-      if (result.success && result.data) {
-        setCardComments(result.data)
+    const loadData = async () => {
+      setCardModalLoading({ comments: true, checklists: true })
+      
+      // Promise.all로 병렬 페칭
+      const [commentsResult, checklistsResult] = await Promise.all([
+        getComments(selectedCard.id),
+        getChecklists(selectedCard.id),
+      ])
+
+      if (commentsResult.success && commentsResult.data) {
+        setCardComments(commentsResult.data)
       }
-      setCardModalLoading({ comments: false })
+      if (checklistsResult.success && checklistsResult.data) {
+        setCardChecklists(checklistsResult.data)
+      }
+
+      setCardModalLoading({ comments: false, checklists: false })
     }
 
-    const loadChecklists = async () => {
-      setCardModalLoading({ checklists: true })
-      const result = await getChecklists(selectedCard.id)
-      if (result.success && result.data) {
-        setCardChecklists(result.data)
-      }
-      setCardModalLoading({ checklists: false })
-    }
-
-    loadComments()
-    loadChecklists()
+    loadData()
   }, [selectedCard?.id, isCardModalOpen, setCardComments, setCardChecklists, setCardModalLoading])
 
   // 라벨 변경

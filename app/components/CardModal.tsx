@@ -369,12 +369,12 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                   ))}
               </div>
 
-              {/* 푸터 (편집 권한자: 수정 가능, 본인 카드: 삭제 가능) */}
+              {/* 푸터 (편집 권한자: 수정 가능, 본인 카드만: 삭제 가능) */}
               <ModalFooter
                 isDeleting={isDeleting}
                 isSubmitting={isSubmitting}
                 canEdit={canEdit}
-                canDelete={isOwner || selectedCard.created_by === currentUserId}
+                canDelete={selectedCard.created_by === currentUserId}
                 currentTab={cardModalTab}
                 onDeleteClick={() => setShowDeleteConfirm(true)}
                 onClose={closeCardModal}

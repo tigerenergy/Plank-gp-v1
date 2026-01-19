@@ -252,9 +252,9 @@ export async function deleteCard(id: string): Promise<ActionResult> {
       return { success: false, error: '보드 멤버만 카드를 삭제할 수 있습니다.' }
     }
 
-    // 카드 생성자이거나 보드 소유자만 삭제 가능
+    // 카드 생성자만 삭제 가능 (보드 소유자도 남의 카드 삭제 불가)
     const isCardCreator = card.created_by === user.id
-    if (!isCardCreator && !membership.isOwner) {
+    if (!isCardCreator) {
       return { success: false, error: '본인이 만든 카드만 삭제할 수 있습니다.' }
     }
 

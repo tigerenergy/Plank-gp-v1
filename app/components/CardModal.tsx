@@ -369,12 +369,12 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                   ))}
               </div>
 
-              {/* 푸터 (편집 권한자: 수정 가능, 소유자만: 삭제 가능) */}
+              {/* 푸터 (편집 권한자: 수정 가능, 본인 카드: 삭제 가능) */}
               <ModalFooter
                 isDeleting={isDeleting}
                 isSubmitting={isSubmitting}
                 canEdit={canEdit}
-                isOwner={isOwner}
+                canDelete={isOwner || selectedCard.created_by === currentUserId}
                 currentTab={cardModalTab}
                 onDeleteClick={() => setShowDeleteConfirm(true)}
                 onClose={closeCardModal}
@@ -468,7 +468,7 @@ interface ModalFooterProps {
   isDeleting: boolean
   isSubmitting: boolean
   canEdit: boolean // 편집 권한 여부
-  isOwner: boolean // 보드 소유자 여부 (삭제 권한)
+  canDelete: boolean // 삭제 권한 여부 (보드 소유자 OR 카드 생성자)
   currentTab: 'details' | 'comments' | 'checklist'
   onDeleteClick: () => void
   onClose: () => void
@@ -479,7 +479,7 @@ function ModalFooter({
   isDeleting,
   isSubmitting,
   canEdit,
-  isOwner,
+  canDelete,
   currentTab,
   onDeleteClick,
   onClose,
@@ -491,14 +491,13 @@ function ModalFooter({
   
   return (
     <div className='sticky bottom-0 px-4 sm:px-6 py-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 border-t border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-[#151525]'>
-      {/* 삭제 버튼: 소유자만 */}
-      {isOwner ? (
+      {/* 삭제 버튼: 보드 소유자 OR 카드 생성자 */}
+      {canDelete ? (
         <motion.button
           type='button'
           onClick={onDeleteClick}
           disabled={isDeleting}
-          className='px-4 py-2.5 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 
-                   hover:bg-red-50 dark:hover:bg-red-500/10 
+          className='px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white
                    rounded-lg transition-all disabled:opacity-50 text-sm font-medium'
           whileTap={{ scale: 0.95 }}
         >

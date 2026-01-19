@@ -5,7 +5,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Calendar } from 'lucide-react'
 import type { Card as CardType } from '@/types'
 import { useBoardStore } from '@/store/useBoardStore'
-import { formatShortDate, getDueDateStatus } from '@/lib/utils'
+import { getDueDateStatus } from '@/lib/utils'
 
 interface CardProps {
   card: CardType
@@ -23,6 +23,22 @@ const labelColorHex: Record<string, { bg: string; text: string }> = {
   indigo: { bg: '#6366f1', text: 'white' },
   purple: { bg: '#a855f7', text: 'white' },
   pink: { bg: '#ec4899', text: 'white' },
+}
+
+// D-Day 형식으로 변환 (D-7, D-3, D-Day, D+2 등)
+function formatDDay(dateString: string): string {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  const dueDate = new Date(dateString)
+  dueDate.setHours(0, 0, 0, 0)
+  
+  const diffTime = dueDate.getTime() - today.getTime()
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24))
+  
+  if (diffDays === 0) return 'D-Day'
+  if (diffDays > 0) return `D-${diffDays}`
+  return `D+${Math.abs(diffDays)}`
 }
 
 // 마감일 스타일
@@ -66,7 +82,7 @@ export function Card({ card }: CardProps) {
       {...listeners}
       onClick={() => openCardModal(card)}
       className={`
-        card p-4 cursor-pointer select-none
+        card p-4 cursor-pointer select-none min-h-[120px] flex flex-col
         ${isDragging ? 'opacity-60 ring-2 ring-indigo-400 scale-[1.02] rotate-1' : ''}
       `}
     >
@@ -105,43 +121,41 @@ export function Card({ card }: CardProps) {
         </p>
       )}
 
-      {/* 하단: 마감일 + 아바타 (선 대신 여백으로 구분) */}
-      {(card.due_date || displayUser) && (
-        <div className='flex items-center justify-between mt-4'>
-          <div className='flex items-center gap-2'>
-            {/* 마감일 */}
-            {card.due_date && dueDateStatus && (
-              <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium ${getDueDateStyle(dueDateStatus)}`}>
-                <Calendar className='w-3.5 h-3.5' />
-                <span>{formatShortDate(card.due_date)}</span>
-              </div>
-            )}
-          </div>
-
-          {/* 담당자 아바타 */}
-          {displayUser && (
-            <div 
-              className='flex-shrink-0'
-              title={displayUser.username || displayUser.email || ''}
-            >
-              {displayUser.avatar_url ? (
-                <img
-                  src={displayUser.avatar_url}
-                  alt=''
-                  referrerPolicy='no-referrer'
-                  className='w-8 h-8 rounded-full ring-2 ring-white dark:ring-slate-700 shadow-sm'
-                />
-              ) : (
-                <div className='w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-sm'>
-                  <span className='text-xs font-bold text-white'>
-                    {(displayUser.username || displayUser.email || '?')[0].toUpperCase()}
-                  </span>
-                </div>
-              )}
+      {/* 하단: 마감일 + 아바타 (항상 아래에 고정) */}
+      <div className='flex items-center justify-between mt-auto pt-3'>
+        <div className='flex items-center gap-2'>
+          {/* 마감일 - D-Day 형식 */}
+          {card.due_date && dueDateStatus && (
+            <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium ${getDueDateStyle(dueDateStatus)}`}>
+              <Calendar className='w-3.5 h-3.5' />
+              <span>{formatDDay(card.due_date)}</span>
             </div>
           )}
         </div>
-      )}
+
+        {/* 담당자 아바타 */}
+        {displayUser && (
+          <div 
+            className='flex-shrink-0'
+            title={displayUser.username || displayUser.email || ''}
+          >
+            {displayUser.avatar_url ? (
+              <img
+                src={displayUser.avatar_url}
+                alt=''
+                referrerPolicy='no-referrer'
+                className='w-8 h-8 rounded-full ring-2 ring-white dark:ring-slate-700 shadow-sm'
+              />
+            ) : (
+              <div className='w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-sm'>
+                <span className='text-xs font-bold text-white'>
+                  {(displayUser.username || displayUser.email || '?')[0].toUpperCase()}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

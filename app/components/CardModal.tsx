@@ -369,6 +369,7 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                 isSubmitting={isSubmitting}
                 canEdit={canEdit}
                 isOwner={isOwner}
+                currentTab={cardModalTab}
                 onDeleteClick={() => setShowDeleteConfirm(true)}
                 onClose={closeCardModal}
                 onSave={handleSubmit(onSubmit)}
@@ -462,6 +463,7 @@ interface ModalFooterProps {
   isSubmitting: boolean
   canEdit: boolean // 편집 권한 여부
   isOwner: boolean // 보드 소유자 여부 (삭제 권한)
+  currentTab: 'details' | 'comments' | 'checklist'
   onDeleteClick: () => void
   onClose: () => void
   onSave: () => void
@@ -472,10 +474,13 @@ function ModalFooter({
   isSubmitting,
   canEdit,
   isOwner,
+  currentTab,
   onDeleteClick,
   onClose,
   onSave,
 }: ModalFooterProps) {
+  // 저장 버튼은 "상세" 탭에서만 표시 (댓글/체크리스트는 별도 저장)
+  const showSaveButton = canEdit && currentTab === 'details'
   return (
     <div className='sticky bottom-0 px-4 sm:px-6 py-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 border-t border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-[#151525]'>
       {/* 삭제 버튼: 소유자만 */}
@@ -507,8 +512,8 @@ function ModalFooter({
         >
           닫기
         </motion.button>
-        {/* 저장 버튼: 편집 권한자 */}
-        {canEdit && (
+        {/* 저장 버튼: 편집 권한자 + 상세 탭에서만 */}
+        {showSaveButton && (
           <motion.button
             type='button'
             onClick={onSave}

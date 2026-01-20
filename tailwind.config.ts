@@ -128,6 +128,13 @@ const config: Config = {
       animation: {
         'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
         'pulse-glow-red': 'pulseGlowRed 1.5s ease-in-out infinite',
+        // 3D 플로팅 애니메이션
+        'float': 'float 3s ease-in-out infinite',
+        'float-slow': 'float 4s ease-in-out infinite',
+        'float-slower': 'float 5s ease-in-out infinite 0.5s',
+        'bounce-slow': 'bounceSlow 2s ease-in-out infinite',
+        'bounce-slower': 'bounceSlow 2.5s ease-in-out infinite 0.3s',
+        'spin-slow': 'spin 15s linear infinite',
       },
       keyframes: {
         pulseGlow: {
@@ -137,6 +144,14 @@ const config: Config = {
         pulseGlowRed: {
           '0%, 100%': { boxShadow: '0 0 0 0 rgba(239, 68, 68, 0)' },
           '50%': { boxShadow: '0 0 8px 2px rgba(239, 68, 68, 0.4)' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0) translateZ(20px)' },
+          '50%': { transform: 'translateY(-8px) translateZ(30px)' },
+        },
+        bounceSlow: {
+          '0%, 100%': { transform: 'translateY(0) rotate(12deg)' },
+          '50%': { transform: 'translateY(-6px) rotate(12deg)' },
         },
       },
 

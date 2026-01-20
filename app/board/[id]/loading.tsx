@@ -55,7 +55,7 @@ export default function BoardLoading() {
               />
             ))}
           </div>
-          <p className='text-sm text-slate-400 tracking-wide'>보드 불러오는 중...</p>
+
         </motion.div>
       </div>
     </div>

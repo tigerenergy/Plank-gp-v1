@@ -160,27 +160,29 @@ export function Column({ list, canEdit = false, isOwner = false }: ColumnProps) 
                   <Pencil className='w-4 h-4 text-[rgb(var(--muted-foreground))]' />
                   이름 변경
                 </button>
-                {/* 완료 리스트 지정 토글 */}
-                <button
-                  onClick={async () => {
-                    setIsMenuOpen(false)
-                    const result = await toggleDoneList(list.id)
-                    if (result.success && result.data) {
-                      updateListInStore(list.id, { is_done_list: result.data.is_done_list })
-                      toast.success(
-                        result.data.is_done_list 
-                          ? '완료 리스트로 지정되었습니다' 
-                          : '완료 리스트 지정이 해제되었습니다'
-                      )
-                    } else {
-                      toast.error(result.error || '설정 변경에 실패했습니다.')
-                    }
-                  }}
-                  className='w-full px-3 py-2 text-left text-sm flex items-center gap-2.5 text-[rgb(var(--foreground))] hover:bg-[rgb(var(--secondary))] transition-colors'
-                >
-                  <CheckCircle2 className={`w-4 h-4 ${list.is_done_list ? 'text-emerald-500' : 'text-[rgb(var(--muted-foreground))]'}`} />
-                  {list.is_done_list ? '완료 리스트 해제' : '완료 리스트로 지정'}
-                </button>
+                {/* 완료 리스트 지정 토글 - 소유자만 가능 */}
+                {isOwner && (
+                  <button
+                    onClick={async () => {
+                      setIsMenuOpen(false)
+                      const result = await toggleDoneList(list.id)
+                      if (result.success && result.data) {
+                        updateListInStore(list.id, { is_done_list: result.data.is_done_list })
+                        toast.success(
+                          result.data.is_done_list 
+                            ? '완료 리스트로 지정되었습니다' 
+                            : '완료 리스트 지정이 해제되었습니다'
+                        )
+                      } else {
+                        toast.error(result.error || '설정 변경에 실패했습니다.')
+                      }
+                    }}
+                    className='w-full px-3 py-2 text-left text-sm flex items-center gap-2.5 text-[rgb(var(--foreground))] hover:bg-[rgb(var(--secondary))] transition-colors'
+                  >
+                    <CheckCircle2 className={`w-4 h-4 ${list.is_done_list ? 'text-emerald-500' : 'text-[rgb(var(--muted-foreground))]'}`} />
+                    {list.is_done_list ? '완료 리스트 해제' : '완료 리스트로 지정'}
+                  </button>
+                )}
                 {/* 리스트 삭제는 소유자만 가능 */}
                 {isOwner && (
                   <>

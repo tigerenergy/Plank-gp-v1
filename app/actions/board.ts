@@ -85,12 +85,12 @@ export async function createBoard(title: string, emoji: string = '📋'): Promis
       return { success: false, error: '보드 생성에 실패했습니다.' }
     }
 
-    // 기본 리스트 생성
+    // 기본 리스트 생성 (완료 리스트는 is_done_list: true)
     await supabase.from('lists').insert([
       { board_id: newBoard.id, title: '할 일', position: 1 },
       { board_id: newBoard.id, title: '진행 중', position: 2 },
       { board_id: newBoard.id, title: '검토 요청', position: 3 },
-      { board_id: newBoard.id, title: '완료', position: 4 },
+      { board_id: newBoard.id, title: '완료', position: 4, is_done_list: true },
     ])
 
     // 생성자를 admin 멤버로 추가
@@ -230,7 +230,9 @@ export async function getBoardData(boardId: string): Promise<ActionResult<ListWi
           .select(
             `
             *,
-            assignee:profiles!cards_assignee_id_fkey(id, email, username, avatar_url)
+            assignee:profiles!cards_assignee_id_fkey(id, email, username, avatar_url),
+            creator:profiles!cards_created_by_fkey(id, email, username, avatar_url),
+            completed_by_profile:profiles!cards_completed_by_fkey(id, email, username, avatar_url)
           `
           )
           .eq('list_id', list.id)

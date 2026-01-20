@@ -34,19 +34,20 @@ export function BoardHeader({ boardId, title, user, members, onSettingsClick }: 
             <h1 className='text-lg font-bold text-[rgb(var(--foreground))] truncate'>
               {title}
             </h1>
+          </div>
 
+          {/* 오른쪽: 완료된 작업 + 멤버 + 설정 */}
+          <div className='flex items-center gap-3 flex-shrink-0'>
             {/* 완료된 작업 버튼 */}
             <NavLink
               href={`/board/${boardId}/completed`}
-              className='hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-sm font-medium hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors'
+              className='hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl btn-ghost border border-[rgb(var(--border))] text-sm font-medium'
+              title='완료된 작업 보기'
             >
-              <CheckCircle2 className='w-4 h-4' />
-              완료된 작업
+              <CheckCircle2 className='w-4 h-4 text-emerald-500' />
+              <span className='hidden md:inline'>완료된 작업</span>
             </NavLink>
-          </div>
 
-          {/* 오른쪽: 멤버 + 설정 */}
-          <div className='flex items-center gap-3 flex-shrink-0'>
             {/* 멤버 아바타 */}
             {members.length > 0 && (
               <button

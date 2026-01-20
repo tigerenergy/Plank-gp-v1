@@ -76,18 +76,28 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
 
   const loadData = useCallback(async () => {
     setIsLoading(true)
-    const [cardsResult, statsResult] = await Promise.all([
-      getCompletedCards(board.id, period),
-      getCompletionStats(board.id),
-    ])
+    try {
+      const [cardsResult, statsResult] = await Promise.all([
+        getCompletedCards(board.id, period),
+        getCompletionStats(board.id),
+      ])
 
-    if (cardsResult.success && cardsResult.data) {
-      setCards(cardsResult.data)
+      if (cardsResult.success && cardsResult.data) {
+        setCards(cardsResult.data)
+      } else {
+        console.error('완료된 카드 조회 실패:', cardsResult.error)
+      }
+      if (statsResult.success && statsResult.data) {
+        setStats(statsResult.data)
+      } else {
+        console.error('통계 조회 실패:', statsResult.error)
+      }
+    } catch (error) {
+      console.error('데이터 로드 에러:', error)
+      toast.error('데이터를 불러오는데 실패했습니다.')
+    } finally {
+      setIsLoading(false)
     }
-    if (statsResult.success && statsResult.data) {
-      setStats(statsResult.data)
-    }
-    setIsLoading(false)
   }, [board.id, period])
 
   useEffect(() => {
@@ -355,8 +365,21 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
 
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
         {isLoading ? (
-          <div className='flex items-center justify-center py-20'>
-            <div className='animate-spin w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full' />
+          <div className='flex flex-col items-center justify-center py-20 gap-4'>
+            {/* 로고 로딩 스피너 */}
+            <div className='relative'>
+              <img
+                src='/blackLogo.png'
+                alt='Loading'
+                className='h-10 dark:hidden animate-pulse'
+              />
+              <img
+                src='/whiteLogo.png'
+                alt='Loading'
+                className='h-10 hidden dark:block animate-pulse'
+              />
+            </div>
+          
           </div>
         ) : (
           <div className='space-y-8'>

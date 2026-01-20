@@ -68,14 +68,10 @@ export async function getCompletedCards(
       return { success: true, data: [] }
     }
 
-    // 완료된 카드 조회
+    // 완료된 카드 조회 (foreign key 없이 안전하게)
     let query = supabase
       .from('cards')
-      .select(`
-        *,
-        assignee:profiles!cards_assignee_id_fkey(id, email, username, avatar_url),
-        completer:profiles!cards_completed_by_fkey(id, email, username, avatar_url)
-      `)
+      .select('*')
       .in('list_id', listIds)
       .eq('is_completed', true)
       .order('completed_at', { ascending: false })
@@ -91,10 +87,26 @@ export async function getCompletedCards(
       return { success: false, error: '완료된 카드를 조회할 수 없습니다.' }
     }
 
-    // 리스트 제목 추가
+    // 완료자 프로필 별도 조회
+    const completerIds = [...new Set((cards || []).map((c) => c.completed_by).filter(Boolean))]
+    let completerMap: Record<string, Profile> = {}
+    
+    if (completerIds.length > 0) {
+      const { data: completers } = await supabase
+        .from('profiles')
+        .select('id, email, username, avatar_url')
+        .in('id', completerIds)
+      
+      if (completers) {
+        completerMap = Object.fromEntries(completers.map((p) => [p.id, p]))
+      }
+    }
+
+    // 리스트 제목 + 완료자 정보 추가
     const cardsWithListTitle = (cards || []).map((card) => ({
       ...card,
       list_title: listMap[card.list_id] || '알 수 없음',
+      completer: card.completed_by ? completerMap[card.completed_by] : null,
     }))
 
     return { success: true, data: cardsWithListTitle }
@@ -173,33 +185,39 @@ export async function getCompletionStats(boardId: string): Promise<ActionResult<
       .eq('is_completed', true)
       .gte('completed_at', monthAgo.toISOString())
 
-    // 멤버별 완료 현황
+    // 멤버별 완료 현황 (foreign key 없이)
     const { data: completedByMember } = await supabase
       .from('cards')
-      .select(`
-        completed_by,
-        completer:profiles!cards_completed_by_fkey(id, email, username, avatar_url)
-      `)
+      .select('completed_by')
       .in('list_id', listIds)
       .eq('is_completed', true)
       .not('completed_by', 'is', null)
 
     // 멤버별 집계
-    const memberCountMap = new Map<string, { profile: Profile; count: number }>()
+    const memberCountMap = new Map<string, number>()
     for (const card of completedByMember || []) {
-      if (card.completed_by && card.completer) {
-        const existing = memberCountMap.get(card.completed_by)
-        if (existing) {
-          existing.count++
-        } else {
-          memberCountMap.set(card.completed_by, {
-            profile: card.completer as unknown as Profile,
-            count: 1,
-          })
-        }
+      if (card.completed_by) {
+        memberCountMap.set(card.completed_by, (memberCountMap.get(card.completed_by) || 0) + 1)
       }
     }
-    const byMember = Array.from(memberCountMap.values()).sort((a, b) => b.count - a.count)
+
+    // 프로필 정보 별도 조회
+    const memberIds = Array.from(memberCountMap.keys())
+    let byMember: { profile: Profile; count: number }[] = []
+    
+    if (memberIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', memberIds)
+      
+      if (profiles) {
+        byMember = profiles.map((profile) => ({
+          profile: profile as Profile,
+          count: memberCountMap.get(profile.id) || 0,
+        })).sort((a, b) => b.count - a.count)
+      }
+    }
 
     // 주간별 완료 추이 (최근 8주)
     const { data: weeklyData } = await supabase

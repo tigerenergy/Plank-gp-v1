@@ -1,23 +1,4 @@
-/* D2Coding ligature 폰트 로드 */
-@font-face {
-  font-family: 'D2Coding';
-  src: url('/fonts/D2Coding.woff2') format('woff2'),
-       url('/fonts/D2Coding.woff') format('woff'),
-       url('/fonts/D2Coding.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'D2Coding';
-  src: url('/fonts/D2CodingBold.woff2') format('woff2'),
-       url('/fonts/D2CodingBold.woff') format('woff'),
-       url('/fonts/D2CodingBold.ttf') format('truetype');
-  font-weight: bold;
-  font-style: normal;
-  font-display: swap;
-}
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
 
 @tailwind base;
 @tailwind components;
@@ -35,7 +16,8 @@
      ☀️ 라이트 모드 (기본)
      ======================================== */
   :root {
-    --font-d2coding: 'D2Coding', 'D2Coding ligature', 'Consolas', 'Monaco', 'Courier New', monospace;
+    --font-pretendard: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto,
+      'Helvetica Neue', 'Segoe UI', 'Noto Sans KR', sans-serif;
 
     /* 기본 색상 */
     --background: 245 247 250;
@@ -154,7 +136,7 @@
    기본 스타일
    ============================================ */
 html {
-  font-family: var(--font-d2coding);
+  font-family: var(--font-pretendard);
   height: 100dvh;
 }
 

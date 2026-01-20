@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { ActionResult, Profile } from '@/types'
 
 // 현재 사용자가 특정 보드의 멤버인지 확인
+// 🚀 병렬 조회로 최적화 (2 sequential → 2 parallel)
 export async function checkBoardMembership(
   boardId: string
 ): Promise<ActionResult<{ isMember: boolean; isOwner: boolean }>> {
@@ -17,83 +18,72 @@ export async function checkBoardMembership(
       return { success: true, data: { isMember: false, isOwner: false } }
     }
 
-    // 보드 정보 가져오기 (소유자 확인)
-    const { data: board } = await supabase
-      .from('boards')
-      .select('created_by')
-      .eq('id', boardId)
-      .maybeSingle()
+    // 🚀 보드 정보와 멤버십을 병렬로 조회
+    const [boardResult, membershipResult] = await Promise.all([
+      supabase
+        .from('boards')
+        .select('created_by')
+        .eq('id', boardId)
+        .maybeSingle(),
+      supabase
+        .from('board_members')
+        .select('user_id')
+        .eq('board_id', boardId)
+        .eq('user_id', user.id)
+        .maybeSingle(),
+    ])
 
-    const isOwner = board?.created_by === user.id
-
-    // 멤버 확인 (maybeSingle로 에러 방지)
-    // board_members 테이블에는 id 컬럼이 없음 (PK: board_id, user_id)
-    const { data: membership } = await supabase
-      .from('board_members')
-      .select('user_id')
-      .eq('board_id', boardId)
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    // 소유자이거나 멤버 테이블에 있으면 멤버
-    const isMember = isOwner || !!membership
-
-    console.log('[멤버십 확인]', {
-      userId: user.id,
-      boardId,
-      isOwner,
-      hasMembership: !!membership,
-      isMember,
-    })
+    const isOwner = boardResult.data?.created_by === user.id
+    const isMember = isOwner || !!membershipResult.data
 
     return { success: true, data: { isMember, isOwner } }
   } catch (error) {
     console.error('멤버십 확인 에러:', error)
-    // 에러가 나도 기본값 반환 (읽기 전용으로 처리되지 않도록)
     return { success: true, data: { isMember: false, isOwner: false } }
   }
 }
 
 // 특정 보드의 실제 멤버 목록 (board_members 테이블 + 보드 소유자)
+// 🚀 병렬 조회로 최적화 (2 sequential → 2 parallel)
 export async function getBoardMembers(boardId: string): Promise<ActionResult<Profile[]>> {
   try {
     const supabase = await createClient()
 
-    // 1. board_members에서 멤버 가져오기
-    const { data: memberData, error: memberError } = await supabase
-      .from('board_members')
-      .select(
+    // 🚀 멤버와 보드 소유자를 병렬로 조회
+    const [memberResult, boardResult] = await Promise.all([
+      supabase
+        .from('board_members')
+        .select(
+          `
+          user_id,
+          profile:profiles!user_id(*)
         `
-        user_id,
-        profile:profiles!user_id(*)
-      `
-      )
-      .eq('board_id', boardId)
+        )
+        .eq('board_id', boardId),
+      supabase
+        .from('boards')
+        .select(
+          `
+          created_by,
+          creator:profiles!boards_created_by_fkey(*)
+        `
+        )
+        .eq('id', boardId)
+        .single(),
+    ])
 
-    if (memberError) {
-      console.error('보드 멤버 목록 조회 에러:', memberError)
+    if (memberResult.error) {
+      console.error('보드 멤버 목록 조회 에러:', memberResult.error)
       return { success: false, error: '보드 멤버 목록을 불러오는데 실패했습니다.' }
     }
 
-    // 2. 보드 소유자 가져오기
-    const { data: boardData } = await supabase
-      .from('boards')
-      .select(
-        `
-        created_by,
-        creator:profiles!boards_created_by_fkey(*)
-      `
-      )
-      .eq('id', boardId)
-      .single()
-
-    // profile 데이터 추출 (Supabase 조인 결과 타입 처리)
+    // 🚀 Set으로 O(1) 중복 체크 (js-set-map-lookups)
     const memberIds = new Set<string>()
     const members: Profile[] = []
 
     // 보드 소유자 먼저 추가
-    if (boardData?.creator) {
-      const creator = boardData.creator as unknown as Profile
+    if (boardResult.data?.creator) {
+      const creator = boardResult.data.creator as unknown as Profile
       if (creator) {
         members.push(creator)
         memberIds.add(creator.id)
@@ -101,8 +91,8 @@ export async function getBoardMembers(boardId: string): Promise<ActionResult<Pro
     }
 
     // board_members 추가 (중복 제외)
-    if (memberData) {
-      for (const item of memberData) {
+    if (memberResult.data) {
+      for (const item of memberResult.data) {
         const profile = item.profile as unknown as Profile | null
         if (profile && !memberIds.has(profile.id)) {
           members.push(profile)

@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+// 🚀 React Compiler 활성화: useCallback 불필요 (자동 메모이제이션)
+import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import {
@@ -76,8 +77,9 @@ export default function BoardClient({ user }: BoardClientProps) {
     easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
   }
 
-  // 🚀 데이터 로드 (Parallel Data Fetching으로 최적화)
-  const loadData = useCallback(async () => {
+  // 🚀 React Compiler가 자동으로 메모이제이션 (useCallback 불필요)
+  // 데이터 로드 (Parallel Data Fetching으로 최적화)
+  const loadData = async () => {
     setLoading(true)
     setError(null)
 
@@ -128,7 +130,7 @@ export default function BoardClient({ user }: BoardClientProps) {
     }
 
     setLoading(false)
-  }, [boardId, user?.id, setBoard, setLists, setMembers, setLoading, setError])
+  }
 
   // 현재 사용자 ID 설정
   useEffect(() => {
@@ -137,10 +139,10 @@ export default function BoardClient({ user }: BoardClientProps) {
 
   // 보드 전환 시 초기화 후 데이터 로드
   useEffect(() => {
-    // 이전 보드 데이터 초기화 (스켈레톤 표시)
     resetBoard()
     loadData()
-  }, [boardId, resetBoard, loadData])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boardId])
 
   if (isLoading) {
     return <BoardLoading />

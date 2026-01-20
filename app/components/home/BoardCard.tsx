@@ -131,7 +131,7 @@ export function BoardCard({
   return (
     <div
       onClick={onNavigate}
-      className='group card p-5 h-44 cursor-pointer relative overflow-hidden hover:scale-[1.02] hover:-translate-y-1 transition-all duration-200'
+      className='group card board-card-item p-5 h-44 cursor-pointer relative overflow-hidden hover:scale-[1.02] hover:-translate-y-1 transition-all duration-200'
       style={{ boxShadow: 'var(--shadow)' }}
     >
       {/* 상단: 아이콘 + 액션 버튼 */}

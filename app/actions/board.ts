@@ -208,54 +208,68 @@ export async function getBoard(boardId: string): Promise<ActionResult<Board>> {
 }
 
 // 보드 데이터 전체 조회 (리스트 + 카드)
+// 🚀 N+1 쿼리 문제 해결: 리스트별 개별 쿼리 → 전체 카드 한 번에 조회
 export async function getBoardData(boardId: string): Promise<ActionResult<ListWithCards[]>> {
   try {
     const supabase = await createClient()
 
-    // 리스트 조회
-    const { data: lists, error: listsError } = await supabase
-      .from('lists')
-      .select('*')
-      .eq('board_id', boardId)
-      .order('position', { ascending: true })
+    // 🚀 Promise.all로 리스트와 카드를 병렬 조회 (2 쿼리로 최적화)
+    const [listsResult, cardsResult] = await Promise.all([
+      // 리스트 조회
+      supabase
+        .from('lists')
+        .select('*')
+        .eq('board_id', boardId)
+        .order('position', { ascending: true }),
+      // 모든 카드를 한 번에 조회 (보드의 모든 리스트에 속한 카드)
+      supabase
+        .from('cards')
+        .select(
+          `
+          *,
+          assignee:profiles!cards_assignee_id_fkey(id, email, username, avatar_url),
+          creator:profiles!cards_created_by_fkey(id, email, username, avatar_url),
+          completed_by_profile:profiles!cards_completed_by_fkey(id, email, username, avatar_url),
+          list:lists!cards_list_id_fkey(board_id)
+        `
+        )
+        .order('position', { ascending: true }),
+    ])
 
-    if (listsError) {
-      console.error('리스트 조회 에러:', listsError)
+    if (listsResult.error) {
+      console.error('리스트 조회 에러:', listsResult.error)
       return { success: false, error: '리스트를 불러오는데 실패했습니다.' }
     }
 
-    // 각 리스트의 카드 조회 (담당자 정보 포함)
-    const listsWithCards: ListWithCards[] = await Promise.all(
-      lists.map(async (list, index) => {
-        const { data: cards, error: cardsError } = await supabase
-          .from('cards')
-          .select(
-            `
-            *,
-            assignee:profiles!cards_assignee_id_fkey(id, email, username, avatar_url),
-            creator:profiles!cards_created_by_fkey(id, email, username, avatar_url),
-            completed_by_profile:profiles!cards_completed_by_fkey(id, email, username, avatar_url)
-          `
-          )
-          .eq('list_id', list.id)
-          .order('position', { ascending: true })
+    const lists = listsResult.data || []
 
-        if (cardsError) {
-          console.error('카드 조회 에러:', cardsError)
-          return {
-            ...list,
-            cards: [] as Card[],
-            color: getListColor(index),
-          }
-        }
+    // 카드 조회 실패 시 빈 배열로 처리
+    const allCards = cardsResult.data || []
 
-        return {
-          ...list,
-          cards: cards as Card[],
-          color: getListColor(index),
-        }
-      })
-    )
+    // 🚀 Map으로 O(1) 조회를 위한 인덱스 생성 (js-index-maps)
+    const cardsByListId = new Map<string, Card[]>()
+
+    // 현재 보드에 속한 카드만 필터링 & 리스트별 그룹핑
+    for (const card of allCards) {
+      // list 관계에서 board_id 확인
+      const cardBoardId = (card.list as { board_id: string } | null)?.board_id
+      if (cardBoardId !== boardId) continue
+
+      const listId = card.list_id
+      if (!cardsByListId.has(listId)) {
+        cardsByListId.set(listId, [])
+      }
+      // list 필드 제거 후 저장 (클라이언트에 불필요)
+      const { list: _, ...cardWithoutList } = card
+      cardsByListId.get(listId)!.push(cardWithoutList as Card)
+    }
+
+    // 리스트에 카드 매핑
+    const listsWithCards: ListWithCards[] = lists.map((list, index) => ({
+      ...list,
+      cards: cardsByListId.get(list.id) || [],
+      color: getListColor(index),
+    }))
 
     return { success: true, data: listsWithCards }
   } catch (error) {

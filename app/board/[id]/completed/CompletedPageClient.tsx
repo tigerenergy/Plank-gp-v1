@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+// 🚀 React Compiler + Zustand: useState/useCallback 최소화
+import { useEffect } from 'react'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -36,15 +37,14 @@ import {
 } from 'recharts'
 import { toast } from 'sonner'
 import type { Board } from '@/types'
+import { useCompletedStore } from '@/store/useCompletedStore'
 import { 
   getCompletedCards, 
   getCompletionStats, 
-  type CompletedCard, 
-  type CompletionStats,
   type PeriodFilter 
 } from '@/app/actions/completed'
-import { createAIReport, getReports, deleteReport, type Report } from '@/app/actions/report'
-import { sendReportToEmail, getEmailLogs, deleteEmailLog, type EmailLog } from '@/app/actions/email'
+import { createAIReport, getReports, deleteReport } from '@/app/actions/report'
+import { sendReportToEmail, getEmailLogs, deleteEmailLog } from '@/app/actions/email'
 import { getTeamMembers, searchUserByEmail } from '@/app/actions/member'
 import type { ReportType } from '@/lib/gemini'
 import type { Profile } from '@/types'
@@ -56,32 +56,60 @@ interface CompletedPageClientProps {
 const COLORS = ['#8b5cf6', '#6366f1', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b']
 
 export function CompletedPageClient({ board }: CompletedPageClientProps) {
-  const [period, setPeriod] = useState<PeriodFilter>('all')
-  const [cards, setCards] = useState<CompletedCard[]>([])
-  const [stats, setStats] = useState<CompletionStats | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set())
-  
-  // 보고서 관련 상태
-  const [showReportModal, setShowReportModal] = useState(false)
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [reports, setReports] = useState<Report[]>([])
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null)
-  const [reportType, setReportType] = useState<ReportType>('weekly')
-  const [copied, setCopied] = useState(false)
+  // Zustand 스토어에서 상태 가져오기
+  const {
+    period,
+    cards,
+    stats,
+    isLoading,
+    selectedCards,
+    showReportModal,
+    isGenerating,
+    reports,
+    selectedReport,
+    reportType,
+    copied,
+    showEmailModal,
+    emailRecipients,
+    isSendingEmail,
+    emailLogs,
+    allUsers,
+    filteredUsers,
+    searchQuery,
+    showManualInput,
+    isSearching,
+    // 액션
+    setPeriod,
+    setCards,
+    setStats,
+    setIsLoading,
+    toggleSelectAll,
+    toggleSelect,
+    setShowReportModal,
+    setIsGenerating,
+    setReports,
+    setSelectedReport,
+    setReportType,
+    setCopied,
+    setShowEmailModal,
+    setEmailRecipients,
+    setIsSendingEmail,
+    setEmailLogs,
+    setAllUsers,
+    setFilteredUsers,
+    setSearchQuery,
+    setShowManualInput,
+    setIsSearching,
+    addRecipient,
+    removeRecipient,
+    updateRecipient,
+    addMemberAsRecipient,
+    removeMemberFromRecipient,
+    resetAll,
+  } = useCompletedStore()
 
-  // 이메일 발송 관련 상태
-  const [showEmailModal, setShowEmailModal] = useState(false)
-  const [emailRecipients, setEmailRecipients] = useState<string[]>([''])
-  const [isSendingEmail, setIsSendingEmail] = useState(false)
-  const [emailLogs, setEmailLogs] = useState<EmailLog[]>([])
-  const [allUsers, setAllUsers] = useState<Profile[]>([])
-  const [filteredUsers, setFilteredUsers] = useState<Profile[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
-  const [showManualInput, setShowManualInput] = useState(false)
-  const [isSearching, setIsSearching] = useState(false)
-
-  const loadData = useCallback(async () => {
+  // 데이터 로드
+  const loadData = async () => {
     setIsLoading(true)
     try {
       const [cardsResult, statsResult] = await Promise.all([
@@ -105,46 +133,36 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
     } finally {
       setIsLoading(false)
     }
-  }, [board.id, period])
+  }
 
+  // 컴포넌트 마운트 & period 변경 시 데이터 로드
   useEffect(() => {
     loadData()
-  }, [loadData])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [board.id, period])
 
-  // 전체 선택/해제
-  const toggleSelectAll = () => {
-    if (selectedCards.size === cards.length) {
-      setSelectedCards(new Set())
-    } else {
-      setSelectedCards(new Set(cards.map((c) => c.id)))
+  // 컴포넌트 언마운트 시 상태 초기화
+  useEffect(() => {
+    return () => {
+      resetAll()
     }
-  }
-
-  // 개별 선택
-  const toggleSelect = (cardId: string) => {
-    const newSet = new Set(selectedCards)
-    if (newSet.has(cardId)) {
-      newSet.delete(cardId)
-    } else {
-      newSet.add(cardId)
-    }
-    setSelectedCards(newSet)
-  }
+  }, [resetAll])
 
   // 보고서 목록 로드
-  const loadReports = useCallback(async () => {
+  const loadReports = async () => {
     const result = await getReports(board.id)
     if (result.success && result.data) {
       setReports(result.data)
     }
-  }, [board.id])
+  }
 
   // 모달 열릴 때 보고서 목록 로드
   useEffect(() => {
     if (showReportModal) {
       loadReports()
     }
-  }, [showReportModal, loadReports])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showReportModal])
 
   // AI 보고서 생성
   const handleGenerateReport = async () => {
@@ -220,15 +238,15 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
   }
 
   // 이메일 로그 로드
-  const loadEmailLogs = useCallback(async () => {
+  const loadEmailLogs = async () => {
     const result = await getEmailLogs(board.id)
     if (result.success && result.data) {
       setEmailLogs(result.data)
     }
-  }, [board.id])
+  }
 
   // 전체 사용자 로드
-  const loadAllUsers = useCallback(async () => {
+  const loadAllUsers = async () => {
     const result = await getTeamMembers()
     if (result.success && result.data) {
       // 이메일이 있는 사용자만 필터링
@@ -240,10 +258,10 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
         setShowManualInput(true)
       }
     }
-  }, [])
+  }
 
   // 검색 처리
-  const handleSearch = useCallback(async (query: string) => {
+  const handleSearch = async (query: string) => {
     setSearchQuery(query)
     
     if (!query.trim()) {
@@ -275,7 +293,7 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
     }
     
     setIsSearching(false)
-  }, [allUsers])
+  }
 
   // 이메일 모달 열릴 때 로그 및 사용자 로드
   useEffect(() => {
@@ -286,48 +304,17 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
       setEmailRecipients([''])
       setSearchQuery('')
     }
-  }, [showEmailModal, loadEmailLogs, loadAllUsers])
-
-  // 수신자 추가
-  const addRecipient = () => {
-    setEmailRecipients([...emailRecipients, ''])
-  }
-
-  // 수신자 제거
-  const removeRecipient = (index: number) => {
-    if (emailRecipients.length === 1) return
-    setEmailRecipients(emailRecipients.filter((_, i) => i !== index))
-  }
-
-  // 수신자 변경
-  const updateRecipient = (index: number, value: string) => {
-    const newRecipients = [...emailRecipients]
-    newRecipients[index] = value
-    setEmailRecipients(newRecipients)
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showEmailModal])
 
   // 멤버를 수신자로 추가
-  const addMemberAsRecipient = (email: string) => {
-    // 이미 추가된 이메일인지 확인
-    if (emailRecipients.includes(email)) {
+  const handleAddMember = (email: string) => {
+    const success = addMemberAsRecipient(email)
+    if (!success) {
       toast.error('이미 추가된 수신자입니다.')
-      return
-    }
-    // 빈 항목이 있으면 그곳에 추가, 아니면 새로 추가
-    const emptyIndex = emailRecipients.findIndex((e) => !e.trim())
-    if (emptyIndex >= 0) {
-      const newRecipients = [...emailRecipients]
-      newRecipients[emptyIndex] = email
-      setEmailRecipients(newRecipients)
     } else {
-      setEmailRecipients([...emailRecipients, email])
+      toast.success(`${email} 추가됨`)
     }
-    toast.success(`${email} 추가됨`)
-  }
-
-  // 멤버 수신자에서 제거
-  const removeMemberFromRecipient = (email: string) => {
-    setEmailRecipients(emailRecipients.filter((e) => e !== email))
   }
 
   // 이메일 발송
@@ -672,7 +659,7 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
                     <input
                       type='checkbox'
                       checked={selectedCards.size === cards.length && cards.length > 0}
-                      onChange={toggleSelectAll}
+                      onChange={() => toggleSelectAll(cards.map((c) => c.id))}
                       className='w-4 h-4 rounded border-gray-300'
                     />
                     전체 선택
@@ -1006,7 +993,7 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
                                   if (isSelected) {
                                     removeMemberFromRecipient(user.email)
                                   } else {
-                                    addMemberAsRecipient(user.email)
+                                    handleAddMember(user.email)
                                   }
                                 }
                               }}

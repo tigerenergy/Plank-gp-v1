@@ -147,7 +147,7 @@ export function Card({ card, isDoneList = false }: CardProps) {
       {...listeners}
       onClick={() => openCardModal(card)}
       className={`
-        card px-6 py-5 cursor-pointer select-none flex flex-col
+        card card-item px-6 py-5 cursor-pointer select-none flex flex-col
         ${isDragging ? 'opacity-60 ring-2 ring-indigo-400 scale-[1.02] rotate-1' : ''}
         ${isCompleted ? 'opacity-60 bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800' : ''}
       `}

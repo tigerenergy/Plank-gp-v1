@@ -344,6 +344,25 @@ h1, h2, h3, .text-2xl, .text-xl, .text-lg {
 }
 
 /* ============================================
+   🚀 Performance: content-visibility (rendering-content-visibility)
+   오프스크린 요소의 레이아웃/페인트를 건너뛰어 초기 렌더링 속도 향상
+   ============================================ */
+.card-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 140px; /* 카드 예상 높이 */
+}
+
+.completed-card-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 100px; /* 완료 카드 예상 높이 */
+}
+
+.board-card-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 180px; /* 보드 카드 예상 높이 */
+}
+
+/* ============================================
    DatePicker
    ============================================ */
 .rdp {

@@ -1,33 +1,48 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+// 🚀 React Compiler + Zustand: useState 최소화
+import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, Check, X, Inbox, MessageSquare, UserPlus, CheckCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { useNotificationStore } from '@/store/useNotificationStore'
 import { getMyNotifications, markAsRead, markAllAsRead } from '@/app/actions/notification'
 import { getMyInvitations, acceptInvitation, rejectInvitation } from '@/app/actions/invitation'
 import type { Notification, BoardInvitation } from '@/types'
 
 export function NotificationDropdown() {
   const router = useRouter()
-  const [isOpen, setIsOpen] = useState(false)
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [invitations, setInvitations] = useState<BoardInvitation[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [processingId, setProcessingId] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
+  // Zustand 스토어에서 상태 가져오기
+  const {
+    isOpen,
+    notifications,
+    invitations,
+    isLoading,
+    processingId,
+    setIsOpen,
+    setNotifications,
+    addNotification,
+    removeNotification,
+    clearNotifications,
+    setInvitations,
+    removeInvitation,
+    setIsLoading,
+    setProcessingId,
+    getTotalCount,
+  } = useNotificationStore()
+
   // 데이터 로드
-  const loadData = useCallback(async () => {
+  const loadData = async () => {
     setIsLoading(true)
 
     const [notifResult, invResult] = await Promise.all([getMyNotifications(), getMyInvitations()])
 
     if (notifResult.success && notifResult.data) {
-      // 읽지 않은 알림만 표시
-      setNotifications(notifResult.data.filter((n) => !n.is_read))
+      setNotifications(notifResult.data)
     }
 
     if (invResult.success && invResult.data) {
@@ -35,7 +50,7 @@ export function NotificationDropdown() {
     }
 
     setIsLoading(false)
-  }, [])
+  }
 
   // 외부 클릭 감지
   useEffect(() => {
@@ -47,7 +62,7 @@ export function NotificationDropdown() {
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }, [setIsOpen])
 
   // 컴포넌트 마운트 시 로드 + 실시간 구독
   useEffect(() => {
@@ -76,7 +91,7 @@ export function NotificationDropdown() {
           (payload) => {
             // 새 알림이 들어오면 목록에 추가
             const newNotification = payload.new as Notification
-            setNotifications((prev) => [newNotification, ...prev])
+            addNotification(newNotification)
             // 토스트 알림 표시
             toast.info(newNotification.title, {
               description: newNotification.message || undefined,
@@ -114,7 +129,8 @@ export function NotificationDropdown() {
     return () => {
       cleanup.then((fn) => fn?.())
     }
-  }, [loadData])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // 초대 수락
   const handleAcceptInvitation = async (invitation: BoardInvitation) => {
@@ -123,7 +139,7 @@ export function NotificationDropdown() {
 
     if (result.success && result.data) {
       toast.success('초대를 수락했습니다!')
-      setInvitations((prev) => prev.filter((inv) => inv.id !== invitation.id))
+      removeInvitation(invitation.id)
       setIsOpen(false)
       router.push(`/board/${result.data.boardId}`)
     } else {
@@ -139,7 +155,7 @@ export function NotificationDropdown() {
 
     if (result.success) {
       toast.success('초대를 거절했습니다.')
-      setInvitations((prev) => prev.filter((inv) => inv.id !== invitationId))
+      removeInvitation(invitationId)
     } else {
       toast.error(result.error || '초대 거절에 실패했습니다.')
     }
@@ -150,8 +166,7 @@ export function NotificationDropdown() {
   const handleNotificationClick = async (notification: Notification) => {
     if (!notification.is_read) {
       await markAsRead(notification.id)
-      // 읽은 알림은 목록에서 제거
-      setNotifications((prev) => prev.filter((n) => n.id !== notification.id))
+      removeNotification(notification.id)
     }
 
     if (notification.link) {
@@ -164,16 +179,14 @@ export function NotificationDropdown() {
   const handleMarkAllAsRead = async () => {
     const result = await markAllAsRead()
     if (result.success) {
-      // 모든 알림을 목록에서 제거
-      setNotifications([])
+      clearNotifications()
       toast.success('모든 알림을 확인했습니다.')
     }
   }
 
-  // 총 개수 (읽지 않은 알림 + 대기 중인 초대)
+  // 계산된 값
+  const totalCount = getTotalCount()
   const unreadNotifCount = notifications.filter((n) => !n.is_read).length
-  const pendingInviteCount = invitations.length
-  const totalCount = unreadNotifCount + pendingInviteCount
 
   // 알림 아이콘 선택
   const getNotificationIcon = (type: string) => {

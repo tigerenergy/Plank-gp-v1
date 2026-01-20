@@ -1,20 +1,31 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+// 🚀 React Compiler + Zustand: useState 최소화
+import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, Check, X, Inbox } from 'lucide-react'
 import { toast } from 'sonner'
+import { useNotificationStore } from '@/store/useNotificationStore'
 import { getMyInvitations, acceptInvitation, rejectInvitation } from '@/app/actions/invitation'
 import type { BoardInvitation } from '@/types'
 
 export function InvitationDropdown() {
   const router = useRouter()
-  const [isOpen, setIsOpen] = useState(false)
-  const [invitations, setInvitations] = useState<BoardInvitation[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [processingId, setProcessingId] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Zustand 스토어에서 상태 가져오기
+  const {
+    isOpen,
+    invitations,
+    isLoading,
+    processingId,
+    setIsOpen,
+    setInvitations,
+    removeInvitation,
+    setIsLoading,
+    setProcessingId,
+  } = useNotificationStore()
 
   // 초대 목록 로드
   const loadInvitations = async () => {
@@ -36,11 +47,12 @@ export function InvitationDropdown() {
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }, [setIsOpen])
 
   // 컴포넌트 마운트 시 초대 목록 로드
   useEffect(() => {
     loadInvitations()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // 초대 수락
@@ -50,7 +62,7 @@ export function InvitationDropdown() {
 
     if (result.success && result.data) {
       toast.success('초대를 수락했습니다!')
-      setInvitations((prev) => prev.filter((inv) => inv.id !== invitation.id))
+      removeInvitation(invitation.id)
       setIsOpen(false)
       // 해당 보드로 이동
       router.push(`/board/${result.data.boardId}`)
@@ -67,7 +79,7 @@ export function InvitationDropdown() {
 
     if (result.success) {
       toast.success('초대를 거절했습니다.')
-      setInvitations((prev) => prev.filter((inv) => inv.id !== invitationId))
+      removeInvitation(invitationId)
     } else {
       toast.error(result.error || '초대 거절에 실패했습니다.')
     }

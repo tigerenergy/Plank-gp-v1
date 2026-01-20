@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
+// 🚀 React Compiler 활성화: useMemo, useCallback 불필요 (자동 메모이제이션)
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Plus, LayoutGrid, Crown, Users } from 'lucide-react'
@@ -68,16 +69,15 @@ export default function HomeClient({ user }: HomeClientProps) {
     loadBoards()
   }, [setBoards, setLoading])
 
+  // 🚀 React Compiler가 자동으로 메모이제이션 (useMemo 불필요)
   // 필터링된 보드 목록
-  const filteredBoards = useMemo(() => {
+  const filteredBoards = (() => {
     if (!user) return boards
 
     switch (filter) {
       case 'owned':
-        // 내가 만든 보드
         return boards.filter((board) => board.created_by === user.id)
       case 'joined':
-        // 내가 멤버로 참여 중인 보드 (내가 만든 보드 제외)
         return boards.filter(
           (board) =>
             board.created_by !== user.id && (board as { isMember?: boolean }).isMember === true
@@ -85,60 +85,57 @@ export default function HomeClient({ user }: HomeClientProps) {
       default:
         return boards
     }
-  }, [boards, filter, user])
+  })()
 
   // 필터별 개수
-  const filterCounts = useMemo(() => {
+  const filterCounts = (() => {
     if (!user) return { all: boards.length, owned: 0, joined: 0 }
 
     const owned = boards.filter((board) => board.created_by === user.id).length
-    // 참여 중: 내가 만든 게 아니면서, isMember가 true인 보드
     const joined = boards.filter(
       (board) => board.created_by !== user.id && (board as { isMember?: boolean }).isMember === true
     ).length
 
     return { all: boards.length, owned, joined }
-  }, [boards, user])
+  })()
 
-  const handleCreateBoard = useCallback(
-    async (data: { title: string; emoji: string; startDate: string; dueDate: string }) => {
-      // 중복 제출 방지
-      if (isSubmittingRef.current) return
+  // 🚀 React Compiler가 자동으로 메모이제이션 (useCallback 불필요)
+  const handleCreateBoard = async (data: { title: string; emoji: string; startDate: string; dueDate: string }) => {
+    // 중복 제출 방지
+    if (isSubmittingRef.current) return
 
-      // zod 스키마로 검증
-      const validation = createBoardSchema.safeParse({
-        title: data.title,
-        emoji: data.emoji,
-        start_date: data.startDate,
-        due_date: data.dueDate,
-      })
+    // zod 스키마로 검증
+    const validation = createBoardSchema.safeParse({
+      title: data.title,
+      emoji: data.emoji,
+      start_date: data.startDate,
+      due_date: data.dueDate,
+    })
 
-      if (!validation.success) {
-        const firstError = validation.error.errors[0]
-        toast.error(firstError.message)
-        return
+    if (!validation.success) {
+      const firstError = validation.error.errors[0]
+      toast.error(firstError.message)
+      return
+    }
+
+    isSubmittingRef.current = true
+    setIsSubmitting(true)
+
+    try {
+      const result = await createBoard(data.title, data.emoji, data.startDate, data.dueDate)
+      if (result.success && result.data) {
+        toast.success('보드가 생성되었습니다!')
+        cancelCreating()
+        setNavigating(true)
+        router.push(`/board/${result.data.id}`)
+      } else {
+        toast.error(result.error || '보드 생성에 실패했습니다.')
       }
-
-      isSubmittingRef.current = true
-      setIsSubmitting(true)
-
-      try {
-        const result = await createBoard(data.title, data.emoji, data.startDate, data.dueDate)
-        if (result.success && result.data) {
-          toast.success('보드가 생성되었습니다!')
-          cancelCreating()
-          setNavigating(true)
-          router.push(`/board/${result.data.id}`)
-        } else {
-          toast.error(result.error || '보드 생성에 실패했습니다.')
-        }
-      } finally {
-        isSubmittingRef.current = false
-        setIsSubmitting(false)
-      }
-    },
-    [cancelCreating, setNavigating, router]
-  )
+    } finally {
+      isSubmittingRef.current = false
+      setIsSubmitting(false)
+    }
+  }
 
   const handleUpdateBoard = async (e: React.FormEvent, boardId: string) => {
     e.preventDefault()

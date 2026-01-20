@@ -616,7 +616,7 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
                             outerRadius={100}
                             paddingAngle={3}
                             dataKey='value'
-                            label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                            label={({ name, value, percent }) => `${name}: ${value} (${((percent ?? 0) * 100).toFixed(0)}%)`}
                             labelLine={{ stroke: 'rgb(var(--muted-foreground))', strokeWidth: 1 }}
                             animationDuration={1000}
                           >

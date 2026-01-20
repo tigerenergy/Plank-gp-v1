@@ -189,3 +189,53 @@ export async function deleteList(id: string): Promise<ActionResult> {
     return { success: false, error: '서버 연결에 실패했습니다.' }
   }
 }
+
+// 완료 리스트 지정/해제 토글 (보드 멤버)
+export async function toggleDoneList(listId: string): Promise<ActionResult<List>> {
+  try {
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
+    // 보드 멤버 확인
+    const isMember = await checkBoardMembershipByListId(supabase, listId, user.id)
+    if (!isMember) {
+      return { success: false, error: '보드 멤버만 설정을 변경할 수 있습니다.' }
+    }
+
+    // 현재 상태 조회
+    const { data: list, error: fetchError } = await supabase
+      .from('lists')
+      .select('is_done_list')
+      .eq('id', listId)
+      .single()
+
+    if (fetchError || !list) {
+      return { success: false, error: '리스트를 찾을 수 없습니다.' }
+    }
+
+    // 토글
+    const { data, error } = await supabase
+      .from('lists')
+      .update({ is_done_list: !list.is_done_list })
+      .eq('id', listId)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('완료 리스트 토글 에러:', error)
+      return { success: false, error: '설정 변경에 실패했습니다.' }
+    }
+
+    return { success: true, data }
+  } catch (error) {
+    console.error('완료 리스트 토글 에러:', error)
+    return { success: false, error: '서버 연결에 실패했습니다.' }
+  }
+}

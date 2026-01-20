@@ -4,10 +4,10 @@ import { useState, useRef } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { toast } from 'sonner'
-import { MoreHorizontal, Plus, Pencil, Trash2 } from 'lucide-react'
+import { MoreHorizontal, Plus, Pencil, Trash2, CheckCircle2 } from 'lucide-react'
 import type { ListWithCards } from '@/types'
 import { useBoardStore } from '@/store/useBoardStore'
-import { updateList, deleteList } from '@/app/actions/list'
+import { updateList, deleteList, toggleDoneList } from '@/app/actions/list'
 import { useOutsideClick, useAutoFocus } from '@/hooks'
 import { Card } from './Card'
 import { AddCardForm } from './AddCardForm'
@@ -42,7 +42,10 @@ export function Column({ list, canEdit = false, isOwner = false }: ColumnProps) 
 
   const { lists, updateList: updateListInStore, deleteList: deleteListInStore } = useBoardStore()
   const listIndex = lists.findIndex((l) => l.id === list.id)
-  const icon = columnIcons[listIndex % columnIcons.length]
+  // 완료 리스트면 체크 아이콘, 아니면 기본 아이콘
+  const icon = list.is_done_list 
+    ? { emoji: '✅', color: 'bg-emerald-100 dark:bg-emerald-900/50' }
+    : columnIcons[listIndex % columnIcons.length]
 
   useOutsideClick(menuRef, () => setIsMenuOpen(false), isMenuOpen)
   useAutoFocus(inputRef, isEditing, true)
@@ -146,7 +149,7 @@ export function Column({ list, canEdit = false, isOwner = false }: ColumnProps) 
             </button>
 
             {isMenuOpen && (
-              <div className='absolute right-0 top-full mt-1 w-44 py-1.5 z-50 rounded-xl border bg-[rgb(var(--card))] border-[rgb(var(--border))] shadow-lg animate-in fade-in slide-in-from-top-1 duration-150'>
+              <div className='absolute right-0 top-full mt-1 w-52 py-1.5 z-50 rounded-xl border bg-[rgb(var(--card))] border-[rgb(var(--border))] shadow-lg animate-in fade-in slide-in-from-top-1 duration-150'>
                 <button
                   onClick={() => {
                     setIsMenuOpen(false)
@@ -157,18 +160,42 @@ export function Column({ list, canEdit = false, isOwner = false }: ColumnProps) 
                   <Pencil className='w-4 h-4 text-[rgb(var(--muted-foreground))]' />
                   이름 변경
                 </button>
+                {/* 완료 리스트 지정 토글 */}
+                <button
+                  onClick={async () => {
+                    setIsMenuOpen(false)
+                    const result = await toggleDoneList(list.id)
+                    if (result.success && result.data) {
+                      updateListInStore(list.id, { is_done_list: result.data.is_done_list })
+                      toast.success(
+                        result.data.is_done_list 
+                          ? '완료 리스트로 지정되었습니다' 
+                          : '완료 리스트 지정이 해제되었습니다'
+                      )
+                    } else {
+                      toast.error(result.error || '설정 변경에 실패했습니다.')
+                    }
+                  }}
+                  className='w-full px-3 py-2 text-left text-sm flex items-center gap-2.5 text-[rgb(var(--foreground))] hover:bg-[rgb(var(--secondary))] transition-colors'
+                >
+                  <CheckCircle2 className={`w-4 h-4 ${list.is_done_list ? 'text-emerald-500' : 'text-[rgb(var(--muted-foreground))]'}`} />
+                  {list.is_done_list ? '완료 리스트 해제' : '완료 리스트로 지정'}
+                </button>
                 {/* 리스트 삭제는 소유자만 가능 */}
                 {isOwner && (
-                  <button
-                    onClick={() => {
-                      setIsMenuOpen(false)
-                      setShowDeleteConfirm(true)
-                    }}
-                    className='w-full px-3 py-2 text-left text-sm flex items-center gap-2.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors'
-                  >
-                    <Trash2 className='w-4 h-4' />
-                    삭제
-                  </button>
+                  <>
+                    <div className='my-1 border-t border-[rgb(var(--border))]' />
+                    <button
+                      onClick={() => {
+                        setIsMenuOpen(false)
+                        setShowDeleteConfirm(true)
+                      }}
+                      className='w-full px-3 py-2 text-left text-sm flex items-center gap-2.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors'
+                    >
+                      <Trash2 className='w-4 h-4' />
+                      삭제
+                    </button>
+                  </>
                 )}
               </div>
             )}
@@ -180,7 +207,7 @@ export function Column({ list, canEdit = false, isOwner = false }: ColumnProps) 
       <div ref={setNodeRef} className='flex-1 overflow-y-auto px-3 pb-3 space-y-3 min-h-[120px]'>
         <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
           {list.cards.map((card) => (
-            <Card key={card.id} card={card} />
+            <Card key={card.id} card={card} isDoneList={list.is_done_list} />
           ))}
         </SortableContext>
 

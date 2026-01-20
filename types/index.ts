@@ -43,6 +43,7 @@ export interface List {
   title: string
   position: number
   board_id: string
+  is_done_list: boolean // 완료 리스트 여부
   created_at: string
   updated_at: string
 }
@@ -76,12 +77,18 @@ export interface Card {
   assignee_id: string | null
   created_by: string | null
   labels: Label[]
+  // 완료 처리 관련
+  is_completed: boolean
+  completed_at: string | null
+  completed_by: string | null
   created_at: string
   updated_at: string
   // 조인된 담당자 정보
   assignee?: Profile | null
   // 조인된 생성자 정보
   creator?: Profile | null
+  // 조인된 완료 처리자 정보
+  completer?: Profile | null
 }
 
 // 컬럼 색상 타입 (UI용 하드코딩)
@@ -189,6 +196,7 @@ export type NotificationType =
   | 'card_created'         // 카드 생성
   | 'card_updated'         // 카드 수정
   | 'card_moved'           // 카드 이동
+  | 'card_completed'       // 카드 완료 ✨
   | 'checklist_created'    // 체크리스트 생성
   | 'checklist_item_added' // 체크리스트 항목 추가
   | 'checklist_item_checked' // 체크리스트 항목 완료

@@ -1,14 +1,18 @@
 'use client'
 
+import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Calendar } from 'lucide-react'
+import { Calendar, PartyPopper, CheckCircle2, Undo2 } from 'lucide-react'
+import { toast } from 'sonner'
 import type { Card as CardType } from '@/types'
 import { useBoardStore } from '@/store/useBoardStore'
 import { getDueDateStatus } from '@/lib/utils'
+import { completeCard, uncompleteCard } from '@/app/actions/card'
 
 interface CardProps {
   card: CardType
+  isDoneList?: boolean // 완료 리스트인지 여부
 }
 
 // 라벨 색상 매핑 (hex 값으로 직접 지정)
@@ -56,8 +60,9 @@ function getDueDateStyle(status: string) {
 }
 
 // React Compiler가 자동으로 memoization 처리 (reactCompiler: true)
-export function Card({ card }: CardProps) {
-  const openCardModal = useBoardStore((state) => state.openCardModal)
+export function Card({ card, isDoneList = false }: CardProps) {
+  const [isCompleting, setIsCompleting] = useState(false)
+  const { openCardModal, updateCard } = useBoardStore()
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
@@ -74,6 +79,41 @@ export function Card({ card }: CardProps) {
   // 담당자 또는 생성자
   const displayUser = card.assignee || card.creator
 
+  // 완료 처리
+  const handleComplete = async (e: React.MouseEvent) => {
+    e.stopPropagation() // 카드 클릭 이벤트 방지
+    setIsCompleting(true)
+
+    const result = await completeCard(card.id)
+    if (result.success && result.data) {
+      updateCard(card.id, result.data)
+      toast.success('🎉 카드가 완료되었습니다!')
+    } else {
+      toast.error(result.error || '완료 처리에 실패했습니다.')
+    }
+
+    setIsCompleting(false)
+  }
+
+  // 완료 취소
+  const handleUncomplete = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsCompleting(true)
+
+    const result = await uncompleteCard(card.id)
+    if (result.success && result.data) {
+      updateCard(card.id, result.data)
+      toast.success('완료가 취소되었습니다.')
+    } else {
+      toast.error(result.error || '완료 취소에 실패했습니다.')
+    }
+
+    setIsCompleting(false)
+  }
+
+  // 완료된 카드인지
+  const isCompleted = card.is_completed
+
   return (
     <div
       ref={setNodeRef}
@@ -84,6 +124,7 @@ export function Card({ card }: CardProps) {
       className={`
         card p-4 cursor-pointer select-none min-h-[120px] flex flex-col
         ${isDragging ? 'opacity-60 ring-2 ring-indigo-400 scale-[1.02] rotate-1' : ''}
+        ${isCompleted ? 'opacity-60 bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800' : ''}
       `}
     >
       {/* 라벨 */}
@@ -110,8 +151,9 @@ export function Card({ card }: CardProps) {
       )}
 
       {/* 제목 */}
-      <h3 className='text-[15px] font-semibold text-[rgb(var(--foreground))] leading-relaxed mb-2'>
-        {card.title}
+      <h3 className={`text-[15px] font-semibold leading-relaxed mb-2 flex items-center gap-2 ${isCompleted ? 'text-emerald-600 dark:text-emerald-400' : 'text-[rgb(var(--foreground))]'}`}>
+        {isCompleted && <CheckCircle2 className='w-4 h-4 flex-shrink-0' />}
+        <span className={isCompleted ? 'line-through' : ''}>{card.title}</span>
       </h3>
 
       {/* 설명 */}
@@ -121,11 +163,23 @@ export function Card({ card }: CardProps) {
         </p>
       )}
 
+      {/* 완료된 카드: 완료 시간 표시 */}
+      {isCompleted && card.completed_at && (
+        <div className='text-xs text-emerald-600 dark:text-emerald-400 mb-3'>
+          ✅ 완료: {new Date(card.completed_at).toLocaleDateString('ko-KR', { 
+            month: 'short', 
+            day: 'numeric', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })}
+        </div>
+      )}
+
       {/* 하단: 마감일 + 아바타 (항상 아래에 고정) */}
       <div className='flex items-center justify-between mt-auto pt-3'>
         <div className='flex items-center gap-2'>
-          {/* 마감일 - D-Day 형식 */}
-          {card.due_date && dueDateStatus && (
+          {/* 마감일 - D-Day 형식 (완료 안 된 경우만) */}
+          {!isCompleted && card.due_date && dueDateStatus && (
             <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium ${getDueDateStyle(dueDateStatus)}`}>
               <Calendar className='w-3.5 h-3.5' />
               <span>{formatDDay(card.due_date)}</span>
@@ -156,6 +210,36 @@ export function Card({ card }: CardProps) {
           </div>
         )}
       </div>
+
+      {/* 완료 리스트일 때만 완료 처리 버튼 표시 */}
+      {isDoneList && (
+        <div className='mt-3 pt-3 border-t border-[rgb(var(--border))]'>
+          {!isCompleted ? (
+            <button
+              onClick={handleComplete}
+              disabled={isCompleting}
+              className='w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg
+                       bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium
+                       transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              <PartyPopper className='w-4 h-4' />
+              {isCompleting ? '처리 중...' : '🎉 완료 처리'}
+            </button>
+          ) : (
+            <button
+              onClick={handleUncomplete}
+              disabled={isCompleting}
+              className='w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg
+                       bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 
+                       text-slate-700 dark:text-slate-300 text-sm font-medium
+                       transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              <Undo2 className='w-4 h-4' />
+              {isCompleting ? '처리 중...' : '완료 취소'}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

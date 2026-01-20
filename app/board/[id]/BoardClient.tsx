@@ -154,6 +154,7 @@ export default function BoardClient({ user }: BoardClientProps) {
   return (
     <div className='h-[100dvh] flex flex-col overflow-hidden'>
       <BoardHeader
+        boardId={boardId}
         title={board?.title || '보드'}
         user={user}
         members={boardMembers}

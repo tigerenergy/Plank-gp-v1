@@ -417,3 +417,124 @@ export async function assignCard(
     return { success: false, error: '서버 연결에 실패했습니다.' }
   }
 }
+
+// 카드 완료 처리 (보드 멤버)
+export async function completeCard(cardId: string): Promise<ActionResult<Card>> {
+  try {
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
+    // 보드 멤버 확인
+    const membership = await checkCardMembership(supabase, cardId, user.id)
+    if (!membership.isMember) {
+      return { success: false, error: '보드 멤버만 완료 처리할 수 있습니다.' }
+    }
+
+    // 카드 정보 조회
+    const { data: card, error: cardError } = await supabase
+      .from('cards')
+      .select('title, list_id, is_completed')
+      .eq('id', cardId)
+      .single()
+
+    if (cardError || !card) {
+      return { success: false, error: '카드를 찾을 수 없습니다.' }
+    }
+
+    // 이미 완료된 경우
+    if (card.is_completed) {
+      return { success: false, error: '이미 완료된 카드입니다.' }
+    }
+
+    // 완료 처리
+    const { data, error } = await supabase
+      .from('cards')
+      .update({
+        is_completed: true,
+        completed_at: new Date().toISOString(),
+        completed_by: user.id,
+      })
+      .eq('id', cardId)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('완료 처리 에러:', error)
+      return { success: false, error: '완료 처리에 실패했습니다.' }
+    }
+
+    // 보드의 모든 멤버에게 알림
+    const { data: listForNotif } = await supabase
+      .from('lists')
+      .select('board_id')
+      .eq('id', card.list_id)
+      .single()
+
+    if (listForNotif?.board_id) {
+      await notifyBoardMembers({
+        boardId: listForNotif.board_id,
+        excludeUserId: user.id,
+        type: 'card_completed',
+        title: '🎉 카드가 완료되었습니다!',
+        message: `"${card.title}" 카드가 완료 처리되었습니다`,
+        link: `/board/${listForNotif.board_id}`,
+        cardId: cardId,
+      })
+    }
+
+    return { success: true, data }
+  } catch (error) {
+    console.error('완료 처리 에러:', error)
+    return { success: false, error: '서버 연결에 실패했습니다.' }
+  }
+}
+
+// 카드 완료 취소 (보드 멤버)
+export async function uncompleteCard(cardId: string): Promise<ActionResult<Card>> {
+  try {
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
+    // 보드 멤버 확인
+    const membership = await checkCardMembership(supabase, cardId, user.id)
+    if (!membership.isMember) {
+      return { success: false, error: '보드 멤버만 완료 취소할 수 있습니다.' }
+    }
+
+    // 완료 취소
+    const { data, error } = await supabase
+      .from('cards')
+      .update({
+        is_completed: false,
+        completed_at: null,
+        completed_by: null,
+      })
+      .eq('id', cardId)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('완료 취소 에러:', error)
+      return { success: false, error: '완료 취소에 실패했습니다.' }
+    }
+
+    return { success: true, data }
+  } catch (error) {
+    console.error('완료 취소 에러:', error)
+    return { success: false, error: '서버 연결에 실패했습니다.' }
+  }
+}

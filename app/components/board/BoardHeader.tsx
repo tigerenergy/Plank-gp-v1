@@ -1,6 +1,6 @@
 'use client'
 
-import { Users } from 'lucide-react'
+import { Users, CheckCircle2 } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import type { Profile } from '@/types'
 import { NavLink } from '../NavLink'
@@ -8,13 +8,14 @@ import { ThemeToggle } from '../ui/ThemeToggle'
 import { UserMenu } from '../auth/UserMenu'
 
 interface BoardHeaderProps {
+  boardId: string
   title: string
   user: User | null
   members: Profile[]
   onSettingsClick?: () => void
 }
 
-export function BoardHeader({ title, user, members, onSettingsClick }: BoardHeaderProps) {
+export function BoardHeader({ boardId, title, user, members, onSettingsClick }: BoardHeaderProps) {
   const displayMembers = members.slice(0, 4)
   const remainingCount = members.length - displayMembers.length
 
@@ -33,6 +34,15 @@ export function BoardHeader({ title, user, members, onSettingsClick }: BoardHead
             <h1 className='text-lg font-bold text-[rgb(var(--foreground))] truncate'>
               {title}
             </h1>
+
+            {/* 완료된 작업 버튼 */}
+            <NavLink
+              href={`/board/${boardId}/completed`}
+              className='hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-sm font-medium hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors'
+            >
+              <CheckCircle2 className='w-4 h-4' />
+              완료된 작업
+            </NavLink>
           </div>
 
           {/* 오른쪽: 멤버 + 설정 */}

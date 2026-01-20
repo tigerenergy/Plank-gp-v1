@@ -129,6 +129,11 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
       toast.error('마감일을 입력해주세요.')
       return
     }
+    // 설명 필수 체크
+    if (!data.description?.trim()) {
+      toast.error('설명을 입력해주세요.')
+      return
+    }
 
     const result = await updateCard(data)
     if (result.success && result.data) {
@@ -340,12 +345,16 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                         <>
                           <textarea
                             {...register('description')}
-                            className='w-full px-4 py-3 rounded-lg 
+                            className={`w-full px-4 py-3 rounded-lg 
                                      bg-gray-100 dark:bg-[#252542] 
-                                     border border-gray-300 dark:border-white/10 
-                                     text-gray-900 dark:text-gray-100
-                                     text-sm focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/50 
-                                     resize-y min-h-[120px] max-h-[300px] placeholder-gray-400 dark:placeholder-gray-500'
+                                     border text-gray-900 dark:text-gray-100
+                                     text-sm focus:outline-none 
+                                     resize-y min-h-[120px] max-h-[300px] placeholder-gray-400 dark:placeholder-gray-500
+                                     transition-all
+                                     ${watch('description')?.trim() 
+                                       ? 'border-emerald-500 ring-2 ring-emerald-500' 
+                                       : 'border-gray-300 dark:border-white/10 focus:border-violet-500 dark:focus:border-violet-500/50'
+                                     }`}
                             placeholder='카드에 대한 설명을 입력하세요...'
                           />
                           {errors.description && (

@@ -20,7 +20,6 @@ import { Card } from '@/app/components/Card'
 import { BoardHeader } from '@/app/components/board/BoardHeader'
 import { BoardLoading } from '@/app/components/board/BoardLoading'
 import { BoardError } from '@/app/components/board/BoardError'
-import { AddListButton } from '@/app/components/board/AddListButton'
 
 // 🚀 Dynamic imports - 모달은 필요할 때만 로드 (코드 스플리팅)
 const CardModal = dynamic(() => import('@/app/components/CardModal').then(mod => ({ default: mod.CardModal })), {
@@ -172,10 +171,8 @@ export default function BoardClient({ user }: BoardClientProps) {
         >
           <div className='flex flex-col sm:flex-row gap-4 p-4 sm:p-6 sm:h-full sm:overflow-x-auto sm:items-start board-scroll'>
             {lists.map((list) => (
-              <Column key={list.id} list={list} canEdit={canEdit} isOwner={isOwner} />
+              <Column key={list.id} list={list} canEdit={canEdit} />
             ))}
-            {/* 멤버도 리스트 추가 가능 */}
-            {canEdit && <AddListButton />}
           </div>
 
           <DragOverlay dropAnimation={dropAnimation}>

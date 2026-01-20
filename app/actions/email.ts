@@ -136,3 +136,33 @@ export async function getEmailLogs(boardId: string): Promise<ActionResult<EmailL
     return { success: false, error: '서버 연결에 실패했습니다.' }
   }
 }
+
+// 이메일 발송 기록 삭제
+export async function deleteEmailLog(logId: string): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
+    const { error } = await supabase
+      .from('email_logs')
+      .delete()
+      .eq('id', logId)
+
+    if (error) {
+      console.error('이메일 로그 삭제 에러:', error)
+      return { success: false, error: '이메일 기록 삭제에 실패했습니다.' }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('이메일 로그 삭제 에러:', error)
+    return { success: false, error: '서버 연결에 실패했습니다.' }
+  }
+}

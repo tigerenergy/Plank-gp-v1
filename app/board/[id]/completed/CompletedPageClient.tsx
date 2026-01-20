@@ -44,7 +44,7 @@ import {
   type PeriodFilter 
 } from '@/app/actions/completed'
 import { createAIReport, getReports, deleteReport, type Report } from '@/app/actions/report'
-import { sendReportToEmail, getEmailLogs, type EmailLog } from '@/app/actions/email'
+import { sendReportToEmail, getEmailLogs, deleteEmailLog, type EmailLog } from '@/app/actions/email'
 import { getTeamMembers, searchUserByEmail } from '@/app/actions/member'
 import type { ReportType } from '@/lib/gemini'
 import type { Profile } from '@/types'
@@ -542,7 +542,7 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
               <div className='grid lg:grid-cols-2 gap-6'>
                 {/* 주간 완료 추이 */}
                 {weeklyChartData.length > 0 && (
-                  <div className='card p-6 bg-gradient-to-br from-violet-500/5 to-indigo-500/5'>
+                  <div className='card p-6 bg-white dark:bg-[rgb(var(--card))]'>
                     <h3 className='text-sm font-semibold text-[rgb(var(--foreground))] mb-4 flex items-center gap-2'>
                       <span className='w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center'>📈</span>
                       주간 완료 추이
@@ -592,7 +592,7 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
 
                 {/* 팀원별 완료 */}
                 {memberChartData.length > 0 && (
-                  <div className='card p-6 bg-gradient-to-br from-indigo-500/5 to-cyan-500/5'>
+                  <div className='card p-6 bg-white dark:bg-[rgb(var(--card))]'>
                     <h3 className='text-sm font-semibold text-[rgb(var(--foreground))] mb-4 flex items-center gap-2'>
                       <span className='w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center'>👥</span>
                       팀원별 완료 현황
@@ -1124,18 +1124,36 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
                     {emailLogs.slice(0, 5).map((log) => (
                       <div
                         key={log.id}
-                        className='flex items-center justify-between text-xs p-2 bg-[rgb(var(--secondary))] rounded-lg'
+                        className='flex items-center justify-between text-xs p-2 bg-[rgb(var(--secondary))] rounded-lg group'
                       >
-                        <span className='text-[rgb(var(--muted-foreground))] truncate'>
+                        <span className='text-[rgb(var(--muted-foreground))] truncate flex-1'>
                           {log.recipients.join(', ')}
                         </span>
-                        <span className={`px-2 py-0.5 rounded ${
-                          log.status === 'sent' 
-                            ? 'bg-emerald-500/10 text-emerald-500' 
-                            : 'bg-red-500/10 text-red-500'
-                        }`}>
-                          {log.status === 'sent' ? '✓ 발송됨' : '✗ 실패'}
-                        </span>
+                        <div className='flex items-center gap-2'>
+                          <span className={`px-2 py-0.5 rounded ${
+                            log.status === 'sent' 
+                              ? 'bg-emerald-500/10 text-emerald-500' 
+                              : 'bg-red-500/10 text-red-500'
+                          }`}>
+                            {log.status === 'sent' ? '✓ 발송됨' : '✗ 실패'}
+                          </span>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              const result = await deleteEmailLog(log.id)
+                              if (result.success) {
+                                toast.success('발송 기록이 삭제되었습니다.')
+                                loadEmailLogs()
+                              } else {
+                                toast.error(result.error || '삭제에 실패했습니다.')
+                              }
+                            }}
+                            className='opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/10 text-[rgb(var(--muted-foreground))] hover:text-red-500 transition-all'
+                            title='삭제'
+                          >
+                            <X className='w-3 h-3' />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

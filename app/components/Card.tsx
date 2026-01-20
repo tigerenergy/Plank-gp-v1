@@ -3,12 +3,12 @@
 import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Calendar, PartyPopper, CheckCircle2, Undo2 } from 'lucide-react'
+import { Calendar, PartyPopper, CheckCircle2, Undo2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Card as CardType } from '@/types'
 import { useBoardStore } from '@/store/useBoardStore'
 import { getDueDateStatus } from '@/lib/utils'
-import { completeCard, uncompleteCard } from '@/app/actions/card'
+import { completeCard, uncompleteCard, deleteCard } from '@/app/actions/card'
 
 interface CardProps {
   card: CardType
@@ -62,7 +62,8 @@ function getDueDateStyle(status: string) {
 // React Compiler가 자동으로 memoization 처리 (reactCompiler: true)
 export function Card({ card, isDoneList = false }: CardProps) {
   const [isCompleting, setIsCompleting] = useState(false)
-  const { openCardModal, updateCard } = useBoardStore()
+  const [isDeleting, setIsDeleting] = useState(false)
+  const { openCardModal, updateCard, deleteCard: removeCardFromStore } = useBoardStore()
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
@@ -109,6 +110,27 @@ export function Card({ card, isDoneList = false }: CardProps) {
     }
 
     setIsCompleting(false)
+  }
+
+  // 완료된 카드 삭제 (완료 페이지에 기록 남아있으니 보드에서 삭제)
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    
+    if (!confirm('이 카드를 삭제하시겠습니까?\n(완료된 작업 페이지에는 기록이 남아있습니다)')) {
+      return
+    }
+    
+    setIsDeleting(true)
+
+    const result = await deleteCard(card.id)
+    if (result.success) {
+      removeCardFromStore(card.id)
+      toast.success('카드가 삭제되었습니다.')
+    } else {
+      toast.error(result.error || '카드 삭제에 실패했습니다.')
+    }
+
+    setIsDeleting(false)
   }
 
   // 완료된 카드인지
@@ -226,17 +248,30 @@ export function Card({ card, isDoneList = false }: CardProps) {
               {isCompleting ? '처리 중...' : '🎉 완료 처리'}
             </button>
           ) : (
-            <button
-              onClick={handleUncomplete}
-              disabled={isCompleting}
-              className='w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg
-                       bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 
-                       text-slate-700 dark:text-slate-300 text-sm font-medium
-                       transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-            >
-              <Undo2 className='w-4 h-4' />
-              {isCompleting ? '처리 중...' : '완료 취소'}
-            </button>
+            <div className='flex gap-2'>
+              <button
+                onClick={handleUncomplete}
+                disabled={isCompleting || isDeleting}
+                className='flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg
+                         bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 
+                         text-slate-700 dark:text-slate-300 text-sm font-medium
+                         transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+              >
+                <Undo2 className='w-4 h-4' />
+                {isCompleting ? '...' : '취소'}
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isCompleting || isDeleting}
+                className='flex items-center justify-center gap-1 px-3 py-2 rounded-lg
+                         bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 
+                         text-red-600 dark:text-red-400 text-sm font-medium
+                         transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+              >
+                <Trash2 className='w-4 h-4' />
+                {isDeleting ? '...' : '삭제'}
+              </button>
+            </div>
           )}
         </div>
       )}

@@ -55,6 +55,14 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [newCardLabels, setNewCardLabels] = useState<Label[]>([]) // 새 카드용 라벨 상태
+  
+  // 에러 상태 (인라인 표시용)
+  const [fieldErrors, setFieldErrors] = useState<{
+    title?: string
+    start_date?: string
+    due_date?: string
+    description?: string
+  }>({})
 
   useEscapeClose(closeCardModal, isCardModalOpen)
 
@@ -168,39 +176,53 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
   const onSubmit = async () => {
     // getValues로 현재 폼 값 가져오기
     const { title, description, start_date, due_date } = getValues()
-
+    
+    // 에러 초기화
+    const errors: typeof fieldErrors = {}
+    
     // 제목 필수 체크
     if (!title?.trim()) {
-      toast.error('제목을 입력해주세요.')
-      titleRef.current?.focus()
-      return
+      errors.title = '제목을 입력해주세요.'
     }
     // 시작일 필수 체크
     if (!start_date) {
-      toast.error('시작일을 입력해주세요.')
-      // DatePicker는 클릭으로 열어야 하므로 스크롤만
-      document.getElementById('start-date-picker')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      return
+      errors.start_date = '시작일을 선택해주세요.'
     }
     // 마감일 필수 체크
     if (!due_date) {
-      toast.error('마감일을 입력해주세요.')
-      document.getElementById('due-date-picker')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      return
+      errors.due_date = '마감일을 선택해주세요.'
     }
     // 설명 필수 체크
     if (!description?.trim()) {
-      toast.error('설명을 입력해주세요.')
-      descriptionRef.current?.focus()
+      errors.description = '설명을 입력해주세요.'
+    }
+    
+    // 에러가 있으면 표시하고 첫 번째 에러 필드로 포커스
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      
+      // 첫 번째 에러 필드로 포커스
+      if (errors.title) {
+        titleRef.current?.focus()
+      } else if (errors.start_date) {
+        document.getElementById('start-date-picker')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      } else if (errors.due_date) {
+        document.getElementById('due-date-picker')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      } else if (errors.description) {
+        descriptionRef.current?.focus()
+      }
       return
     }
+    
+    // 에러 없으면 초기화
+    setFieldErrors({})
 
     // 새 카드 생성 모드
     if (isNewCardMode && newCardListId) {
       const result = await createCard({
         list_id: newCardListId,
-        title: title.trim(),
-        description: description.trim(),
+        title: title!.trim(),
+        description: description!.trim(),
         start_date,
         due_date,
         labels: newCardLabels, // 라벨도 함께 전송
@@ -219,8 +241,8 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
     if (!selectedCard) return
     const result = await updateCard({
       id: selectedCard.id,
-      title: title.trim(),
-      description: description.trim(),
+      title: title!.trim(),
+      description: description!.trim(),
       start_date,
       due_date,
     })
@@ -282,36 +304,42 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                 <div className='w-10 h-1 bg-white/20 rounded-full' />
               </div>
 
-              {/* 헤더 */}
               {/* 헤더 - 인라인으로 렌더링 */}
-              <div className='sticky top-0 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-gray-200 dark:border-white/5 bg-white dark:bg-[#1a1a2e]'>
-                <div className='flex items-center gap-3 flex-1 mr-4'>
-                  <div className='w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0'>
-                    <svg className='w-4 h-4 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' />
-                    </svg>
+              <div className='sticky top-0 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-[#1a1a2e]'>
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center gap-3 flex-1 mr-4'>
+                    <div className='w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0'>
+                      <svg className='w-4 h-4 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' />
+                      </svg>
+                    </div>
+                    <input
+                      ref={titleRef}
+                      name='title'
+                      value={watch('title') || ''}
+                      onChange={(e) => {
+                        setValue('title', e.target.value)
+                        if (fieldErrors.title) setFieldErrors(prev => ({ ...prev, title: undefined }))
+                      }}
+                      className={`text-lg font-semibold text-gray-900 dark:text-gray-100 bg-transparent border-b-2 focus:outline-none w-full placeholder-gray-400 dark:placeholder-gray-500 pb-1 transition-colors
+                        ${fieldErrors.title ? 'border-red-500' : 'border-transparent focus:border-violet-500'}`}
+                      placeholder='카드 제목'
+                    />
                   </div>
-                  <input
-                    {...register('title')}
-                    ref={(e) => {
-                      register('title').ref(e)
-                      // @ts-ignore
-                      titleRef.current = e
-                    }}
-                    className='text-lg font-semibold text-gray-900 dark:text-gray-100 bg-transparent border-none focus:outline-none w-full placeholder-gray-400 dark:placeholder-gray-500'
-                    placeholder='카드 제목'
-                  />
+                  <motion.button
+                    type='button'
+                    onClick={closeCardModal}
+                    className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-all flex-shrink-0'
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                    </svg>
+                  </motion.button>
                 </div>
-                <motion.button
-                  type='button'
-                  onClick={closeCardModal}
-                  className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-all flex-shrink-0'
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
-                  </svg>
-                </motion.button>
+                {fieldErrors.title && (
+                  <p className='text-xs text-red-500 mt-1 ml-11'>{fieldErrors.title}</p>
+                )}
               </div>
 
               {/* 탭 네비게이션 */}
@@ -420,10 +448,17 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                         <div id='start-date-picker'>
                           <DatePicker
                             value={watch('start_date') || null}
-                            onChange={(value) => setValue('start_date', value || '')}
+                            onChange={(value) => {
+                              setValue('start_date', value || '')
+                              if (fieldErrors.start_date) setFieldErrors(prev => ({ ...prev, start_date: undefined }))
+                            }}
                             placeholder='시작일 선택'
                             hasSuccess={!!watch('start_date')}
+                            hasError={!!fieldErrors.start_date}
                           />
+                          {fieldErrors.start_date && (
+                            <p className='text-xs text-red-500 mt-1'>{fieldErrors.start_date}</p>
+                          )}
                         </div>
                       ) : (
                         <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm'>
@@ -445,10 +480,17 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                         <div id='due-date-picker'>
                           <DatePicker
                             value={watch('due_date') || null}
-                            onChange={(value) => setValue('due_date', value || '')}
+                            onChange={(value) => {
+                              setValue('due_date', value || '')
+                              if (fieldErrors.due_date) setFieldErrors(prev => ({ ...prev, due_date: undefined }))
+                            }}
                             placeholder='마감일 선택'
                             hasSuccess={!!watch('due_date')}
+                            hasError={!!fieldErrors.due_date}
                           />
+                          {fieldErrors.due_date && (
+                            <p className='text-xs text-red-500 mt-1'>{fieldErrors.due_date}</p>
+                          )}
                         </div>
                       ) : (
                         <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm'>
@@ -469,11 +511,12 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                       {canEdit || isNewCardMode ? (
                         <>
                           <textarea
-                            {...register('description')}
-                            ref={(e) => {
-                              register('description').ref(e)
-                              // @ts-ignore
-                              descriptionRef.current = e
+                            ref={descriptionRef}
+                            name='description'
+                            value={watch('description') || ''}
+                            onChange={(e) => {
+                              setValue('description', e.target.value)
+                              if (fieldErrors.description) setFieldErrors(prev => ({ ...prev, description: undefined }))
                             }}
                             className={`w-full px-4 py-3 rounded-lg 
                                      bg-gray-100 dark:bg-[#252542] 
@@ -481,12 +524,17 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                                      text-sm focus:outline-none 
                                      resize-y min-h-[120px] max-h-[300px] placeholder-gray-400 dark:placeholder-gray-500
                                      transition-all
-                                     ${watch('description')?.trim() 
-                                       ? 'border-emerald-500 ring-2 ring-emerald-500' 
-                                       : 'border-gray-300 dark:border-white/10 focus:border-violet-500 dark:focus:border-violet-500/50'
+                                     ${fieldErrors.description 
+                                       ? 'border-red-500 ring-2 ring-red-500' 
+                                       : watch('description')?.trim() 
+                                         ? 'border-emerald-500 ring-2 ring-emerald-500' 
+                                         : 'border-gray-300 dark:border-white/10 focus:border-violet-500 dark:focus:border-violet-500/50'
                                      }`}
                             placeholder='카드에 대한 설명을 입력하세요...'
                           />
+                          {fieldErrors.description && (
+                            <p className='text-xs text-red-500 mt-1'>{fieldErrors.description}</p>
+                          )}
                         </>
                       ) : (
                         <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm text-gray-900 dark:text-gray-100 min-h-[120px] whitespace-pre-wrap'>

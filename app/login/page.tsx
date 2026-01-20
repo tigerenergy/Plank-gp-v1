@@ -28,14 +28,14 @@ export default function LoginPage() {
         transition={{ duration: 0.4 }}
         className='w-full max-w-sm mx-4'
       >
-        <div className='bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-8 shadow-sm'>
+        <div className='bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-10 shadow-xl shadow-slate-900/5 dark:shadow-black/20'>
           {/* 로고 & 타이틀 */}
-          <div className='text-center mb-8'>
+          <div className='text-center mb-10'>
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.1 }}
-              className='flex justify-center mb-4'
+              className='flex justify-center mb-5'
             >
               {/* 라이트 모드 로고 */}
               <Image
@@ -56,17 +56,22 @@ export default function LoginPage() {
                 priority
               />
             </motion.div>
-            <p className='text-slate-500 dark:text-slate-400 text-sm tracking-wide'>
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className='text-slate-500 dark:text-slate-400 text-sm tracking-wide font-light'
+            >
               팀과 함께 성장하는 협업 공간
-            </p>
+            </motion.p>
           </div>
 
           {/* Google 로그인 버튼 */}
           <motion.button
-            whileHover={{ scale: 1.01 }}
+            whileHover={{ scale: 1.01, y: -1 }}
             whileTap={{ scale: 0.99 }}
             onClick={handleGoogleLogin}
-            className='w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-white text-sm font-medium tracking-wide rounded-xl border border-slate-200 dark:border-slate-600 transition-colors shadow-sm'
+            className='w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-white text-sm font-medium tracking-wide rounded-xl border border-slate-200 dark:border-slate-600 transition-all shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500'
           >
             <svg className='w-5 h-5' viewBox='0 0 24 24'>
               <path
@@ -90,7 +95,7 @@ export default function LoginPage() {
           </motion.button>
 
           {/* 안내 문구 */}
-          <p className='mt-6 text-center text-[11px] text-slate-400 leading-relaxed tracking-wide'>
+          <p className='mt-8 text-center text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed tracking-wide'>
             로그인하면{' '}
             <span className='text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer underline underline-offset-2'>
               서비스 이용약관
@@ -104,7 +109,14 @@ export default function LoginPage() {
         </div>
 
         {/* 하단 */}
-        <p className='mt-6 text-center text-[11px] text-slate-400 tracking-wide'>© 2026 Plank</p>
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className='mt-8 text-center text-[11px] text-slate-400 dark:text-slate-500 tracking-wide'
+        >
+          © 2026 Plank
+        </motion.p>
       </motion.div>
     </div>
   )

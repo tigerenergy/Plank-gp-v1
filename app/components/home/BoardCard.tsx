@@ -112,7 +112,11 @@ export function BoardCard({
             }}
           />
           <div className='flex gap-3 mt-auto'>
-            <button type='submit' className='flex-1 btn-primary py-2.5 text-sm'>
+            <button 
+              type='submit' 
+              disabled={!editingTitle.trim()}
+              className='flex-1 btn-primary py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed'
+            >
               저장
             </button>
             <button

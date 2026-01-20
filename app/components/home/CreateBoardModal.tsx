@@ -309,7 +309,7 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
                 </button>
                 <button
                   type='submit'
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !title.trim()}
                   className='flex-1 btn-primary py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
                 >
                   {isSubmitting && (

@@ -104,7 +104,7 @@ export function AddCardForm({ listId, onClose }: AddCardFormProps) {
         <button
           type='button'
           onClick={handleSubmit(onSubmit)}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !cardTitle?.trim()}
           className='btn-primary px-6 py-2.5 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'
         >
           {isSubmitting && (

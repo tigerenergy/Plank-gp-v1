@@ -179,6 +179,17 @@ export function CardModal({ isBoardMember = false, isOwner = false }: CardModalP
   // 새 카드 모드가 아닌데 selectedCard가 없으면 렌더링 안 함
   if (!isNewCardMode && !selectedCard) return null
 
+  // 폼 필드 값 watch (실시간 검증용)
+  const title = watch('title')
+  const startDate = watch('start_date')
+  const dueDate = watch('due_date')
+  const description = watch('description')
+
+  // 폼 유효성 검사: 새 카드 모드일 때만 필수 필드 체크
+  const isFormValid = isNewCardMode
+    ? !!(title?.trim() && startDate && dueDate && description?.trim())
+    : true // 기존 카드 수정 모드에서는 항상 활성화 (선택적 수정 가능)
+
   const onSubmit = async () => {
     // 중복 제출 방지
     if (isSubmitting) return
@@ -622,6 +633,7 @@ export function CardModal({ isBoardMember = false, isOwner = false }: CardModalP
                 onDeleteClick={() => setShowDeleteConfirm(true)}
                 onClose={closeCardModal}
                 onSave={onSubmit}
+                isFormValid={isFormValid}
               />
             </div>
           </motion.div>
@@ -686,6 +698,7 @@ interface ModalFooterProps {
   onDeleteClick: () => void
   onClose: () => void
   onSave: () => void
+  isFormValid?: boolean // 폼 유효성 검사 결과
 }
 
 function ModalFooter({
@@ -698,6 +711,7 @@ function ModalFooter({
   onDeleteClick,
   onClose,
   onSave,
+  isFormValid = false,
 }: ModalFooterProps) {
   // 저장 버튼은 "상세" 탭 + 편집 권한이 있을 때만 표시
   // 댓글/체크리스트는 각각 자체 저장 버튼이 있으므로 푸터에 저장 버튼 불필요
@@ -742,7 +756,7 @@ function ModalFooter({
           <motion.button
             type='button'
             onClick={onSave}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isFormValid}
             className='flex-1 sm:flex-none px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2'
             whileTap={{ scale: 0.95 }}
           >

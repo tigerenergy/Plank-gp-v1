@@ -64,7 +64,7 @@ export function ConfirmModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
-        <div className='flex items-start gap-4 p-5'>
+        <div className='flex items-start gap-4 p-6'>
           <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${styles.icon}`}>
             <AlertTriangle className='w-6 h-6' />
           </div>
@@ -80,7 +80,7 @@ export function ConfirmModal({
         </div>
 
         {/* 버튼 */}
-        <div className='flex justify-end gap-2 px-5 py-4 border-t border-[rgb(var(--border))] bg-[rgb(var(--secondary))]/50'>
+        <div className='flex justify-end gap-3 px-6 py-4 border-t border-[rgb(var(--border))] bg-[rgb(var(--secondary))]/50'>
           <button onClick={onCancel} className='btn-secondary px-4 py-2.5 text-sm'>
             {cancelText}
           </button>

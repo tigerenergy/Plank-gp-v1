@@ -21,10 +21,10 @@ export function BoardHeader({ boardId, title, user, members, onSettingsClick }: 
 
   return (
     <header className='flex-shrink-0 sticky top-0 z-50 border-b border-[rgb(var(--border))] bg-[rgb(var(--card))]/95 backdrop-blur-sm'>
-      <div className='px-4 sm:px-6 py-3'>
+      <div className='px-5 sm:px-6 py-4'>
         <div className='flex items-center justify-between gap-4'>
           {/* 왼쪽: 뒤로가기 + 제목 */}
-          <div className='flex items-center gap-3 min-w-0'>
+          <div className='flex items-center gap-4 min-w-0'>
             <NavLink href='/' className='w-10 h-10 rounded-xl flex items-center justify-center btn-ghost border border-[rgb(var(--border))]' title='보드 목록'>
               <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                 <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 19l-7-7 7-7' />

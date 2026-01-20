@@ -321,9 +321,9 @@ export function CardModal({ isBoardMember = false, isOwner = false }: CardModalP
               </div>
 
               {/* 헤더 - 인라인으로 렌더링 */}
-              <div className='sticky top-0 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-[#1a1a2e]'>
+              <div className='sticky top-0 px-5 sm:px-6 py-4 sm:py-5 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-[#1a1a2e]'>
                 <div className='flex items-center justify-between'>
-                  <div className='flex items-center gap-3 flex-1 mr-4'>
+                  <div className='flex items-center gap-4 flex-1 mr-4'>
                     <div className='w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0'>
                       <svg className='w-4 h-4 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                         <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' />
@@ -359,8 +359,8 @@ export function CardModal({ isBoardMember = false, isOwner = false }: CardModalP
               </div>
 
               {/* 탭 네비게이션 */}
-              <div className='px-4 sm:px-6 pt-3 border-b border-gray-200 dark:border-white/5'>
-                <div className='flex gap-1'>
+              <div className='px-5 sm:px-6 pt-4 border-b border-gray-200 dark:border-white/5'>
+                <div className='flex gap-2'>
                   <TabButton
                     active={cardModalTab === 'details'}
                     onClick={() => setCardModalTab('details')}
@@ -385,7 +385,7 @@ export function CardModal({ isBoardMember = false, isOwner = false }: CardModalP
               </div>
 
               {/* 컨텐츠 */}
-              <div className='p-4 sm:p-6 space-y-5 min-h-[200px]'>
+              <div className='p-5 sm:p-6 space-y-6 min-h-[200px]'>
                 {/* 상세 탭 */}
                 {cardModalTab === 'details' && (
                   <>
@@ -400,7 +400,7 @@ export function CardModal({ isBoardMember = false, isOwner = false }: CardModalP
                           onChange={handleLabelsChange}
                         />
                       ) : (
-                        <div className='flex flex-wrap gap-1.5'>
+                        <div className='flex flex-wrap gap-2'>
                           {selectedCard?.labels?.length ? (
                             selectedCard.labels.map((label, idx) => (
                               <span key={idx} className='px-2.5 py-1 rounded-full text-xs font-semibold label-blue'>
@@ -419,7 +419,7 @@ export function CardModal({ isBoardMember = false, isOwner = false }: CardModalP
                       <label className='block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2'>
                         담당자
                       </label>
-                      <div className='flex items-center gap-3 px-4 py-3 rounded-xl bg-[rgb(var(--secondary))]'>
+                      <div className='flex items-center gap-4 px-5 py-4 rounded-xl bg-[rgb(var(--secondary))]'>
                         {isNewCardMode ? (
                           <span className='text-sm text-[rgb(var(--muted-foreground))]'>저장 시 본인으로 자동 지정됩니다</span>
                         ) : selectedCard?.assignee ? (
@@ -477,7 +477,7 @@ export function CardModal({ isBoardMember = false, isOwner = false }: CardModalP
                           )}
                         </div>
                       ) : (
-                        <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm'>
+                        <div className='px-5 py-4 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm'>
                           {selectedCard?.start_date ? (
                             new Date(selectedCard.start_date).toLocaleDateString('ko-KR')
                           ) : (
@@ -509,7 +509,7 @@ export function CardModal({ isBoardMember = false, isOwner = false }: CardModalP
                           )}
                         </div>
                       ) : (
-                        <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm'>
+                        <div className='px-5 py-4 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm'>
                           {selectedCard?.due_date ? (
                             new Date(selectedCard.due_date).toLocaleDateString('ko-KR')
                           ) : (
@@ -534,7 +534,7 @@ export function CardModal({ isBoardMember = false, isOwner = false }: CardModalP
                               setValue('description', e.target.value)
                               if (fieldErrors.description) setFieldErrors(prev => ({ ...prev, description: undefined }))
                             }}
-                            className={`w-full px-4 py-3 rounded-lg 
+                            className={`w-full px-5 py-4 rounded-lg 
                                      bg-gray-100 dark:bg-[#252542] 
                                      border text-gray-900 dark:text-gray-100
                                      text-sm focus:outline-none 
@@ -657,7 +657,7 @@ function TabButton({ active, onClick, icon, label, count }: TabButtonProps) {
     <button
       type='button'
       onClick={onClick}
-      className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-t-lg transition-colors
+      className={`flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-t-lg transition-all duration-200
                 ${
                   active
                     ? 'bg-gray-100 dark:bg-[#252542] text-gray-900 dark:text-gray-100 border-b-2 border-violet-500'
@@ -723,7 +723,7 @@ function ModalFooter({
       ) : (
         <div />
       )}
-      <div className='flex items-center gap-2'>
+      <div className='flex items-center gap-3'>
         {/* 닫기/취소 버튼 */}
         <motion.button
           type='button'

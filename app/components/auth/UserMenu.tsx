@@ -32,7 +32,7 @@ export function UserMenu({ user }: UserMenuProps) {
     <div ref={menuRef} className='relative'>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className='flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-[rgb(var(--secondary))] transition-colors'
+        className='flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[rgb(var(--secondary))] transition-all duration-200'
       >
         {avatarUrl ? (
           <img
@@ -53,9 +53,9 @@ export function UserMenu({ user }: UserMenuProps) {
       </button>
 
       {isOpen && (
-        <div className='absolute right-0 mt-2 w-56 py-1.5 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-xl shadow-lg z-50 animate-in fade-in slide-in-from-top-1 duration-150'>
+        <div className='absolute right-0 mt-2 w-56 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-xl shadow-lg z-50 animate-in fade-in slide-in-from-top-1 duration-150'>
           {/* 유저 정보 */}
-          <div className='px-4 py-3 border-b border-[rgb(var(--border))]'>
+          <div className='px-5 py-4 border-b border-[rgb(var(--border))]'>
             <p className='text-sm font-semibold text-[rgb(var(--foreground))] truncate'>
               {displayName}
             </p>

@@ -198,7 +198,7 @@ export function ChecklistSection({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className='bg-gray-100 dark:bg-[#252542]/50 rounded-lg p-3 space-y-3'
+              className='bg-gray-100 dark:bg-[#252542]/50 rounded-lg p-4 space-y-4'
             >
               {/* 헤더 */}
               <div className='flex items-center justify-between'>
@@ -212,7 +212,7 @@ export function ChecklistSection({
                       if (e.key === 'Enter') handleUpdateTitle(checklist.id)
                       if (e.key === 'Escape') setEditingTitleId(null)
                     }}
-                    className='flex-1 px-2 py-1 bg-white dark:bg-[#252542] border border-gray-300 dark:border-white/10 rounded
+                    className='flex-1 px-3 py-2 bg-white dark:bg-[#252542] border border-gray-300 dark:border-white/10 rounded-lg
                              text-sm font-medium text-gray-900 dark:text-gray-100 focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/50'
                     autoFocus
                   />
@@ -250,7 +250,7 @@ export function ChecklistSection({
               </div>
 
               {/* 진행률 바 */}
-              <div className='flex items-center gap-2'>
+              <div className='flex items-center gap-3'>
                 <span className='text-xs text-gray-500 dark:text-gray-400 w-8'>{progress}%</span>
                 <div className='flex-1 h-1.5 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden'>
                   <motion.div
@@ -319,7 +319,7 @@ export function ChecklistSection({
 
               {/* 항목 추가 입력 (소유자만) */}
               {canEdit && (
-                <div className='flex gap-2'>
+                <div className='flex gap-3'>
                   <input
                     type='text'
                     value={newItemInputs[checklist.id] || ''}
@@ -333,7 +333,7 @@ export function ChecklistSection({
                       if (e.key === 'Enter') handleAddItem(checklist.id)
                     }}
                     placeholder='항목 추가...'
-                    className='flex-1 px-2 py-1.5 bg-transparent border border-gray-300 dark:border-white/10 rounded
+                    className='flex-1 px-3 py-2 bg-transparent border border-gray-300 dark:border-white/10 rounded-lg
                              text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500
                              focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/50'
                   />
@@ -342,8 +342,8 @@ export function ChecklistSection({
                     disabled={
                       !newItemInputs[checklist.id]?.trim() || submittingItemId === checklist.id
                     }
-                    className='px-2 py-1.5 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 
-                             disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1'
+                    className='px-3 py-2 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 
+                             disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'
                   >
                     {submittingItemId === checklist.id && (
                       <div className='w-3 h-3 border-2 border-violet-600 dark:border-violet-400 border-t-transparent rounded-full animate-spin' />
@@ -360,7 +360,7 @@ export function ChecklistSection({
       {/* 체크리스트 추가 (소유자만) */}
       {canEdit &&
         (isCreating ? (
-          <div className='flex gap-2'>
+          <div className='flex gap-3'>
             <input
               type='text'
               value={newTitle}
@@ -373,7 +373,7 @@ export function ChecklistSection({
                 }
               }}
               placeholder='체크리스트 제목...'
-              className='flex-1 px-3 py-2 bg-white dark:bg-[#252542] border border-gray-300 dark:border-white/10 rounded-lg
+              className='flex-1 px-4 py-3 bg-white dark:bg-[#252542] border border-gray-300 dark:border-white/10 rounded-lg
                        text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500
                        focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/50'
               autoFocus

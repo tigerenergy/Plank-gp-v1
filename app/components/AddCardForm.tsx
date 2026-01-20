@@ -97,10 +97,10 @@ export function AddCardForm({ listId, onClose }: AddCardFormProps) {
       />
       
       {errors.title && (
-        <p className='text-sm text-red-500 mt-2'>{errors.title.message}</p>
+        <p className='text-sm text-red-500 mt-3'>{errors.title.message}</p>
       )}
       
-      <div className='flex items-center justify-between mt-4'>
+      <div className='flex items-center justify-between mt-6'>
         <button
           type='button'
           onClick={handleSubmit(onSubmit)}

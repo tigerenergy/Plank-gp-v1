@@ -136,22 +136,22 @@ export function CommentList({
   return (
     <div className='space-y-4'>
       {/* 댓글 입력 */}
-      <form onSubmit={handleSubmit} className='flex gap-2'>
+      <form onSubmit={handleSubmit} className='flex gap-3'>
         <input
           ref={inputRef}
           type='text'
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           placeholder='댓글을 입력하세요...'
-          className='flex-1 px-3 py-2 bg-gray-100 dark:bg-[#252542] border border-gray-300 dark:border-white/10 rounded-lg
+          className='flex-1 px-4 py-3 bg-gray-100 dark:bg-[#252542] border border-gray-300 dark:border-white/10 rounded-lg
                    text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500
-                   focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/50'
+                   focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/50 transition-all'
         />
         <button
           type='submit'
           disabled={!newComment.trim() || isSubmitting}
-          className='px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg
-                   disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center'
+          className='px-4 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-lg
+                   disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center hover:shadow-md'
         >
           {isSubmitting ? (
             <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
@@ -162,7 +162,7 @@ export function CommentList({
       </form>
 
       {/* 댓글 목록 */}
-      <div className='space-y-3 max-h-60 overflow-y-auto'>
+      <div className='space-y-4 max-h-60 overflow-y-auto'>
         <AnimatePresence>
           {comments.map((comment) => (
             <motion.div
@@ -170,7 +170,7 @@ export function CommentList({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className='flex gap-3 group'
+              className='flex gap-4 group'
             >
               {/* 아바타 */}
               {comment.user?.avatar_url ? (
@@ -209,14 +209,14 @@ export function CommentList({
                         if (e.key === 'Enter') handleUpdate(comment.id)
                         if (e.key === 'Escape') setEditingId(null)
                       }}
-                      className='flex-1 px-2 py-1 bg-white dark:bg-[#252542] border border-gray-300 dark:border-white/10 rounded
-                               text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/50'
+                      className='flex-1 px-3 py-2 bg-white dark:bg-[#252542] border border-gray-300 dark:border-white/10 rounded-lg
+                               text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/50 transition-all'
                       autoFocus
                     />
                     <button
                       onClick={() => handleUpdate(comment.id)}
                       disabled={isUpdating === comment.id}
-                      className='text-xs text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 disabled:opacity-50 flex items-center gap-1'
+                      className='text-xs text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 disabled:opacity-50 flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-all'
                     >
                       {isUpdating === comment.id && (
                         <div className='w-3 h-3 border-2 border-violet-600 dark:border-violet-400 border-t-transparent rounded-full animate-spin' />
@@ -225,7 +225,7 @@ export function CommentList({
                     </button>
                     <button
                       onClick={() => setEditingId(null)}
-                      className='text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                      className='text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all'
                     >
                       취소
                     </button>

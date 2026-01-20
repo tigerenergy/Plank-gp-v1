@@ -111,7 +111,7 @@ export function BoardCard({
               if (e.key === 'Escape') onCancelEdit()
             }}
           />
-          <div className='flex gap-2 mt-auto'>
+          <div className='flex gap-3 mt-auto'>
             <button type='submit' className='flex-1 btn-primary py-2.5 text-sm'>
               저장
             </button>
@@ -143,7 +143,7 @@ export function BoardCard({
         </div>
 
         {/* 호버 시 액션 (생성자만 삭제 가능) */}
-        <div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity'>
+        <div className='flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity'>
           {isOwner && (
             <>
               <button

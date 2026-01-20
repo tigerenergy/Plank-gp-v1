@@ -44,7 +44,7 @@ export function AssigneeSelect({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={`
-          w-full flex items-center gap-3 p-3 rounded-lg border transition-colors
+          w-full flex items-center gap-4 p-4 rounded-lg border transition-all duration-200
           ${
             disabled
               ? 'opacity-50 cursor-not-allowed'
@@ -109,14 +109,14 @@ export function AssigneeSelect({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className='absolute top-full left-0 right-0 mt-1 py-1 bg-card dark:bg-slate-800 
+            className='absolute top-full left-0 right-0 mt-2 py-2 bg-card dark:bg-slate-800 
                      border border-border dark:border-white/10 rounded-lg shadow-lg z-20
                      max-h-60 overflow-y-auto'
           >
             {/* 담당자 없음 옵션 */}
             <button
               onClick={() => handleSelect(null)}
-              className={`w-full flex items-center gap-3 px-3 py-2 hover:bg-secondary dark:hover:bg-white/5
+              className={`w-full flex items-center gap-4 px-4 py-3 hover:bg-secondary dark:hover:bg-white/5 transition-colors
                        ${!currentAssignee ? 'bg-primary/5' : ''}`}
             >
               <div className='w-8 h-8 rounded-full bg-secondary dark:bg-white/10 flex items-center justify-center'>
@@ -136,7 +136,7 @@ export function AssigneeSelect({
                 <button
                   key={member.id}
                   onClick={() => handleSelect(member.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 hover:bg-secondary dark:hover:bg-white/5
+                  className={`w-full flex items-center gap-4 px-4 py-3 hover:bg-secondary dark:hover:bg-white/5 transition-colors
                            ${isSelected ? 'bg-primary/5' : ''}`}
                 >
                   {member.avatar_url ? (

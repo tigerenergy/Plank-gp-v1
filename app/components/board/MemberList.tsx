@@ -44,13 +44,13 @@ export function MemberList({
   return (
     <div className='space-y-4'>
       {/* 헤더 */}
-      <div className='flex items-center gap-2 text-sm text-[rgb(var(--muted-foreground))]'>
+      <div className='flex items-center gap-3 text-sm text-[rgb(var(--muted-foreground))]'>
         <Users className='w-4 h-4' />
         <span>팀원 ({members.length}명)</span>
       </div>
 
       {/* 팀원 목록 */}
-      <div className='space-y-2'>
+      <div className='space-y-3'>
         {members.map((member) => {
           const isMe = member.id === currentUserId
           const isBoardMember = boardMemberIds.includes(member.id)
@@ -61,10 +61,10 @@ export function MemberList({
           return (
             <div
               key={member.id}
-              className='flex items-center justify-between p-3 rounded-xl
-                       bg-[rgb(var(--secondary))] hover:bg-[rgb(var(--secondary-hover))] transition-colors'
+              className='flex items-center justify-between p-4 rounded-xl
+                       bg-[rgb(var(--secondary))] hover:bg-[rgb(var(--secondary-hover))] transition-all duration-200'
             >
-              <div className='flex items-center gap-3'>
+              <div className='flex items-center gap-4'>
                 {/* 아바타 */}
                 {member.avatar_url ? (
                   <img
@@ -83,7 +83,7 @@ export function MemberList({
 
                 {/* 이름 & 이메일 */}
                 <div className='min-w-0'>
-                  <div className='flex items-center gap-2'>
+                  <div className='flex items-center gap-3'>
                     <span className='text-sm font-semibold text-[rgb(var(--foreground))] truncate'>
                       {member.username || '이름 없음'}
                     </span>

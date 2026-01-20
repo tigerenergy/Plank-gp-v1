@@ -119,7 +119,7 @@ export function InvitationDropdown() {
             className='absolute right-0 top-full mt-2 w-80 bg-[rgb(var(--card))] rounded-2xl border border-[rgb(var(--border))] shadow-xl overflow-hidden z-50'
           >
             {/* 헤더 */}
-            <div className='px-4 py-3 border-b border-[rgb(var(--border))] flex items-center justify-between'>
+            <div className='px-5 py-4 border-b border-[rgb(var(--border))] flex items-center justify-between'>
               <h3 className='font-semibold text-[rgb(var(--foreground))]'>초대 알림</h3>
               <span className='text-xs text-[rgb(var(--muted-foreground))]'>
                 {pendingCount}개의 초대
@@ -140,15 +140,15 @@ export function InvitationDropdown() {
                   </p>
                 </div>
               ) : (
-                <div className='p-2 space-y-2'>
+                <div className='p-3 space-y-3'>
                   {invitations.map((invitation) => (
                     <motion.div
                       key={invitation.id}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className='p-3 rounded-xl bg-[rgb(var(--secondary))] hover:bg-[rgb(var(--secondary))]/80 transition-colors'
+                      className='p-4 rounded-xl bg-[rgb(var(--secondary))] hover:bg-[rgb(var(--secondary))]/80 transition-all duration-200'
                     >
-                      <div className='flex items-start gap-3'>
+                      <div className='flex items-start gap-4'>
                         {/* 초대자 아바타 */}
                         {invitation.inviter?.avatar_url ? (
                           <img
@@ -177,11 +177,11 @@ export function InvitationDropdown() {
                           </p>
 
                           {/* 액션 버튼 */}
-                          <div className='flex gap-2 mt-3'>
+                          <div className='flex gap-3 mt-4'>
                             <button
                               onClick={() => handleAccept(invitation)}
                               disabled={processingId === invitation.id}
-                              className='flex-1 py-2 px-3 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-1.5 disabled:opacity-50 transition-colors'
+                              className='flex-1 py-2.5 px-4 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 transition-all duration-200 hover:shadow-md'
                             >
                               <Check className='w-4 h-4' />
                               수락
@@ -189,7 +189,7 @@ export function InvitationDropdown() {
                             <button
                               onClick={() => handleReject(invitation.id)}
                               disabled={processingId === invitation.id}
-                              className='flex-1 py-2 px-3 bg-[rgb(var(--card))] hover:bg-red-50 dark:hover:bg-red-500/10 text-[rgb(var(--foreground))] hover:text-red-500 text-sm font-medium rounded-lg flex items-center justify-center gap-1.5 disabled:opacity-50 border border-[rgb(var(--border))] transition-colors'
+                              className='flex-1 py-2.5 px-4 bg-[rgb(var(--card))] hover:bg-red-50 dark:hover:bg-red-500/10 text-[rgb(var(--foreground))] hover:text-red-500 text-sm font-medium rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 border border-[rgb(var(--border))] transition-all duration-200'
                             >
                               <X className='w-4 h-4' />
                               거절

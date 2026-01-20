@@ -16,8 +16,8 @@ interface HeaderProps {
 export function Header({ user, title, showBack }: HeaderProps) {
   return (
     <header className='sticky top-0 z-50 border-b border-[rgb(var(--border))] bg-[rgb(var(--card))]/95 backdrop-blur-sm'>
-      <div className='max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between'>
-        <div className='flex items-center gap-3'>
+      <div className='max-w-6xl mx-auto px-5 sm:px-6 py-4 flex items-center justify-between'>
+        <div className='flex items-center gap-4'>
           {showBack && (
             <NavLink href='/' className='p-2 rounded-xl btn-ghost'>
               <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -53,7 +53,7 @@ export function Header({ user, title, showBack }: HeaderProps) {
           </NavLink>
         </div>
 
-        <div className='flex items-center gap-2'>
+        <div className='flex items-center gap-3'>
           {user && <NotificationDropdown />}
           <ThemeToggle />
           {user && <UserMenu user={user} />}

@@ -45,9 +45,9 @@ export function LabelEditor({ labels, onChange }: LabelEditorProps) {
   }
 
   return (
-    <div className='space-y-3'>
+    <div className='space-y-4'>
       {/* 현재 라벨 목록 */}
-      <div className='flex flex-wrap gap-2'>
+      <div className='flex flex-wrap gap-3'>
         {labels.map((label, idx) => {
           const colorInfo = LABEL_COLORS.find((c) => c.color === label.color) || LABEL_COLORS[4]
           const isLightColor = label.color === 'yellow'
@@ -93,7 +93,7 @@ export function LabelEditor({ labels, onChange }: LabelEditorProps) {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className='space-y-3 p-4 bg-[rgb(var(--secondary))] rounded-xl'
+            className='space-y-4 p-5 bg-[rgb(var(--secondary))] rounded-xl'
           >
             <input
               type='text'
@@ -106,7 +106,7 @@ export function LabelEditor({ labels, onChange }: LabelEditorProps) {
             />
 
             {/* 색상 선택 */}
-            <div className='flex flex-wrap gap-2'>
+            <div className='flex flex-wrap gap-3'>
               {LABEL_COLORS.map((colorOption) => (
                 <button
                   key={colorOption.color}
@@ -128,7 +128,7 @@ export function LabelEditor({ labels, onChange }: LabelEditorProps) {
             </div>
 
             {/* 버튼 */}
-            <div className='flex gap-2'>
+            <div className='flex gap-3'>
               <button
                 type='button'
                 onClick={handleAddLabel}

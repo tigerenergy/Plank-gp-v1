@@ -58,8 +58,8 @@ export function Column({ list, canEdit = false }: ColumnProps) {
       style={{ boxShadow: 'var(--shadow)' }}
     >
       {/* 헤더 */}
-      <div className='flex items-center justify-between px-5 py-4'>
-        <div className='flex items-center gap-3 flex-1 min-w-0'>
+      <div className='flex items-center justify-between px-6 py-5'>
+        <div className='flex items-center gap-4 flex-1 min-w-0'>
           <div
             className={`w-9 h-9 rounded-xl ${iconConfig.color} flex items-center justify-center`}
           >
@@ -105,7 +105,7 @@ export function Column({ list, canEdit = false }: ColumnProps) {
       </div>
 
       {/* 카드 목록 */}
-      <div ref={setNodeRef} className='flex-1 overflow-y-auto px-3 pb-3 space-y-3 min-h-[120px]'>
+      <div ref={setNodeRef} className='flex-1 overflow-y-auto px-4 pb-4 space-y-4 min-h-[120px]'>
         <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
           {list.cards.map((card) => (
             <Card key={card.id} card={card} isDoneList={list.is_done_list} />

@@ -79,7 +79,7 @@ export function BoardSettingsModal({ isOpen, currentUserId, onClose }: BoardSett
           className='w-full max-w-lg bg-[rgb(var(--card))] rounded-2xl shadow-xl overflow-hidden'
         >
           {/* 헤더 */}
-          <div className='flex items-center justify-between px-5 py-4 border-b border-[rgb(var(--border))]'>
+          <div className='flex items-center justify-between px-6 py-5 border-b border-[rgb(var(--border))]'>
             <h2 className='text-lg font-bold text-[rgb(var(--foreground))] flex items-center gap-2'>
               <Users className='w-5 h-5' />
               팀원
@@ -93,7 +93,7 @@ export function BoardSettingsModal({ isOpen, currentUserId, onClose }: BoardSett
           </div>
 
           {/* 콘텐츠 */}
-          <div className='p-4 max-h-[60vh] overflow-y-auto'>
+          <div className='p-6 max-h-[60vh] overflow-y-auto'>
             {isLoading ? (
               <div className='flex items-center justify-center py-8'>
                 <div className='w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin' />

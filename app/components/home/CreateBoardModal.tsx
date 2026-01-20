@@ -163,7 +163,7 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
                 <label className='block text-sm font-medium text-[rgb(var(--muted-foreground))] mb-2'>
                   아이콘 선택
                 </label>
-                <div className='flex gap-2 items-center flex-wrap'>
+                <div className='flex gap-3 items-center flex-wrap'>
                   {DEFAULT_EMOJIS.map((e) => (
                     <button
                       key={e}
@@ -198,11 +198,11 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
 
                 {/* 이모지 피커 */}
                 {showPicker && (
-                  <div className='absolute top-full left-0 mt-2 z-50 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-xl shadow-lg p-3 w-72 max-h-64 overflow-y-auto'>
+                  <div className='absolute top-full left-0 mt-2 z-50 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-xl shadow-lg p-4 w-72 max-h-64 overflow-y-auto'>
                     {Object.entries(ALL_EMOJIS).map(([category, emojis]) => (
                       <div key={category} className='mb-3 last:mb-0'>
                         <div className='text-xs font-medium text-[rgb(var(--muted-foreground))] mb-1.5'>{category}</div>
-                        <div className='flex flex-wrap gap-1'>
+                        <div className='flex flex-wrap gap-2'>
                           {emojis.map((e) => (
                             <button
                               key={e}

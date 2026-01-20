@@ -60,7 +60,7 @@ export function DatePicker({ value, onChange, placeholder = '마감일 선택', 
       <button
         type='button'
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl input text-left transition-all ${getButtonStyle()}`}
+        className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl input text-left transition-all duration-200 ${getButtonStyle()}`}
       >
         <Calendar className='w-4 h-4 text-[rgb(var(--muted-foreground))] flex-shrink-0' />
         <span className={isValidDate ? 'text-[rgb(var(--foreground))]' : 'text-[rgb(var(--muted-foreground))]'}>
@@ -223,7 +223,7 @@ export function DatePicker({ value, onChange, placeholder = '마감일 선택', 
           </div>
 
           {/* 빠른 선택 */}
-          <div className='px-4 pb-4 flex gap-2'>
+          <div className='px-5 pb-5 flex gap-3'>
             <button
               type='button'
               onClick={() => {

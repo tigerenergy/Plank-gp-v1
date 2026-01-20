@@ -46,9 +46,9 @@ export function ColumnHeader({
   onDeleteClick,
 }: ColumnHeaderProps) {
   return (
-    <div className='flex-shrink-0 px-3 sm:px-4 py-3 bg-gray-50/50 dark:bg-transparent border-b border-gray-100 dark:border-white/5'>
+    <div className='flex-shrink-0 px-4 sm:px-5 py-4 bg-gray-50/50 dark:bg-transparent border-b border-gray-100 dark:border-white/5'>
       <div className='flex items-center justify-between'>
-        <div className='flex items-center gap-2 min-w-0 flex-1'>
+        <div className='flex items-center gap-3 min-w-0 flex-1'>
           {/* Status indicator dots */}
           <div className='flex gap-1'>
             <div className={`w-2 h-2 rounded-full ${colorClasses.dotPrimary}`} />
@@ -63,10 +63,10 @@ export function ColumnHeader({
               onChange={(e) => onEditTitleChange(e.target.value)}
               onBlur={onUpdateTitle}
               onKeyDown={onKeyDown}
-              className='flex-1 px-2 py-1 text-sm font-semibold 
+              className='flex-1 px-3 py-2 text-sm font-semibold 
                          bg-white dark:bg-[#252542] border border-violet-400 dark:border-violet-500/50 
-                         rounded-md text-gray-900 dark:text-gray-100 
-                         focus:outline-none focus:ring-2 focus:ring-violet-500/30'
+                         rounded-lg text-gray-900 dark:text-gray-100 
+                         focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition-all'
             />
           ) : (
             <>
@@ -109,8 +109,8 @@ export function ColumnHeader({
               >
                 <motion.button
                   onClick={onStartEdit}
-                  className='w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 
-                             hover:bg-gray-100 dark:hover:bg-white/5 flex items-center gap-2 transition-colors'
+                  className='w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-300 
+                             hover:bg-gray-100 dark:hover:bg-white/5 flex items-center gap-3 transition-all duration-200'
                   whileTap={{ scale: 0.98 }}
                 >
                   <EditIcon />
@@ -118,8 +118,8 @@ export function ColumnHeader({
                 </motion.button>
                 <motion.button
                   onClick={onDeleteClick}
-                  className='w-full px-3 py-2 text-left text-sm text-red-500 dark:text-red-400 
-                             hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2 transition-colors'
+                  className='w-full px-4 py-3 text-left text-sm text-red-500 dark:text-red-400 
+                             hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-3 transition-all duration-200'
                   whileTap={{ scale: 0.98 }}
                 >
                   <DeleteIcon />

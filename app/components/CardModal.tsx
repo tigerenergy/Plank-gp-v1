@@ -2,13 +2,11 @@
 
 import { useRef, useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageSquare, CheckSquare2, FileText } from 'lucide-react'
 import { useBoardStore } from '@/store/useBoardStore'
-import { updateCardSchema, type UpdateCardInput } from '@/schema/validation'
-import { updateCard, deleteCard } from '@/app/actions/card'
+import { updateCard, deleteCard, createCard } from '@/app/actions/card'
 import { getComments } from '@/app/actions/comment'
 import { getChecklists } from '@/app/actions/checklist'
 import { useEscapeClose } from '@/hooks'
@@ -35,7 +33,10 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
     updateCard: updateCardInStore,
     deleteCard: deleteCardInStore,
     updateSelectedCard,
+    addCard,
     isCardModalOpen,
+    isNewCardMode,
+    newCardListId,
     // 카드 모달 관련 상태 (Zustand로 이관)
     cardModalTab,
     cardComments,
@@ -54,9 +55,9 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
 
   useEscapeClose(closeCardModal, isCardModalOpen)
 
-  // 🚀 댓글 & 체크리스트 병렬 로드 (async-parallel)
+  // 🚀 댓글 & 체크리스트 병렬 로드 (async-parallel) - 새 카드 모드에서는 스킵
   useEffect(() => {
-    if (!selectedCard || !isCardModalOpen) return
+    if (!selectedCard || !isCardModalOpen || isNewCardMode) return
 
     const loadData = async () => {
       setCardModalLoading({ comments: true, checklists: true })
@@ -78,7 +79,7 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
     }
 
     loadData()
-  }, [selectedCard?.id, isCardModalOpen, setCardComments, setCardChecklists, setCardModalLoading])
+  }, [selectedCard?.id, isCardModalOpen, isNewCardMode, setCardComments, setCardChecklists, setCardModalLoading])
 
   // 라벨 변경
   const handleLabelsChange = async (labels: Label[]) => {
@@ -97,45 +98,109 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
 
   const {
     register,
-    handleSubmit,
     watch,
     setValue,
-    formState: { errors, isSubmitting },
-  } = useForm<UpdateCardInput>({
-    resolver: zodResolver(updateCardSchema),
+    reset,
+    getValues,
+    formState: { isSubmitting },
+  } = useForm<{
+    id?: string
+    list_id?: string
+    title?: string
+    description?: string
+    start_date?: string
+    due_date?: string
+  }>({
     defaultValues: {
-      id: selectedCard?.id,
-      title: selectedCard?.title,
-      description: selectedCard?.description || '',
-      start_date: selectedCard?.start_date || '',
-      due_date: selectedCard?.due_date || '',
+      list_id: '',
+      title: '',
+      description: '',
+      start_date: '',
+      due_date: '',
     },
   })
+
+  // 폼 리셋: 모달 열릴 때 + 모드/카드 변경 시
+  useEffect(() => {
+    if (isNewCardMode) {
+      reset({
+        list_id: newCardListId || '',
+        title: '',
+        description: '',
+        start_date: '',
+        due_date: '',
+      })
+    } else if (selectedCard) {
+      reset({
+        id: selectedCard.id,
+        title: selectedCard.title || '',
+        description: selectedCard.description || '',
+        start_date: selectedCard.start_date || '',
+        due_date: selectedCard.due_date || '',
+      })
+    }
+  }, [isNewCardMode, selectedCard?.id, newCardListId, reset])
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) closeCardModal()
   }
 
-  if (!selectedCard) return null
+  // 새 카드 모드가 아닌데 selectedCard가 없으면 렌더링 안 함
+  if (!isNewCardMode && !selectedCard) return null
 
-  const onSubmit = async (data: UpdateCardInput) => {
+  const onSubmit = async () => {
+    // getValues로 현재 폼 값 가져오기
+    const { title, description, start_date, due_date } = getValues()
+
+    // 제목 필수 체크
+    if (!title?.trim()) {
+      toast.error('제목을 입력해주세요.')
+      return
+    }
     // 시작일 필수 체크
-    if (!data.start_date) {
+    if (!start_date) {
       toast.error('시작일을 입력해주세요.')
       return
     }
     // 마감일 필수 체크
-    if (!data.due_date) {
+    if (!due_date) {
       toast.error('마감일을 입력해주세요.')
       return
     }
     // 설명 필수 체크
-    if (!data.description?.trim()) {
+    if (!description?.trim()) {
       toast.error('설명을 입력해주세요.')
       return
     }
 
-    const result = await updateCard(data)
+    // 새 카드 생성 모드
+    if (isNewCardMode && newCardListId) {
+      const result = await createCard({
+        list_id: newCardListId,
+        title: title.trim(),
+        description: description.trim(),
+        start_date,
+        due_date,
+      })
+      if (result.success && result.data) {
+        addCard(newCardListId, result.data)
+        closeCardModal()
+        toast.success('카드가 생성되었습니다.')
+      } else {
+        toast.error(result.error || '카드 생성에 실패했습니다.')
+      }
+      return
+    }
+
+    // 기존 카드 수정 모드
+    if (!selectedCard) return
+    const result = await updateCard({
+      id: selectedCard.id,
+      title: title.trim(),
+      description: description.trim(),
+      start_date,
+      due_date,
+    })
     if (result.success && result.data) {
       updateCardInStore(selectedCard.id, result.data)
       updateSelectedCard(result.data)
@@ -147,6 +212,8 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
   }
 
   const handleDeleteConfirm = async () => {
+    if (!selectedCard) return
+    
     setShowDeleteConfirm(false)
     setIsDeleting(true)
 
@@ -226,19 +293,19 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                 {/* 상세 탭 */}
                 {cardModalTab === 'details' && (
                   <>
-                    {/* 라벨 (편집 권한 있는 멤버) */}
+                    {/* 라벨 */}
                     <div>
                       <label className='block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2'>
                         라벨
                       </label>
-                      {canEdit ? (
+                      {canEdit || isNewCardMode ? (
                         <LabelEditor
-                          labels={selectedCard.labels || []}
+                          labels={selectedCard?.labels || []}
                           onChange={handleLabelsChange}
                         />
                       ) : (
                         <div className='flex flex-wrap gap-1.5'>
-                          {selectedCard.labels?.length ? (
+                          {selectedCard?.labels?.length ? (
                             selectedCard.labels.map((label, idx) => (
                               <span key={idx} className='px-2.5 py-1 rounded-full text-xs font-semibold label-blue'>
                                 {label.name}
@@ -251,13 +318,15 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                       )}
                     </div>
 
-                    {/* 담당자 (카드 생성자 = 담당자, 고정) */}
+                    {/* 담당자 */}
                     <div>
                       <label className='block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2'>
                         담당자
                       </label>
                       <div className='flex items-center gap-3 px-4 py-3 rounded-xl bg-[rgb(var(--secondary))]'>
-                        {selectedCard.assignee ? (
+                        {isNewCardMode ? (
+                          <span className='text-sm text-[rgb(var(--muted-foreground))]'>저장 시 본인으로 자동 지정됩니다</span>
+                        ) : selectedCard?.assignee ? (
                           <>
                             {selectedCard.assignee.avatar_url ? (
                               <img
@@ -295,7 +364,7 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                       <label className='block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2'>
                         시작일
                       </label>
-                      {canEdit ? (
+                      {canEdit || isNewCardMode ? (
                         <DatePicker
                           value={watch('start_date') || null}
                           onChange={(value) => setValue('start_date', value || '')}
@@ -304,7 +373,7 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                         />
                       ) : (
                         <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm'>
-                          {selectedCard.start_date ? (
+                          {selectedCard?.start_date ? (
                             new Date(selectedCard.start_date).toLocaleDateString('ko-KR')
                           ) : (
                             <span className='text-gray-400'>시작일 없음</span>
@@ -318,7 +387,7 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                       <label className='block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2'>
                         마감일
                       </label>
-                      {canEdit ? (
+                      {canEdit || isNewCardMode ? (
                         <DatePicker
                           value={watch('due_date') || null}
                           onChange={(value) => setValue('due_date', value || '')}
@@ -327,7 +396,7 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                         />
                       ) : (
                         <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm'>
-                          {selectedCard.due_date ? (
+                          {selectedCard?.due_date ? (
                             new Date(selectedCard.due_date).toLocaleDateString('ko-KR')
                           ) : (
                             <span className='text-gray-400'>마감일 없음</span>
@@ -341,7 +410,7 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                       <label className='block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2'>
                         설명
                       </label>
-                      {canEdit ? (
+                      {canEdit || isNewCardMode ? (
                         <>
                           <textarea
                             {...register('description')}
@@ -363,60 +432,74 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                         </>
                       ) : (
                         <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm text-gray-900 dark:text-gray-100 min-h-[120px] whitespace-pre-wrap'>
-                          {selectedCard.description || <span className='text-gray-400'>설명 없음</span>}
+                          {selectedCard?.description || <span className='text-gray-400'>설명 없음</span>}
                         </div>
                       )}
                     </div>
 
-                    <div className='pt-3 border-t border-gray-200 dark:border-white/5'>
-                      <p className='text-xs text-gray-500 dark:text-gray-500'>
-                        생성일: {new Date(selectedCard.created_at).toLocaleString('ko-KR')}
-                      </p>
-                    </div>
+                    {/* 생성일 - 기존 카드만 표시 */}
+                    {!isNewCardMode && selectedCard && (
+                      <div className='pt-3 border-t border-gray-200 dark:border-white/5'>
+                        <p className='text-xs text-gray-500 dark:text-gray-500'>
+                          생성일: {new Date(selectedCard.created_at).toLocaleString('ko-KR')}
+                        </p>
+                      </div>
+                    )}
                   </>
                 )}
 
-                {/* 댓글 탭 */}
+                {/* 댓글 탭 - 새 카드 모드에서는 비활성화 */}
                 {cardModalTab === 'comments' &&
-                  (cardModalLoading.comments ? (
+                  (isNewCardMode ? (
+                    <div className='flex flex-col items-center justify-center py-8 text-gray-400'>
+                      <MessageSquare className='w-8 h-8 mb-2' />
+                      <p className='text-sm'>카드를 먼저 저장해주세요</p>
+                    </div>
+                  ) : cardModalLoading.comments ? (
                     <div className='flex items-center justify-center py-8'>
                       <div className='animate-spin w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full' />
                     </div>
-                  ) : (
+                  ) : selectedCard ? (
                     <CommentList
                       cardId={selectedCard.id}
                       comments={cardComments}
                       currentUserId={currentUserId}
                       onCommentsChange={setCardComments}
                     />
-                  ))}
+                  ) : null)}
 
-                {/* 체크리스트 탭 */}
+                {/* 체크리스트 탭 - 새 카드 모드에서는 비활성화 */}
                 {cardModalTab === 'checklist' &&
-                  (cardModalLoading.checklists ? (
+                  (isNewCardMode ? (
+                    <div className='flex flex-col items-center justify-center py-8 text-gray-400'>
+                      <CheckSquare2 className='w-8 h-8 mb-2' />
+                      <p className='text-sm'>카드를 먼저 저장해주세요</p>
+                    </div>
+                  ) : cardModalLoading.checklists ? (
                     <div className='flex items-center justify-center py-8'>
                       <div className='animate-spin w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full' />
                     </div>
-                  ) : (
+                  ) : selectedCard ? (
                     <ChecklistSection
                       cardId={selectedCard.id}
                       checklists={cardChecklists}
                       onChecklistsChange={setCardChecklists}
                       canEdit={canEdit}
                     />
-                  ))}
+                  ) : null)}
               </div>
 
               {/* 푸터 (편집 권한자: 수정 가능, 본인 카드만: 삭제 가능) */}
               <ModalFooter
                 isDeleting={isDeleting}
                 isSubmitting={isSubmitting}
-                canEdit={canEdit}
-                canDelete={selectedCard.created_by === currentUserId}
+                canEdit={canEdit || isNewCardMode}
+                canDelete={!isNewCardMode && selectedCard?.created_by === currentUserId}
                 currentTab={cardModalTab}
+                isNewCard={isNewCardMode}
                 onDeleteClick={() => setShowDeleteConfirm(true)}
                 onClose={closeCardModal}
-                onSave={handleSubmit(onSubmit)}
+                onSave={onSubmit}
               />
             </div>
           </motion.div>
@@ -471,7 +554,7 @@ function TabButton({ active, onClick, icon, label, count }: TabButtonProps) {
 }
 
 interface ModalHeaderProps {
-  register: ReturnType<typeof useForm<UpdateCardInput>>['register']
+  register: ReturnType<typeof useForm>['register']
   onClose: () => void
 }
 
@@ -508,6 +591,7 @@ interface ModalFooterProps {
   canEdit: boolean // 편집 권한 여부
   canDelete: boolean // 삭제 권한 여부 (보드 소유자 OR 카드 생성자)
   currentTab: 'details' | 'comments' | 'checklist'
+  isNewCard?: boolean // 새 카드 생성 모드 여부
   onDeleteClick: () => void
   onClose: () => void
   onSave: () => void
@@ -519,6 +603,7 @@ function ModalFooter({
   canEdit,
   canDelete,
   currentTab,
+  isNewCard = false,
   onDeleteClick,
   onClose,
   onSave,
@@ -529,7 +614,7 @@ function ModalFooter({
   
   return (
     <div className='sticky bottom-0 px-4 sm:px-6 py-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 border-t border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-[#151525]'>
-      {/* 삭제 버튼: 보드 소유자 OR 카드 생성자 */}
+      {/* 삭제 버튼: 기존 카드 + 카드 생성자만 */}
       {canDelete ? (
         <motion.button
           type='button'
@@ -545,16 +630,20 @@ function ModalFooter({
         <div />
       )}
       <div className='flex items-center gap-2'>
-        {/* 닫기 버튼: 항상 보라색으로 */}
+        {/* 닫기/취소 버튼 */}
         <motion.button
           type='button'
           onClick={onClose}
-          className='flex-1 sm:flex-none px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-all text-sm font-medium'
+          className={`flex-1 sm:flex-none px-5 py-2.5 rounded-lg transition-all text-sm font-medium ${
+            isNewCard 
+              ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              : 'bg-violet-600 hover:bg-violet-500 text-white'
+          }`}
           whileTap={{ scale: 0.95 }}
         >
-          닫기
+          {isNewCard ? '취소' : '닫기'}
         </motion.button>
-        {/* 저장 버튼: 상세 탭 + 편집 권한 있을 때만 */}
+        {/* 저장/생성 버튼: 상세 탭 + 편집 권한 있을 때만 */}
         {showSaveButton && (
           <motion.button
             type='button'
@@ -563,7 +652,7 @@ function ModalFooter({
             className='flex-1 sm:flex-none px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-all disabled:opacity-50 text-sm font-medium'
             whileTap={{ scale: 0.95 }}
           >
-            {isSubmitting ? '저장 중...' : '저장'}
+            {isSubmitting ? (isNewCard ? '생성 중...' : '저장 중...') : (isNewCard ? '생성' : '저장')}
           </motion.button>
         )}
       </div>

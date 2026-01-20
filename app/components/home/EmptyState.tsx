@@ -38,7 +38,7 @@ export function EmptyState({ onCreateClick }: EmptyStateProps) {
         {/* 컨텐츠 */}
         <span className='relative flex items-center gap-2'>
           <Plus className='w-5 h-5' />
-          새 보드 만들기
+          새 프로젝트 만들기
         </span>
       </button>
     </div>

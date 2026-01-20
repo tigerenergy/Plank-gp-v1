@@ -85,6 +85,24 @@ const config: Config = {
         display: ['var(--font-display)', 'Playfair Display', 'Georgia', 'serif'],
       },
 
+      // 폰트 사이즈 (앱 전체 기준 - 기본보다 약간 크게)
+      fontSize: {
+        'xs': ['13px', { lineHeight: '1.5' }],
+        'sm': ['14px', { lineHeight: '1.5' }],
+        'base': ['16px', { lineHeight: '1.6' }],
+        'lg': ['18px', { lineHeight: '1.5' }],
+        'xl': ['20px', { lineHeight: '1.4' }],
+        '2xl': ['24px', { lineHeight: '1.35' }],
+        '3xl': ['30px', { lineHeight: '1.3' }],
+        '4xl': ['36px', { lineHeight: '1.25' }],
+        // 커스텀 사이즈
+        'title': ['22px', { lineHeight: '1.3', fontWeight: '700' }],
+        'subtitle': ['17px', { lineHeight: '1.4', fontWeight: '600' }],
+        'body': ['15px', { lineHeight: '1.6' }],
+        'caption': ['13px', { lineHeight: '1.5' }],
+        'small': ['12px', { lineHeight: '1.5' }],
+      },
+
       // 배경 그라데이션
       backgroundImage: {
         'gradient-pink': 'linear-gradient(180deg, #f9a8d4 0%, #fce7f3 100%)',

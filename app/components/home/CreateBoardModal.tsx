@@ -142,7 +142,7 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
             {/* 헤더 */}
             <div className='flex items-center justify-between px-6 py-4 border-b border-[rgb(var(--border))]'>
               <h2 className='text-lg font-bold text-[rgb(var(--foreground))]'>
-                새 보드 만들기
+                새 프로젝트 만들기
               </h2>
               <button
                 onClick={onClose}
@@ -221,10 +221,10 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
                 )}
               </div>
 
-              {/* 보드 이름 */}
+              {/* 프로젝트 이름 */}
               <div>
                 <label className='block text-sm font-medium text-[rgb(var(--muted-foreground))] mb-2'>
-                  보드 이름
+                  프로젝트 이름
                 </label>
                 <input
                   ref={titleInputRef}
@@ -248,7 +248,7 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
                   disabled={isSubmitting}
                 />
                 {errors.title && (
-                  <p className='text-xs text-red-500 mt-1'>보드 이름을 입력해주세요.</p>
+                  <p className='text-xs text-red-500 mt-1'>프로젝트 이름을 입력해주세요.</p>
                 )}
               </div>
 
@@ -309,7 +309,7 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
                   disabled={isSubmitting}
                   className='flex-1 btn-primary py-3 text-sm font-semibold disabled:opacity-50'
                 >
-                  {isSubmitting ? '생성 중...' : '보드 만들기'}
+                  {isSubmitting ? '생성 중...' : '프로젝트 만들기'}
                 </button>
               </div>
             </form>

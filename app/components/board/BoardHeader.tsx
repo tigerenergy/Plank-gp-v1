@@ -1,6 +1,6 @@
 'use client'
 
-import { Users, CheckCircle2 } from 'lucide-react'
+import { Users } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import type { Profile } from '@/types'
 import { NavLink } from '../NavLink'
@@ -38,16 +38,6 @@ export function BoardHeader({ boardId, title, user, members, onSettingsClick }: 
 
           {/* 오른쪽: 완료된 작업 + 멤버 + 설정 */}
           <div className='flex items-center gap-3 flex-shrink-0'>
-            {/* 완료된 작업 버튼 */}
-            <NavLink
-              href={`/board/${boardId}/completed`}
-              className='hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl btn-ghost border border-[rgb(var(--border))] text-sm font-medium'
-              title='완료된 작업 보기'
-            >
-              <CheckCircle2 className='w-4 h-4 text-emerald-500' />
-              <span className='hidden md:inline'>완료된 작업</span>
-            </NavLink>
-
             {/* 멤버 아바타 */}
             {members.length > 0 && (
               <button
@@ -85,13 +75,25 @@ export function BoardHeader({ boardId, title, user, members, onSettingsClick }: 
               </button>
             )}
 
+            {/* 완료된 작업 버튼 */}
+            <NavLink
+              href={`/board/${boardId}/completed`}
+              className='w-10 h-10 rounded-xl flex items-center justify-center btn-ghost border border-[rgb(var(--border))]'
+              title='완료된 작업 보기'
+            >
+              <svg className='w-5 h-5 text-emerald-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
+              </svg>
+            </NavLink>
+
+            {/* 팀원 관리 버튼 */}
             {onSettingsClick && (
               <button
                 onClick={onSettingsClick}
                 className='w-10 h-10 rounded-xl flex items-center justify-center btn-ghost border border-[rgb(var(--border))]'
-                title='팀원'
+                title='팀원 관리'
               >
-                <Users className='w-4 h-4' />
+                <Users className='w-5 h-5' />
               </button>
             )}
 

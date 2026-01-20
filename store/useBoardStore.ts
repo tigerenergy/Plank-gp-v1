@@ -19,6 +19,8 @@ interface BoardState {
   // 카드 모달 상태
   selectedCard: Card | null
   isCardModalOpen: boolean
+  isNewCardMode: boolean  // 새 카드 생성 모드
+  newCardListId: string | null  // 새 카드를 추가할 리스트 ID
   cardModalTab: CardModalTab
   cardComments: Comment[]
   cardChecklists: Checklist[]
@@ -40,6 +42,7 @@ interface BoardState {
 
   // 카드 모달 액션
   openCardModal: (card: Card) => void
+  openNewCardModal: (listId: string) => void  // 새 카드 생성 모달 열기
   closeCardModal: () => void
   updateSelectedCard: (updates: Partial<Card>) => void
   setCardModalTab: (tab: CardModalTab) => void
@@ -81,6 +84,8 @@ export const useBoardStore = create<BoardState>()(
     error: null,
     selectedCard: null,
     isCardModalOpen: false,
+    isNewCardMode: false,
+    newCardListId: null,
     cardModalTab: 'details' as CardModalTab,
     cardComments: [],
     cardChecklists: [],
@@ -126,8 +131,22 @@ export const useBoardStore = create<BoardState>()(
       set((state) => {
         state.selectedCard = card
         state.isCardModalOpen = true
+        state.isNewCardMode = false
+        state.newCardListId = null
         state.cardModalTab = 'details' // 탭 초기화
         state.cardComments = [] // 데이터 초기화
+        state.cardChecklists = []
+      }),
+
+    // 새 카드 생성 모달 열기
+    openNewCardModal: (listId) =>
+      set((state) => {
+        state.selectedCard = null
+        state.isCardModalOpen = true
+        state.isNewCardMode = true
+        state.newCardListId = listId
+        state.cardModalTab = 'details'
+        state.cardComments = []
         state.cardChecklists = []
       }),
 
@@ -135,6 +154,8 @@ export const useBoardStore = create<BoardState>()(
       set((state) => {
         state.selectedCard = null
         state.isCardModalOpen = false
+        state.isNewCardMode = false
+        state.newCardListId = null
         state.cardModalTab = 'details'
         state.cardComments = []
         state.cardChecklists = []
@@ -279,6 +300,8 @@ export const useBoardStore = create<BoardState>()(
         state.error = null
         state.selectedCard = null
         state.isCardModalOpen = false
+        state.isNewCardMode = false
+        state.newCardListId = null
         state.cardModalTab = 'details'
         state.cardComments = []
         state.cardChecklists = []

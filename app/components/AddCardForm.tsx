@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { X } from 'lucide-react'
 import { useBoardStore } from '@/store/useBoardStore'
 import { useDraftStore } from '@/store/useDraftStore'
 import { createCardSchema, type CreateCardInput } from '@/schema/validation'
@@ -77,40 +76,35 @@ export function AddCardForm({ listId, onClose }: AddCardFormProps) {
   }
 
   return (
-    <div className='card p-4'>
-      <div className='flex items-start gap-2 mb-3'>
-        <textarea
-          {...register('title')}
-          ref={(e) => {
-            register('title').ref(e)
-            if (e) textareaRef.current = e
-          }}
-          placeholder='카드 제목을 입력하세요...'
-          className='flex-1 resize-none bg-transparent border-0 focus:ring-0 focus:outline-none
-                     text-[15px] text-[rgb(var(--foreground))] placeholder-[rgb(var(--muted-foreground))]
-                     min-h-[80px] leading-relaxed'
-          onKeyDown={handleKeyDown}
-          disabled={isSubmitting}
-        />
-        <button onClick={onClose} className='p-1 btn-ghost rounded-lg'>
-          <X className='w-4 h-4' />
-        </button>
-      </div>
+    <div>
+      <textarea
+        {...register('title')}
+        ref={(e) => {
+          register('title').ref(e)
+          if (e) textareaRef.current = e
+        }}
+        placeholder='카드 제목을 입력하세요...'
+        className='w-full resize-none bg-[rgb(var(--secondary))]/50 rounded-xl px-4 py-3 border border-[rgb(var(--border))] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none
+                   text-base text-[rgb(var(--foreground))] placeholder-[rgb(var(--muted-foreground))]
+                   min-h-[100px] leading-relaxed transition-all'
+        onKeyDown={handleKeyDown}
+        disabled={isSubmitting}
+      />
       
       {errors.title && (
-        <p className='text-xs text-red-500 mb-3'>{errors.title.message}</p>
+        <p className='text-sm text-red-500 mt-2'>{errors.title.message}</p>
       )}
       
-      <div className='flex items-center justify-between pt-3 border-t border-[rgb(var(--border))]'>
+      <div className='flex items-center justify-between mt-4'>
         <button
           type='button'
           onClick={handleSubmit(onSubmit)}
           disabled={isSubmitting}
-          className='btn-primary px-4 py-2 text-sm'
+          className='btn-primary px-6 py-2.5 text-base font-semibold'
         >
           {isSubmitting ? '추가 중...' : '카드 추가'}
         </button>
-        <span className='text-xs text-[rgb(var(--muted-foreground))]'>
+        <span className='text-sm text-[rgb(var(--muted-foreground))]'>
           Enter 저장 · Esc 취소
         </span>
       </div>

@@ -75,6 +75,7 @@ export async function createCard(input: {
   list_id: string
   title: string
   description?: string
+  start_date?: string
   due_date?: string
 }): Promise<ActionResult<Card>> {
   try {
@@ -118,6 +119,7 @@ export async function createCard(input: {
         list_id: input.list_id,
         title: input.title,
         description: input.description || null,
+        start_date: input.start_date || null,
         due_date: input.due_date || null,
         position: newPosition,
         assignee_id: user.id,

@@ -310,13 +310,12 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                         <>
                           <textarea
                             {...register('description')}
-                            rows={4}
                             className='w-full px-4 py-3 rounded-lg 
                                      bg-gray-100 dark:bg-[#252542] 
                                      border border-gray-300 dark:border-white/10 
                                      text-gray-900 dark:text-gray-100
                                      text-sm focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/50 
-                                     resize-none placeholder-gray-400 dark:placeholder-gray-500'
+                                     resize-y min-h-[120px] max-h-[300px] placeholder-gray-400 dark:placeholder-gray-500'
                             placeholder='카드에 대한 설명을 입력하세요...'
                           />
                           {errors.description && (
@@ -324,7 +323,7 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                           )}
                         </>
                       ) : (
-                        <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm text-gray-900 dark:text-gray-100 min-h-[100px] whitespace-pre-wrap'>
+                        <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm text-gray-900 dark:text-gray-100 min-h-[120px] whitespace-pre-wrap'>
                           {selectedCard.description || <span className='text-gray-400'>설명 없음</span>}
                         </div>
                       )}

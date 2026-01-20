@@ -30,7 +30,7 @@ export function Header({ user, title, showBack }: HeaderProps) {
               </svg>
             </NavLink>
           )}
-
+          
           <NavLink href='/' className='flex items-center'>
             {/* 라이트 모드 로고 (다크모드에서 숨김) */}
             <Image

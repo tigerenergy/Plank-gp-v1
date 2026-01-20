@@ -1,17 +1,17 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Plus, LayoutGrid, Crown, Users } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import { useHomeStore } from '@/store/useHomeStore'
-import { useDraftStore } from '@/store/useDraftStore'
 import { useNavigationStore } from '@/store/useNavigationStore'
 import { getAllBoards, createBoard, deleteBoard, updateBoard } from './actions/board'
+import { createBoardSchema } from '@/schema/validation'
 import { ConfirmModal } from './components/ConfirmModal'
 import { BoardCard } from './components/home/BoardCard'
-import { CreateBoardForm } from './components/home/CreateBoardForm'
+import { CreateBoardModal } from './components/home/CreateBoardModal'
 import { EmptyState } from './components/home/EmptyState'
 import { Header } from './components/layout/Header'
 import { BoardCardSkeleton } from './components/ui/Skeleton'
@@ -49,13 +49,10 @@ export default function HomeClient({ user }: HomeClientProps) {
     setDeleteTarget,
   } = useHomeStore()
 
-  const { newBoardTitle, setNewBoardTitle, clearNewBoardTitle } = useDraftStore()
   const setNavigating = useNavigationStore((s) => s.setNavigating)
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
-  const [selectedEmoji, setSelectedEmoji] = useState('📋')
-  const [newBoardDueDate, setNewBoardDueDate] = useState('')
   const isSubmittingRef = useRef(false)
 
   useEffect(() => {
@@ -104,40 +101,35 @@ export default function HomeClient({ user }: HomeClientProps) {
   }, [boards, user])
 
   const handleCreateBoard = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault()
-
+    async (data: { title: string; emoji: string; startDate: string; dueDate: string }) => {
       // 중복 제출 방지
       if (isSubmittingRef.current) return
 
-      const title = newBoardTitle.trim()
-      if (!title) {
-        toast.error('보드 제목을 입력해주세요.')
+      // zod 스키마로 검증
+      const validation = createBoardSchema.safeParse({
+        title: data.title,
+        emoji: data.emoji,
+        start_date: data.startDate,
+        due_date: data.dueDate,
+      })
+
+      if (!validation.success) {
+        const firstError = validation.error.errors[0]
+        toast.error(firstError.message)
         return
       }
 
       isSubmittingRef.current = true
       setIsSubmitting(true)
 
-      // 입력값 즉시 초기화 (중복 제출 방지)
-      clearNewBoardTitle()
-      const emojiToSave = selectedEmoji
-      const dueDateToSave = newBoardDueDate
-
       try {
-        const result = await createBoard(title, emojiToSave, dueDateToSave || undefined)
+        const result = await createBoard(data.title, data.emoji, data.startDate, data.dueDate)
         if (result.success && result.data) {
           toast.success('보드가 생성되었습니다!')
           cancelCreating()
-          setSelectedEmoji('📋') // 이모지 초기화
-          setNewBoardDueDate('') // 마감일 초기화
           setNavigating(true)
           router.push(`/board/${result.data.id}`)
         } else {
-          // 실패 시 입력값 복원
-          setNewBoardTitle(title)
-          setSelectedEmoji(emojiToSave)
-          setNewBoardDueDate(dueDateToSave)
           toast.error(result.error || '보드 생성에 실패했습니다.')
         }
       } finally {
@@ -145,7 +137,7 @@ export default function HomeClient({ user }: HomeClientProps) {
         setIsSubmitting(false)
       }
     },
-    [newBoardTitle, clearNewBoardTitle, setNewBoardTitle, cancelCreating, setNavigating, router, selectedEmoji, newBoardDueDate]
+    [cancelCreating, setNavigating, router]
   )
 
   const handleUpdateBoard = async (e: React.FormEvent, boardId: string) => {
@@ -305,19 +297,6 @@ export default function HomeClient({ user }: HomeClientProps) {
               />
             ))}
 
-            {isCreating && (
-              <CreateBoardForm
-                title={newBoardTitle}
-                emoji={selectedEmoji}
-                dueDate={newBoardDueDate}
-                isSubmitting={isSubmitting}
-                onTitleChange={setNewBoardTitle}
-                onEmojiChange={setSelectedEmoji}
-                onDueDateChange={setNewBoardDueDate}
-                onSubmit={handleCreateBoard}
-                onCancel={cancelCreating}
-              />
-            )}
           </div>
         )}
       </div>
@@ -331,6 +310,13 @@ export default function HomeClient({ user }: HomeClientProps) {
         variant='danger'
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      <CreateBoardModal
+        isOpen={isCreating}
+        onClose={cancelCreating}
+        onSubmit={handleCreateBoard}
+        isSubmitting={isSubmitting}
       />
     </main>
   )

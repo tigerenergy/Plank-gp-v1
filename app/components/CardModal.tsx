@@ -119,6 +119,11 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
   if (!selectedCard) return null
 
   const onSubmit = async (data: UpdateCardInput) => {
+    // 시작일 필수 체크
+    if (!data.start_date) {
+      toast.error('시작일을 입력해주세요.')
+      return
+    }
     // 마감일 필수 체크
     if (!data.due_date) {
       toast.error('마감일을 입력해주세요.')

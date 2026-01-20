@@ -9,6 +9,7 @@ import type { Card as CardType } from '@/types'
 import { useBoardStore } from '@/store/useBoardStore'
 import { getDueDateStatus } from '@/lib/utils'
 import { completeCard, uncompleteCard, deleteCard } from '@/app/actions/card'
+import { ConfirmModal } from './ConfirmModal'
 
 interface CardProps {
   card: CardType
@@ -63,6 +64,7 @@ function getDueDateStyle(status: string) {
 export function Card({ card, isDoneList = false }: CardProps) {
   const [isCompleting, setIsCompleting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const { openCardModal, updateCard, deleteCard: removeCardFromStore } = useBoardStore()
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -112,14 +114,15 @@ export function Card({ card, isDoneList = false }: CardProps) {
     setIsCompleting(false)
   }
 
-  // 완료된 카드 삭제 (완료 페이지에 기록 남아있으니 보드에서 삭제)
-  const handleDelete = async (e: React.MouseEvent) => {
+  // 완료된 카드 삭제 모달 열기
+  const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    
-    if (!confirm('이 카드를 삭제하시겠습니까?\n(완료된 작업 페이지에는 기록이 남아있습니다)')) {
-      return
-    }
-    
+    setShowDeleteConfirm(true)
+  }
+
+  // 삭제 확인 (완료 페이지에 기록 남아있으니 보드에서 삭제)
+  const handleDeleteConfirm = async () => {
+    setShowDeleteConfirm(false)
     setIsDeleting(true)
 
     const result = await deleteCard(card.id)
@@ -261,7 +264,7 @@ export function Card({ card, isDoneList = false }: CardProps) {
                 {isCompleting ? '...' : '취소'}
               </button>
               <button
-                onClick={handleDelete}
+                onClick={handleDeleteClick}
                 disabled={isCompleting || isDeleting}
                 className='flex items-center justify-center gap-1 px-3 py-2 rounded-lg
                          bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 
@@ -275,6 +278,18 @@ export function Card({ card, isDoneList = false }: CardProps) {
           )}
         </div>
       )}
+
+      {/* 삭제 확인 모달 */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title='카드 삭제'
+        message='이 카드를 삭제하시겠습니까? 완료된 작업 페이지에는 기록이 남아있습니다.'
+        confirmText='삭제'
+        cancelText='취소'
+        variant='danger'
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   )
 }

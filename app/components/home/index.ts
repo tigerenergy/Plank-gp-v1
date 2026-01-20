@@ -1,3 +1,3 @@
 export { BoardCard } from './BoardCard'
-export { CreateBoardForm } from './CreateBoardForm'
+export { CreateBoardModal } from './CreateBoardModal'
 export { EmptyState } from './EmptyState'

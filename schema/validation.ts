@@ -57,9 +57,25 @@ export const updateListSchema = z.object({
     .optional(),
 })
 
+// 보드 생성 스키마
+export const createBoardSchema = z.object({
+  title: z
+    .string()
+    .min(1, { message: '보드 이름을 입력해주세요.' })
+    .max(100, { message: '보드 이름은 100자 이내로 입력해주세요.' }),
+  emoji: z.string().optional(),
+  start_date: z
+    .string()
+    .min(1, { message: '시작일을 입력해주세요.' }),
+  due_date: z
+    .string()
+    .min(1, { message: '마감일을 입력해주세요.' }),
+})
+
 // 스키마 타입 추론
 export type CreateCardInput = z.infer<typeof createCardSchema>
 export type UpdateCardInput = z.infer<typeof updateCardSchema>
 export type MoveCardInput = z.infer<typeof moveCardSchema>
 export type CreateListInput = z.infer<typeof createListSchema>
 export type UpdateListInput = z.infer<typeof updateListSchema>
+export type CreateBoardInput = z.infer<typeof createBoardSchema>

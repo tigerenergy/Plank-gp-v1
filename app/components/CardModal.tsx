@@ -293,6 +293,11 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                   </div>
                   <input
                     {...register('title')}
+                    ref={(e) => {
+                      register('title').ref(e)
+                      // @ts-ignore
+                      titleRef.current = e
+                    }}
                     className='text-lg font-semibold text-gray-900 dark:text-gray-100 bg-transparent border-none focus:outline-none w-full placeholder-gray-400 dark:placeholder-gray-500'
                     placeholder='카드 제목'
                   />
@@ -412,12 +417,14 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                         시작일
                       </label>
                       {canEdit || isNewCardMode ? (
-                        <DatePicker
-                          value={watch('start_date') || null}
-                          onChange={(value) => setValue('start_date', value || '')}
-                          placeholder='시작일 선택'
-                          hasSuccess={!!watch('start_date')}
-                        />
+                        <div id='start-date-picker'>
+                          <DatePicker
+                            value={watch('start_date') || null}
+                            onChange={(value) => setValue('start_date', value || '')}
+                            placeholder='시작일 선택'
+                            hasSuccess={!!watch('start_date')}
+                          />
+                        </div>
                       ) : (
                         <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm'>
                           {selectedCard?.start_date ? (
@@ -435,12 +442,14 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                         마감일
                       </label>
                       {canEdit || isNewCardMode ? (
-                        <DatePicker
-                          value={watch('due_date') || null}
-                          onChange={(value) => setValue('due_date', value || '')}
-                          placeholder='마감일 선택'
-                          hasSuccess={!!watch('due_date')}
-                        />
+                        <div id='due-date-picker'>
+                          <DatePicker
+                            value={watch('due_date') || null}
+                            onChange={(value) => setValue('due_date', value || '')}
+                            placeholder='마감일 선택'
+                            hasSuccess={!!watch('due_date')}
+                          />
+                        </div>
                       ) : (
                         <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm'>
                           {selectedCard?.due_date ? (
@@ -461,6 +470,11 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                         <>
                           <textarea
                             {...register('description')}
+                            ref={(e) => {
+                              register('description').ref(e)
+                              // @ts-ignore
+                              descriptionRef.current = e
+                            }}
                             className={`w-full px-4 py-3 rounded-lg 
                                      bg-gray-100 dark:bg-[#252542] 
                                      border text-gray-900 dark:text-gray-100

@@ -16,6 +16,7 @@
      ☀️ 라이트 모드 (기본)
      ======================================== */
   :root {
+    /* cspell:ignore Pretendard */
     --font-pretendard: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto,
       'Helvetica Neue', 'Segoe UI', 'Noto Sans KR', sans-serif;
 

@@ -45,7 +45,7 @@ import {
 } from '@/app/actions/completed'
 import { createAIReport, getReports, deleteReport, type Report } from '@/app/actions/report'
 import { sendReportToEmail, getEmailLogs, type EmailLog } from '@/app/actions/email'
-import { getBoardMembers } from '@/app/actions/member'
+import { getTeamMembers, searchUserByEmail } from '@/app/actions/member'
 import type { ReportType } from '@/lib/gemini'
 import type { Profile } from '@/types'
 
@@ -75,8 +75,11 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
   const [emailRecipients, setEmailRecipients] = useState<string[]>([''])
   const [isSendingEmail, setIsSendingEmail] = useState(false)
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>([])
-  const [boardMembers, setBoardMembers] = useState<Profile[]>([])
+  const [allUsers, setAllUsers] = useState<Profile[]>([])
+  const [filteredUsers, setFilteredUsers] = useState<Profile[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
   const [showManualInput, setShowManualInput] = useState(false)
+  const [isSearching, setIsSearching] = useState(false)
 
   const loadData = useCallback(async () => {
     setIsLoading(true)
@@ -224,29 +227,66 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
     }
   }, [board.id])
 
-  // 보드 멤버 로드
-  const loadBoardMembers = useCallback(async () => {
-    const result = await getBoardMembers(board.id)
+  // 전체 사용자 로드
+  const loadAllUsers = useCallback(async () => {
+    const result = await getTeamMembers()
     if (result.success && result.data) {
-      // 이메일이 있는 멤버만 필터링
-      const membersWithEmail = result.data.filter((m: Profile) => m.email)
-      setBoardMembers(membersWithEmail)
-      // 멤버가 없으면 직접 입력 모드 활성화
-      if (membersWithEmail.length === 0) {
+      // 이메일이 있는 사용자만 필터링
+      const usersWithEmail = result.data.filter((m: Profile) => m.email)
+      setAllUsers(usersWithEmail)
+      setFilteredUsers(usersWithEmail)
+      // 사용자가 없으면 직접 입력 모드 활성화
+      if (usersWithEmail.length === 0) {
         setShowManualInput(true)
       }
     }
-  }, [board.id])
+  }, [])
 
-  // 이메일 모달 열릴 때 로그 및 멤버 로드
+  // 검색 처리
+  const handleSearch = useCallback(async (query: string) => {
+    setSearchQuery(query)
+    
+    if (!query.trim()) {
+      setFilteredUsers(allUsers)
+      return
+    }
+
+    setIsSearching(true)
+    
+    // 로컬 필터링 (빠른 응답)
+    const localFiltered = allUsers.filter((user) => 
+      user.email?.toLowerCase().includes(query.toLowerCase()) ||
+      user.username?.toLowerCase().includes(query.toLowerCase())
+    )
+    setFilteredUsers(localFiltered)
+    
+    // 서버 검색 (더 정확한 결과)
+    const result = await searchUserByEmail(query)
+    if (result.success && result.data) {
+      const usersWithEmail = result.data.filter((m: Profile) => m.email)
+      // 로컬 결과와 서버 결과 합치기 (중복 제거)
+      const merged = [...localFiltered]
+      for (const user of usersWithEmail) {
+        if (!merged.find((u) => u.id === user.id)) {
+          merged.push(user)
+        }
+      }
+      setFilteredUsers(merged)
+    }
+    
+    setIsSearching(false)
+  }, [allUsers])
+
+  // 이메일 모달 열릴 때 로그 및 사용자 로드
   useEffect(() => {
     if (showEmailModal) {
       loadEmailLogs()
-      loadBoardMembers()
+      loadAllUsers()
       setShowManualInput(false)
       setEmailRecipients([''])
+      setSearchQuery('')
     }
-  }, [showEmailModal, loadEmailLogs, loadBoardMembers])
+  }, [showEmailModal, loadEmailLogs, loadAllUsers])
 
   // 수신자 추가
   const addRecipient = () => {
@@ -410,21 +450,68 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
 
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
         {isLoading ? (
-          <div className='flex flex-col items-center justify-center py-20 gap-4'>
-            {/* 로고 로딩 스피너 */}
-            <div className='relative'>
-              <img
-                src='/blackLogo.png'
-                alt='Loading'
-                className='h-10 dark:hidden animate-pulse'
-              />
-              <img
-                src='/whiteLogo.png'
-                alt='Loading'
-                className='h-10 hidden dark:block animate-pulse'
-              />
+          <div className='space-y-8 animate-pulse'>
+            {/* 통계 카드 스켈레톤 */}
+            <div className='grid grid-cols-2 lg:grid-cols-4 gap-4'>
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className='card p-4'>
+                  <div className='flex items-center gap-3 mb-3'>
+                    <div className='w-8 h-8 rounded-lg bg-[rgb(var(--secondary))]' />
+                    <div className='h-4 w-16 rounded bg-[rgb(var(--secondary))]' />
+                  </div>
+                  <div className='h-8 w-12 rounded bg-[rgb(var(--secondary))] mb-2' />
+                  <div className='h-3 w-20 rounded bg-[rgb(var(--secondary))]' />
+                </div>
+              ))}
             </div>
-          
+
+            {/* 차트 스켈레톤 */}
+            <div className='grid lg:grid-cols-2 gap-6'>
+              <div className='card p-6'>
+                <div className='flex items-center gap-2 mb-4'>
+                  <div className='w-8 h-8 rounded-lg bg-[rgb(var(--secondary))]' />
+                  <div className='h-4 w-24 rounded bg-[rgb(var(--secondary))]' />
+                </div>
+                <div className='h-72 bg-[rgb(var(--secondary))] rounded-xl' />
+              </div>
+              <div className='card p-6'>
+                <div className='flex items-center gap-2 mb-4'>
+                  <div className='w-8 h-8 rounded-lg bg-[rgb(var(--secondary))]' />
+                  <div className='h-4 w-28 rounded bg-[rgb(var(--secondary))]' />
+                </div>
+                <div className='h-72 flex items-center justify-center'>
+                  <div className='w-48 h-48 rounded-full bg-[rgb(var(--secondary))]' />
+                </div>
+              </div>
+            </div>
+
+            {/* 카드 목록 스켈레톤 */}
+            <div className='card'>
+              <div className='p-4 border-b border-[rgb(var(--border))] flex items-center gap-4'>
+                <div className='h-4 w-12 rounded bg-[rgb(var(--secondary))]' />
+                <div className='flex gap-2'>
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className='h-8 w-16 rounded-lg bg-[rgb(var(--secondary))]' />
+                  ))}
+                </div>
+              </div>
+              <div className='divide-y divide-[rgb(var(--border))]'>
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className='p-4 flex items-start gap-4'>
+                    <div className='w-4 h-4 rounded bg-[rgb(var(--secondary))]' />
+                    <div className='flex-1'>
+                      <div className='h-5 w-48 rounded bg-[rgb(var(--secondary))] mb-2' />
+                      <div className='h-4 w-64 rounded bg-[rgb(var(--secondary))] mb-3' />
+                      <div className='flex gap-3'>
+                        <div className='h-5 w-16 rounded bg-[rgb(var(--secondary))]' />
+                        <div className='h-5 w-24 rounded bg-[rgb(var(--secondary))]' />
+                        <div className='h-5 w-20 rounded bg-[rgb(var(--secondary))]' />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         ) : (
           <div className='space-y-8'>
@@ -879,57 +966,89 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
                   수신자 이메일
                 </label>
 
-                {/* 보드 멤버 목록 */}
-                {boardMembers.length > 0 && !showManualInput && (
+                {/* 전체 사용자 목록 */}
+                {allUsers.length > 0 && !showManualInput && (
                   <div className='mb-4'>
-                    <div className='text-xs text-[rgb(var(--muted-foreground))] mb-2'>팀원 목록에서 선택</div>
-                    <div className='space-y-2 max-h-40 overflow-y-auto'>
-                      {boardMembers.map((member) => {
-                        const isSelected = emailRecipients.includes(member.email || '')
-                        return (
-                          <div
-                            key={member.id}
-                            onClick={() => {
-                              if (member.email) {
-                                if (isSelected) {
-                                  removeMemberFromRecipient(member.email)
-                                } else {
-                                  addMemberAsRecipient(member.email)
+                    {/* 검색 입력 */}
+                    <div className='relative mb-3'>
+                      <input
+                        type='text'
+                        value={searchQuery}
+                        onChange={(e) => handleSearch(e.target.value)}
+                        placeholder='이름 또는 이메일로 검색...'
+                        className='w-full px-4 py-2.5 pl-10 rounded-xl bg-[rgb(var(--secondary))] border border-[rgb(var(--border))] text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-violet-500'
+                      />
+                      <svg
+                        className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--muted-foreground))]'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
+                      </svg>
+                      {isSearching && (
+                        <div className='absolute right-3 top-1/2 -translate-y-1/2'>
+                          <div className='w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin' />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className='text-xs text-[rgb(var(--muted-foreground))] mb-2'>
+                      전체 친구 목록 ({filteredUsers.length}명)
+                    </div>
+                    <div className='space-y-2 max-h-48 overflow-y-auto'>
+                      {filteredUsers.length === 0 ? (
+                        <div className='text-center py-4 text-sm text-[rgb(var(--muted-foreground))]'>
+                          검색 결과가 없습니다
+                        </div>
+                      ) : (
+                        filteredUsers.map((user) => {
+                          const isSelected = emailRecipients.includes(user.email || '')
+                          return (
+                            <div
+                              key={user.id}
+                              onClick={() => {
+                                if (user.email) {
+                                  if (isSelected) {
+                                    removeMemberFromRecipient(user.email)
+                                  } else {
+                                    addMemberAsRecipient(user.email)
+                                  }
                                 }
-                              }
-                            }}
-                            className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
-                              isSelected
-                                ? 'bg-violet-500/10 border-2 border-violet-500'
-                                : 'bg-[rgb(var(--secondary))] border-2 border-transparent hover:border-violet-300'
-                            }`}
-                          >
-                            {member.avatar_url ? (
-                              <img
-                                src={member.avatar_url}
-                                alt=''
-                                className='w-8 h-8 rounded-full'
-                                referrerPolicy='no-referrer'
-                              />
-                            ) : (
-                              <div className='w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center text-sm font-medium text-violet-600'>
-                                {(member.username || member.email || '?')[0].toUpperCase()}
+                              }}
+                              className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
+                                isSelected
+                                  ? 'bg-violet-500/10 border-2 border-violet-500'
+                                  : 'bg-[rgb(var(--secondary))] border-2 border-transparent hover:border-violet-300'
+                              }`}
+                            >
+                              {user.avatar_url ? (
+                                <img
+                                  src={user.avatar_url}
+                                  alt=''
+                                  className='w-8 h-8 rounded-full'
+                                  referrerPolicy='no-referrer'
+                                />
+                              ) : (
+                                <div className='w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center text-sm font-medium text-violet-600'>
+                                  {(user.username || user.email || '?')[0].toUpperCase()}
+                                </div>
+                              )}
+                              <div className='flex-1 min-w-0'>
+                                <div className='text-sm font-medium text-[rgb(var(--foreground))] truncate'>
+                                  {user.username || user.email?.split('@')[0]}
+                                </div>
+                                <div className='text-xs text-[rgb(var(--muted-foreground))] truncate'>
+                                  {user.email}
+                                </div>
                               </div>
-                            )}
-                            <div className='flex-1 min-w-0'>
-                              <div className='text-sm font-medium text-[rgb(var(--foreground))] truncate'>
-                                {member.username || member.email?.split('@')[0]}
-                              </div>
-                              <div className='text-xs text-[rgb(var(--muted-foreground))] truncate'>
-                                {member.email}
-                              </div>
+                              {isSelected && (
+                                <Check className='w-5 h-5 text-violet-500' />
+                              )}
                             </div>
-                            {isSelected && (
-                              <Check className='w-5 h-5 text-violet-500' />
-                            )}
-                          </div>
-                        )
-                      })}
+                          )
+                        })
+                      )}
                     </div>
                     <button
                       onClick={() => setShowManualInput(true)}
@@ -941,15 +1060,15 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
                   </div>
                 )}
 
-                {/* 직접 입력 모드 또는 멤버가 없을 때 */}
-                {(showManualInput || boardMembers.length === 0) && (
+                {/* 직접 입력 모드 또는 사용자가 없을 때 */}
+                {(showManualInput || allUsers.length === 0) && (
                   <div>
-                    {boardMembers.length > 0 && (
+                    {allUsers.length > 0 && (
                       <button
                         onClick={() => setShowManualInput(false)}
                         className='mb-2 text-xs text-violet-500 hover:text-violet-600'
                       >
-                        ← 팀원 목록으로 돌아가기
+                        ← 친구 목록으로 돌아가기
                       </button>
                     )}
                     <div className='space-y-2'>
@@ -983,17 +1102,19 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
                   </div>
                 )}
 
-                {/* 선택된 수신자 표시 (멤버 선택 모드일 때) */}
-                {!showManualInput && boardMembers.length > 0 && emailRecipients.filter(e => e.trim()).length > 0 && (
+                {/* 선택된 수신자 표시 (친구 선택 모드일 때) */}
+                {!showManualInput && allUsers.length > 0 && emailRecipients.filter(e => e.trim()).length > 0 && (
                   <div className='mt-3 p-3 bg-violet-500/5 rounded-xl'>
-                    <div className='text-xs text-[rgb(var(--muted-foreground))] mb-1'>선택된 수신자</div>
+                    <div className='text-xs text-[rgb(var(--muted-foreground))] mb-2'>선택된 수신자 ({emailRecipients.filter(e => e.trim()).length}명)</div>
                     <div className='flex flex-wrap gap-2'>
                       {emailRecipients.filter(e => e.trim()).map((email, index) => (
                         <span
                           key={index}
-                          className='px-2 py-1 bg-violet-500/20 text-violet-600 text-xs rounded-lg'
+                          onClick={() => removeMemberFromRecipient(email)}
+                          className='px-2 py-1 bg-violet-500/20 text-violet-600 text-xs rounded-lg cursor-pointer hover:bg-red-500/20 hover:text-red-500 transition-colors flex items-center gap-1'
                         >
                           {email}
+                          <X className='w-3 h-3' />
                         </span>
                       ))}
                     </div>

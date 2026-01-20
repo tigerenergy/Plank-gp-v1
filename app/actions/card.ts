@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import type { ActionResult, Card, Label } from '@/types'
 import { createCardSchema, updateCardSchema, moveCardSchema } from '@/schema/validation'
+import { notifyBoardMembers } from './notification'
 
 // 보드 멤버인지 확인하는 헬퍼 함수 (소유자 OR board_members)
 async function checkBoardMembership(
@@ -135,6 +136,25 @@ export async function createCard(input: {
       return { success: false, error: '카드 생성에 실패했습니다.' }
     }
 
+    // 보드의 모든 멤버에게 알림 (본인 제외)
+    const { data: listForNotif } = await supabase
+      .from('lists')
+      .select('board_id, title')
+      .eq('id', input.list_id)
+      .single()
+
+    if (listForNotif?.board_id) {
+      await notifyBoardMembers({
+        boardId: listForNotif.board_id,
+        excludeUserId: user.id,
+        type: 'card_created',
+        title: '새 카드가 생성되었습니다',
+        message: `"${listForNotif.title}" 리스트에 "${input.title}" 카드가 추가되었습니다`,
+        link: `/board/${listForNotif.board_id}`,
+        cardId: data.id,
+      })
+    }
+
     return { success: true, data }
   } catch (error) {
     console.error('카드 생성 에러:', error)
@@ -213,6 +233,9 @@ export async function updateCard(input: {
       console.error('카드 수정 에러:', error)
       return { success: false, error: '카드 수정에 실패했습니다.' }
     }
+
+    // 카드 수정은 알림 안 함 (알림 피로도 감소)
+    // 카드 생성/이동/댓글만 알림
 
     return { success: true, data }
   } catch (error) {
@@ -302,6 +325,13 @@ export async function moveCard(input: {
       return { success: false, error: '보드 멤버만 카드를 이동할 수 있습니다.' }
     }
 
+    // 이동 전 카드 제목 조회
+    const { data: cardForNotif } = await supabase
+      .from('cards')
+      .select('title')
+      .eq('id', input.cardId)
+      .single()
+
     const { error } = await supabase
       .from('cards')
       .update({
@@ -313,6 +343,25 @@ export async function moveCard(input: {
     if (error) {
       console.error('카드 이동 에러:', error)
       return { success: false, error: '카드 이동에 실패했습니다.' }
+    }
+
+    // 보드의 모든 멤버에게 알림 (본인 제외)
+    const { data: listForNotif } = await supabase
+      .from('lists')
+      .select('board_id, title')
+      .eq('id', input.targetListId)
+      .single()
+
+    if (listForNotif?.board_id) {
+      await notifyBoardMembers({
+        boardId: listForNotif.board_id,
+        excludeUserId: user.id,
+        type: 'card_moved',
+        title: '카드가 이동되었습니다',
+        message: `"${cardForNotif?.title || '카드'}"가 "${listForNotif.title}" 리스트로 이동되었습니다`,
+        link: `/board/${listForNotif.board_id}`,
+        cardId: input.cardId,
+      })
     }
 
     return { success: true }

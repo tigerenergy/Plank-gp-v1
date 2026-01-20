@@ -78,6 +78,76 @@ export async function getMyNotifications(): Promise<ActionResult<Notification[]>
   }
 }
 
+// 보드의 모든 멤버에게 알림 보내기 (본인 제외)
+// 이 프로젝트의 핵심: 보고자/관리자 없이 모든 멤버가 평등하게 알림 받음
+export async function notifyBoardMembers(input: {
+  boardId: string
+  excludeUserId: string // 본인은 제외
+  type: NotificationType
+  title: string
+  message?: string
+  link?: string
+  cardId?: string
+}): Promise<void> {
+  try {
+    const supabase = await createClient()
+
+    // 1. 보드 소유자 조회
+    const { data: board } = await supabase
+      .from('boards')
+      .select('created_by')
+      .eq('id', input.boardId)
+      .single()
+
+    // 2. board_members에서 모든 멤버 조회
+    const { data: members } = await supabase
+      .from('board_members')
+      .select('user_id')
+      .eq('board_id', input.boardId)
+
+    // 3. 알림 대상 수집 (본인 제외)
+    const targetUserIds = new Set<string>()
+
+    // 보드 소유자 추가
+    if (board?.created_by && board.created_by !== input.excludeUserId) {
+      targetUserIds.add(board.created_by)
+    }
+
+    // board_members 추가
+    if (members) {
+      for (const member of members) {
+        if (member.user_id !== input.excludeUserId) {
+          targetUserIds.add(member.user_id)
+        }
+      }
+    }
+
+    // 4. 각 멤버에게 알림 전송 (병렬)
+    if (targetUserIds.size > 0) {
+      const notifications = Array.from(targetUserIds).map((userId) => ({
+        user_id: userId,
+        type: input.type,
+        title: input.title,
+        message: input.message || null,
+        link: input.link || null,
+        board_id: input.boardId,
+        card_id: input.cardId || null,
+        sender_id: input.excludeUserId,
+      }))
+
+      const { error } = await supabase.from('notifications').insert(notifications)
+
+      if (error) {
+        console.error('[notifyBoardMembers] 알림 전송 에러:', error)
+      } else {
+        console.log(`[notifyBoardMembers] ${targetUserIds.size}명에게 알림 전송 완료`)
+      }
+    }
+  } catch (error) {
+    console.error('[notifyBoardMembers] 에러:', error)
+  }
+}
+
 // 알림 생성 (내부용)
 export async function createNotification(input: {
   userId: string

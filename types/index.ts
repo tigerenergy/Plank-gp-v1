@@ -180,8 +180,18 @@ export interface BoardInvitation {
   invitee?: Profile | null
 }
 
-// 알림 타입
-export type NotificationType = 'invitation' | 'comment' | 'mention' | 'due_date'
+// 알림 타입 (협업 알림 확장)
+export type NotificationType = 
+  | 'invitation'           // 초대
+  | 'comment'              // 댓글
+  | 'mention'              // 멘션
+  | 'due_date'             // 마감일
+  | 'card_created'         // 카드 생성
+  | 'card_updated'         // 카드 수정
+  | 'card_moved'           // 카드 이동
+  | 'checklist_created'    // 체크리스트 생성
+  | 'checklist_item_added' // 체크리스트 항목 추가
+  | 'checklist_item_checked' // 체크리스트 항목 완료
 
 // 알림
 export interface Notification {

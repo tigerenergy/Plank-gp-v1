@@ -2,6 +2,31 @@
 
 import { createClient } from '@/lib/supabase/server'
 import type { ActionResult, Checklist, ChecklistItem } from '@/types'
+import { notifyBoardMembers } from './notification'
+
+// 카드 ID로 보드 정보 가져오기 (알림용)
+async function getCardBoardInfo(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  cardId: string
+): Promise<{ boardId: string; cardTitle: string } | null> {
+  const { data: card } = await supabase
+    .from('cards')
+    .select('title, list_id')
+    .eq('id', cardId)
+    .single()
+
+  if (!card) return null
+
+  const { data: list } = await supabase
+    .from('lists')
+    .select('board_id')
+    .eq('id', card.list_id)
+    .single()
+
+  if (!list) return null
+
+  return { boardId: list.board_id, cardTitle: card.title }
+}
 
 // 카드의 체크리스트 목록 조회 (항목 포함)
 export async function getChecklists(cardId: string): Promise<ActionResult<Checklist[]>> {
@@ -43,6 +68,13 @@ export async function createChecklist(input: {
   try {
     const supabase = await createClient()
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
     // 최대 position 조회
     const { data: maxData } = await supabase
       .from('checklists')
@@ -67,6 +99,20 @@ export async function createChecklist(input: {
     if (error) {
       console.error('체크리스트 생성 에러:', error)
       return { success: false, error: '체크리스트 생성에 실패했습니다.' }
+    }
+
+    // 보드의 모든 멤버에게 알림
+    const boardInfo = await getCardBoardInfo(supabase, input.cardId)
+    if (boardInfo) {
+      await notifyBoardMembers({
+        boardId: boardInfo.boardId,
+        excludeUserId: user.id,
+        type: 'checklist_created',
+        title: '체크리스트가 추가되었습니다',
+        message: `"${boardInfo.cardTitle}" 카드에 "${data.title}" 체크리스트가 추가되었습니다`,
+        link: `/board/${boardInfo.boardId}`,
+        cardId: input.cardId,
+      })
     }
 
     return { success: true, data: { ...data, items: [] } }
@@ -131,6 +177,13 @@ export async function addChecklistItem(input: {
   try {
     const supabase = await createClient()
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
     // 최대 position 조회
     const { data: maxData } = await supabase
       .from('checklist_items')
@@ -157,6 +210,29 @@ export async function addChecklistItem(input: {
       return { success: false, error: '항목 추가에 실패했습니다.' }
     }
 
+    // 체크리스트에서 카드 ID 가져오기
+    const { data: checklist } = await supabase
+      .from('checklists')
+      .select('card_id, title')
+      .eq('id', input.checklistId)
+      .single()
+
+    // 보드의 모든 멤버에게 알림
+    if (checklist?.card_id) {
+      const boardInfo = await getCardBoardInfo(supabase, checklist.card_id)
+      if (boardInfo) {
+        await notifyBoardMembers({
+          boardId: boardInfo.boardId,
+          excludeUserId: user.id,
+          type: 'checklist_item_added',
+          title: '할 일이 추가되었습니다',
+          message: `"${boardInfo.cardTitle}" 카드의 "${checklist.title}"에 "${input.content}" 항목이 추가되었습니다`,
+          link: `/board/${boardInfo.boardId}`,
+          cardId: checklist.card_id,
+        })
+      }
+    }
+
     return { success: true, data }
   } catch (error) {
     console.error('항목 추가 에러:', error)
@@ -172,6 +248,20 @@ export async function toggleChecklistItem(input: {
   try {
     const supabase = await createClient()
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
+    // 항목 정보 먼저 조회
+    const { data: item } = await supabase
+      .from('checklist_items')
+      .select('content, checklist_id')
+      .eq('id', input.id)
+      .single()
+
     const { error } = await supabase
       .from('checklist_items')
       .update({ is_checked: input.isChecked })
@@ -180,6 +270,30 @@ export async function toggleChecklistItem(input: {
     if (error) {
       console.error('항목 토글 에러:', error)
       return { success: false, error: '항목 업데이트에 실패했습니다.' }
+    }
+
+    // 체크 완료 시에만 알림 (해제 시에는 알림 안 함)
+    if (input.isChecked && item?.checklist_id) {
+      const { data: checklist } = await supabase
+        .from('checklists')
+        .select('card_id, title')
+        .eq('id', item.checklist_id)
+        .single()
+
+      if (checklist?.card_id) {
+        const boardInfo = await getCardBoardInfo(supabase, checklist.card_id)
+        if (boardInfo) {
+          await notifyBoardMembers({
+            boardId: boardInfo.boardId,
+            excludeUserId: user.id,
+            type: 'checklist_item_checked',
+            title: '할 일이 완료되었습니다 ✅',
+            message: `"${boardInfo.cardTitle}" 카드에서 "${item.content}" 항목이 완료되었습니다`,
+            link: `/board/${boardInfo.boardId}`,
+            cardId: checklist.card_id,
+          })
+        }
+      }
     }
 
     return { success: true }

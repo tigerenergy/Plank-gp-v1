@@ -26,7 +26,8 @@ export function NotificationDropdown() {
     const [notifResult, invResult] = await Promise.all([getMyNotifications(), getMyInvitations()])
 
     if (notifResult.success && notifResult.data) {
-      setNotifications(notifResult.data)
+      // 읽지 않은 알림만 표시
+      setNotifications(notifResult.data.filter((n) => !n.is_read))
     }
 
     if (invResult.success && invResult.data) {
@@ -145,13 +146,12 @@ export function NotificationDropdown() {
     setProcessingId(null)
   }
 
-  // 알림 클릭 (읽음 처리 + 이동)
+  // 알림 클릭 (읽음 처리 + 목록에서 제거 + 이동)
   const handleNotificationClick = async (notification: Notification) => {
     if (!notification.is_read) {
       await markAsRead(notification.id)
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notification.id ? { ...n, is_read: true } : n))
-      )
+      // 읽은 알림은 목록에서 제거
+      setNotifications((prev) => prev.filter((n) => n.id !== notification.id))
     }
 
     if (notification.link) {
@@ -160,12 +160,13 @@ export function NotificationDropdown() {
     }
   }
 
-  // 모두 읽음 처리
+  // 모두 읽음 처리 (목록에서 모두 제거)
   const handleMarkAllAsRead = async () => {
     const result = await markAllAsRead()
     if (result.success) {
-      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
-      toast.success('모든 알림을 읽음 처리했습니다.')
+      // 모든 알림을 목록에서 제거
+      setNotifications([])
+      toast.success('모든 알림을 확인했습니다.')
     }
   }
 
@@ -314,18 +315,14 @@ export function NotificationDropdown() {
                     </motion.div>
                   ))}
 
-                  {/* 일반 알림 목록 */}
+                  {/* 일반 알림 목록 (읽지 않은 것만) */}
                   {notifications.map((notification) => (
                     <motion.div
                       key={`notif-${notification.id}`}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       onClick={() => handleNotificationClick(notification)}
-                      className={`p-3 rounded-xl cursor-pointer transition-colors ${
-                        notification.is_read
-                          ? 'bg-[rgb(var(--secondary))]/50 hover:bg-[rgb(var(--secondary))]'
-                          : 'bg-[rgb(var(--secondary))] hover:bg-[rgb(var(--secondary))]/80'
-                      }`}
+                      className='p-3 rounded-xl cursor-pointer transition-colors bg-[rgb(var(--secondary))] hover:bg-[rgb(var(--secondary))]/80'
                     >
                       <div className='flex items-start gap-3'>
                         {/* 발신자 아바타 */}
@@ -350,9 +347,7 @@ export function NotificationDropdown() {
                             <span className='text-xs font-medium text-[rgb(var(--muted-foreground))]'>
                               {notification.type === 'comment' ? '댓글' : '알림'}
                             </span>
-                            {!notification.is_read && (
-                              <span className='w-2 h-2 bg-indigo-500 rounded-full' />
-                            )}
+                            <span className='w-2 h-2 bg-indigo-500 rounded-full' />
                           </div>
                           <p className='text-sm font-medium text-[rgb(var(--foreground))]'>
                             {notification.title}

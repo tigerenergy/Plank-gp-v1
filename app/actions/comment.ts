@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import type { ActionResult, Comment } from '@/types'
-import { createNotification } from './notification'
+import { notifyBoardMembers } from './notification'
 
 // 카드의 댓글 목록 조회
 export async function getComments(cardId: string): Promise<ActionResult<Comment[]>> {
@@ -67,8 +67,7 @@ export async function createComment(input: {
       return { success: false, error: '댓글 작성에 실패했습니다.' }
     }
 
-    // 알림 보내기: 보드 소유자에게 (본인 제외)
-    // 카드 정보 조회
+    // 보드의 모든 멤버에게 알림 (본인 제외)
     const { data: cardForNotif } = await supabase
       .from('cards')
       .select('id, title, list_id')
@@ -76,7 +75,6 @@ export async function createComment(input: {
       .single()
 
     if (cardForNotif?.list_id) {
-      // 리스트 정보 조회
       const { data: listForNotif } = await supabase
         .from('lists')
         .select('board_id')
@@ -84,28 +82,15 @@ export async function createComment(input: {
         .single()
 
       if (listForNotif?.board_id) {
-        // 보드 소유자 조회
-        const { data: boardForNotif } = await supabase
-          .from('boards')
-          .select('created_by')
-          .eq('id', listForNotif.board_id)
-          .single()
-
-        const ownerId = boardForNotif?.created_by
-
-        // 보드 소유자에게 알림 (본인이 아닌 경우에만)
-        if (ownerId && ownerId !== user.id) {
-          await supabase.from('notifications').insert({
-            user_id: ownerId,
-            type: 'comment',
-            title: '새 댓글이 달렸습니다',
-            message: `"${cardForNotif.title}" 카드에 댓글: ${input.content.slice(0, 50)}${input.content.length > 50 ? '...' : ''}`,
-            link: `/board/${listForNotif.board_id}`,
-            board_id: listForNotif.board_id,
-            card_id: input.cardId,
-            sender_id: user.id,
-          })
-        }
+        await notifyBoardMembers({
+          boardId: listForNotif.board_id,
+          excludeUserId: user.id,
+          type: 'comment',
+          title: '새 댓글이 달렸습니다 💬',
+          message: `"${cardForNotif.title}" 카드에 댓글: ${input.content.slice(0, 50)}${input.content.length > 50 ? '...' : ''}`,
+          link: `/board/${listForNotif.board_id}`,
+          cardId: input.cardId,
+        })
       }
     }
 

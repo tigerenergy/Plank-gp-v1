@@ -53,6 +53,7 @@ export function CardModal({ isBoardMember = false, isOwner = false }: CardModalP
 
   // 최소한의 로컬 상태 (UI 전용)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [newCardLabels, setNewCardLabels] = useState<Label[]>([]) // 새 카드용 라벨 상태
   
@@ -132,7 +133,7 @@ export function CardModal({ isBoardMember = false, isOwner = false }: CardModalP
     setValue,
     reset,
     getValues,
-    formState: { isSubmitting },
+    formState: {},
   } = useForm<{
     id?: string
     list_id?: string
@@ -179,6 +180,9 @@ export function CardModal({ isBoardMember = false, isOwner = false }: CardModalP
   if (!isNewCardMode && !selectedCard) return null
 
   const onSubmit = async () => {
+    // 중복 제출 방지
+    if (isSubmitting) return
+    
     // getValues로 현재 폼 값 가져오기
     const { title, description, start_date, due_date } = getValues()
     
@@ -222,61 +226,68 @@ export function CardModal({ isBoardMember = false, isOwner = false }: CardModalP
     // 에러 없으면 초기화
     setFieldErrors({})
 
-    // 새 카드 생성 모드
-    if (isNewCardMode && newCardListId) {
-      const result = await createCard({
-        list_id: newCardListId,
+    setIsSubmitting(true)
+    try {
+      // 새 카드 생성 모드
+      if (isNewCardMode && newCardListId) {
+        const result = await createCard({
+          list_id: newCardListId,
+          title: title!.trim(),
+          description: description!.trim(),
+          start_date,
+          due_date,
+          labels: newCardLabels, // 라벨도 함께 전송
+        })
+        if (result.success && result.data) {
+          addCard(newCardListId, result.data)
+          closeCardModal()
+          toast.success('카드가 생성되었습니다.')
+        } else {
+          toast.error(result.error || '카드 생성에 실패했습니다.')
+        }
+        return
+      }
+
+      // 기존 카드 수정 모드
+      if (!selectedCard) return
+      const result = await updateCard({
+        id: selectedCard.id,
         title: title!.trim(),
         description: description!.trim(),
         start_date,
         due_date,
-        labels: newCardLabels, // 라벨도 함께 전송
       })
       if (result.success && result.data) {
-        addCard(newCardListId, result.data)
+        updateCardInStore(selectedCard.id, result.data)
+        updateSelectedCard(result.data)
         closeCardModal()
-        toast.success('카드가 생성되었습니다.')
+        toast.success('카드가 수정되었습니다.')
       } else {
-        toast.error(result.error || '카드 생성에 실패했습니다.')
+        toast.error(result.error || '수정에 실패했습니다.')
       }
-      return
-    }
-
-    // 기존 카드 수정 모드
-    if (!selectedCard) return
-    const result = await updateCard({
-      id: selectedCard.id,
-      title: title!.trim(),
-      description: description!.trim(),
-      start_date,
-      due_date,
-    })
-    if (result.success && result.data) {
-      updateCardInStore(selectedCard.id, result.data)
-      updateSelectedCard(result.data)
-      closeCardModal()
-      toast.success('카드가 수정되었습니다.')
-    } else {
-      toast.error(result.error || '수정에 실패했습니다.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleDeleteConfirm = async () => {
-    if (!selectedCard) return
+    if (!selectedCard || isDeleting) return
     
     setShowDeleteConfirm(false)
     setIsDeleting(true)
 
-    const result = await deleteCard(selectedCard.id)
-    if (result.success) {
-      deleteCardInStore(selectedCard.id)
-      closeCardModal()
-      toast.success('카드가 삭제되었습니다.')
-    } else {
-      toast.error(result.error || '삭제에 실패했습니다.')
+    try {
+      const result = await deleteCard(selectedCard.id)
+      if (result.success) {
+        deleteCardInStore(selectedCard.id)
+        closeCardModal()
+        toast.success('카드가 삭제되었습니다.')
+      } else {
+        toast.error(result.error || '삭제에 실패했습니다.')
+      }
+    } finally {
+      setIsDeleting(false)
     }
-
-    setIsDeleting(false)
   }
 
   return (
@@ -701,9 +712,12 @@ function ModalFooter({
           onClick={onDeleteClick}
           disabled={isDeleting}
           className='px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white
-                   rounded-lg transition-all disabled:opacity-50 text-sm font-medium'
+                   rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2'
           whileTap={{ scale: 0.95 }}
         >
+          {isDeleting && (
+            <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
+          )}
           {isDeleting ? '삭제 중...' : '삭제'}
         </motion.button>
       ) : (
@@ -729,9 +743,12 @@ function ModalFooter({
             type='button'
             onClick={onSave}
             disabled={isSubmitting}
-            className='flex-1 sm:flex-none px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-all disabled:opacity-50 text-sm font-medium'
+            className='flex-1 sm:flex-none px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2'
             whileTap={{ scale: 0.95 }}
           >
+            {isSubmitting && (
+              <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
+            )}
             {isSubmitting ? (isNewCard ? '생성 중...' : '저장 중...') : (isNewCard ? '생성' : '저장')}
           </motion.button>
         )}

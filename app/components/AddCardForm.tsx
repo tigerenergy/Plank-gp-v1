@@ -47,8 +47,12 @@ export function AddCardForm({ listId, onClose }: AddCardFormProps) {
   }, [])
 
   const onSubmit = async (data: CreateCardInput) => {
+    // 중복 제출 방지
+    if (isSubmitting) return
+    
     setIsSubmitting(true)
-    const result = await createCard(data)
+    try {
+      const result = await createCard(data)
 
     if (result.success && result.data) {
       addCard(listId, result.data)
@@ -61,8 +65,9 @@ export function AddCardForm({ listId, onClose }: AddCardFormProps) {
     } else {
       toast.error(result.error || '카드 추가에 실패했습니다.')
     }
-
-    setIsSubmitting(false)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -100,8 +105,11 @@ export function AddCardForm({ listId, onClose }: AddCardFormProps) {
           type='button'
           onClick={handleSubmit(onSubmit)}
           disabled={isSubmitting}
-          className='btn-primary px-6 py-2.5 text-base font-semibold'
+          className='btn-primary px-6 py-2.5 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'
         >
+          {isSubmitting && (
+            <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
+          )}
           {isSubmitting ? '추가 중...' : '카드 추가'}
         </button>
         <span className='text-sm text-[rgb(var(--muted-foreground))]'>

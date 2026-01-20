@@ -85,33 +85,39 @@ export function Card({ card, isDoneList = false }: CardProps) {
   // 완료 처리
   const handleComplete = async (e: React.MouseEvent) => {
     e.stopPropagation() // 카드 클릭 이벤트 방지
+    if (isCompleting) return
+    
     setIsCompleting(true)
-
-    const result = await completeCard(card.id)
-    if (result.success && result.data) {
-      updateCard(card.id, result.data)
-      toast.success('🎉 카드가 완료되었습니다!')
-    } else {
-      toast.error(result.error || '완료 처리에 실패했습니다.')
+    try {
+      const result = await completeCard(card.id)
+      if (result.success && result.data) {
+        updateCard(card.id, result.data)
+        toast.success('🎉 카드가 완료되었습니다!')
+      } else {
+        toast.error(result.error || '완료 처리에 실패했습니다.')
+      }
+    } finally {
+      setIsCompleting(false)
     }
-
-    setIsCompleting(false)
   }
 
   // 완료 취소
   const handleUncomplete = async (e: React.MouseEvent) => {
     e.stopPropagation()
+    if (isCompleting) return
+    
     setIsCompleting(true)
-
-    const result = await uncompleteCard(card.id)
-    if (result.success && result.data) {
-      updateCard(card.id, result.data)
-      toast.success('완료가 취소되었습니다.')
-    } else {
-      toast.error(result.error || '완료 취소에 실패했습니다.')
+    try {
+      const result = await uncompleteCard(card.id)
+      if (result.success && result.data) {
+        updateCard(card.id, result.data)
+        toast.success('완료가 취소되었습니다.')
+      } else {
+        toast.error(result.error || '완료 취소에 실패했습니다.')
+      }
+    } finally {
+      setIsCompleting(false)
     }
-
-    setIsCompleting(false)
   }
 
   // 완료된 카드 삭제 모달 열기
@@ -247,8 +253,17 @@ export function Card({ card, isDoneList = false }: CardProps) {
                        bg-emerald-500 hover:bg-emerald-600 text-white text-base font-semibold
                        transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
             >
-              <PartyPopper className='w-5 h-5' />
-              {isCompleting ? '처리 중...' : '🎉 완료 처리'}
+              {isCompleting ? (
+                <>
+                  <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin' />
+                  처리 중...
+                </>
+              ) : (
+                <>
+                  <PartyPopper className='w-5 h-5' />
+                  🎉 완료 처리
+                </>
+              )}
             </button>
           ) : (
             <div className='flex gap-3'>
@@ -260,8 +275,14 @@ export function Card({ card, isDoneList = false }: CardProps) {
                          text-slate-700 dark:text-slate-300 text-base font-medium
                          transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
               >
-                <Undo2 className='w-5 h-5' />
-                {isCompleting ? '...' : '취소'}
+                {isCompleting ? (
+                  <div className='w-5 h-5 border-2 border-slate-700 dark:border-slate-300 border-t-transparent rounded-full animate-spin' />
+                ) : (
+                  <>
+                    <Undo2 className='w-5 h-5' />
+                    취소
+                  </>
+                )}
               </button>
               <button
                 onClick={handleDeleteClick}
@@ -271,8 +292,14 @@ export function Card({ card, isDoneList = false }: CardProps) {
                          text-red-600 dark:text-red-400 text-base font-medium
                          transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
               >
-                <Trash2 className='w-5 h-5' />
-                {isDeleting ? '...' : '삭제'}
+                {isDeleting ? (
+                  <div className='w-5 h-5 border-2 border-red-600 dark:border-red-400 border-t-transparent rounded-full animate-spin' />
+                ) : (
+                  <>
+                    <Trash2 className='w-5 h-5' />
+                    삭제
+                  </>
+                )}
               </button>
             </div>
           )}

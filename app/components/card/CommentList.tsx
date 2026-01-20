@@ -27,6 +27,8 @@ export function CommentList({
 
   const [newComment, setNewComment] = useState(savedDraft)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUpdating, setIsUpdating] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editContent, setEditContent] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -74,38 +76,50 @@ export function CommentList({
   }
 
   const handleUpdate = async (id: string) => {
-    if (!editContent.trim()) return
+    if (!editContent.trim() || isUpdating === id) return
 
+    setIsUpdating(id)
     const trimmedContent = editContent.trim()
     const originalComments = [...comments]
 
-    // 낙관적 업데이트
-    onCommentsChange(
-      comments.map((c) =>
-        c.id === id ? { ...c, content: trimmedContent, updated_at: new Date().toISOString() } : c
+    try {
+      // 낙관적 업데이트
+      onCommentsChange(
+        comments.map((c) =>
+          c.id === id ? { ...c, content: trimmedContent, updated_at: new Date().toISOString() } : c
+        )
       )
-    )
-    setEditingId(null)
+      setEditingId(null)
 
-    const result = await updateComment({ id, content: trimmedContent })
-    if (result.success && result.data) {
-      // 서버 데이터로 교체
-      onCommentsChange(comments.map((c) => (c.id === id ? result.data! : c)))
-      toast.success('댓글이 수정되었습니다.')
-    } else {
-      // 실패 시 롤백
-      onCommentsChange(originalComments)
-      toast.error(result.error || '댓글 수정에 실패했습니다.')
+      const result = await updateComment({ id, content: trimmedContent })
+      if (result.success && result.data) {
+        // 서버 데이터로 교체
+        onCommentsChange(comments.map((c) => (c.id === id ? result.data! : c)))
+        toast.success('댓글이 수정되었습니다.')
+      } else {
+        // 실패 시 롤백
+        onCommentsChange(originalComments)
+        toast.error(result.error || '댓글 수정에 실패했습니다.')
+      }
+    } finally {
+      setIsUpdating(null)
     }
   }
 
   const handleDelete = async (id: string) => {
-    const result = await deleteComment(id)
-    if (result.success) {
-      onCommentsChange(comments.filter((c) => c.id !== id))
-      toast.success('댓글이 삭제되었습니다.')
-    } else {
-      toast.error(result.error || '댓글 삭제에 실패했습니다.')
+    if (isDeleting === id) return
+    
+    setIsDeleting(id)
+    try {
+      const result = await deleteComment(id)
+      if (result.success) {
+        onCommentsChange(comments.filter((c) => c.id !== id))
+        toast.success('댓글이 삭제되었습니다.')
+      } else {
+        toast.error(result.error || '댓글 삭제에 실패했습니다.')
+      }
+    } finally {
+      setIsDeleting(null)
     }
   }
 
@@ -137,9 +151,13 @@ export function CommentList({
           type='submit'
           disabled={!newComment.trim() || isSubmitting}
           className='px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg
-                   disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+                   disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center'
         >
-          <Send className='w-4 h-4' />
+          {isSubmitting ? (
+            <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
+          ) : (
+            <Send className='w-4 h-4' />
+          )}
         </button>
       </form>
 
@@ -197,8 +215,12 @@ export function CommentList({
                     />
                     <button
                       onClick={() => handleUpdate(comment.id)}
-                      className='text-xs text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300'
+                      disabled={isUpdating === comment.id}
+                      className='text-xs text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 disabled:opacity-50 flex items-center gap-1'
                     >
+                      {isUpdating === comment.id && (
+                        <div className='w-3 h-3 border-2 border-violet-600 dark:border-violet-400 border-t-transparent rounded-full animate-spin' />
+                      )}
                       저장
                     </button>
                     <button
@@ -232,10 +254,15 @@ export function CommentList({
                   {/* 삭제 버튼 - 더 잘 보이고 클릭하기 쉽게 */}
                   <button
                     onClick={() => handleDelete(comment.id)}
-                    className='p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all'
+                    disabled={isDeleting === comment.id}
+                    className='p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all disabled:opacity-50'
                     title='댓글 삭제'
                   >
-                    <Trash2 className='w-4 h-4' />
+                    {isDeleting === comment.id ? (
+                      <div className='w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin' />
+                    ) : (
+                      <Trash2 className='w-4 h-4' />
+                    )}
                   </button>
                 </div>
               )}

@@ -81,7 +81,7 @@ const config: Config = {
 
       // 폰트 패밀리
       fontFamily: {
-        sans: ['var(--font-pretendard)', 'Pretendard', 'Noto Sans KR', 'sans-serif'],
+        sans: ['var(--font-d2coding)', 'D2Coding', 'D2Coding ligature', 'Consolas', 'Monaco', 'Courier New', 'monospace'],
         display: ['var(--font-display)', 'Playfair Display', 'Georgia', 'serif'],
       },
 

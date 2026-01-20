@@ -30,7 +30,7 @@ export default function RootLayout({
             position="bottom-right"
             toastOptions={{
               style: {
-                fontFamily: 'var(--font-pretendard)',
+                fontFamily: 'var(--font-d2coding)',
               },
             }}
             richColors

@@ -34,6 +34,9 @@ export function ChecklistSection({
   const [editTitle, setEditTitle] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submittingItemId, setSubmittingItemId] = useState<string | null>(null)
+  const [deletingChecklistId, setDeletingChecklistId] = useState<string | null>(null)
+  const [togglingItemId, setTogglingItemId] = useState<string | null>(null)
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null)
 
   // 체크리스트 생성
   const handleCreateChecklist = async () => {
@@ -44,27 +47,36 @@ export function ChecklistSection({
     }
 
     setIsSubmitting(true)
-    const result = await createChecklist({ cardId, title: newTitle.trim() })
-    setIsSubmitting(false)
-
-    if (result.success && result.data) {
-      onChecklistsChange([...checklists, result.data])
-      setNewTitle('')
-      setIsCreating(false)
-      toast.success('체크리스트가 추가되었습니다.')
-    } else {
-      toast.error(result.error || '체크리스트 추가에 실패했습니다.')
+    try {
+      const result = await createChecklist({ cardId, title: newTitle.trim() })
+      if (result.success && result.data) {
+        onChecklistsChange([...checklists, result.data])
+        setNewTitle('')
+        setIsCreating(false)
+        toast.success('체크리스트가 추가되었습니다.')
+      } else {
+        toast.error(result.error || '체크리스트 추가에 실패했습니다.')
+      }
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   // 체크리스트 삭제
   const handleDeleteChecklist = async (id: string) => {
-    const result = await deleteChecklist(id)
-    if (result.success) {
-      onChecklistsChange(checklists.filter((c) => c.id !== id))
-      toast.success('체크리스트가 삭제되었습니다.')
-    } else {
-      toast.error(result.error || '삭제에 실패했습니다.')
+    if (deletingChecklistId === id) return
+    
+    setDeletingChecklistId(id)
+    try {
+      const result = await deleteChecklist(id)
+      if (result.success) {
+        onChecklistsChange(checklists.filter((c) => c.id !== id))
+        toast.success('체크리스트가 삭제되었습니다.')
+      } else {
+        toast.error(result.error || '삭제에 실패했습니다.')
+      }
+    } finally {
+      setDeletingChecklistId(null)
     }
   }
 
@@ -95,58 +107,74 @@ export function ChecklistSection({
     setNewItemInputs((prev) => ({ ...prev, [checklistId]: '' }))
     setSubmittingItemId(checklistId)
 
-    // 서버에 저장 먼저 (낙관적 업데이트 대신 확실한 방식)
-    const result = await addChecklistItem({ checklistId, content })
-    setSubmittingItemId(null)
-
-    if (result.success && result.data) {
-      // 서버 응답으로 UI 업데이트 - 기존 items에 새 항목 추가
-      const newChecklists = checklists.map((c) =>
-        c.id === checklistId ? { ...c, items: [...(c.items || []), result.data!] } : c
-      )
-      onChecklistsChange(newChecklists)
-      toast.success('항목이 추가되었습니다.')
-    } else {
-      toast.error(result.error || '항목 추가에 실패했습니다.')
+    try {
+      // 서버에 저장 먼저 (낙관적 업데이트 대신 확실한 방식)
+      const result = await addChecklistItem({ checklistId, content })
+      if (result.success && result.data) {
+        // 서버 응답으로 UI 업데이트 - 기존 items에 새 항목 추가
+        const newChecklists = checklists.map((c) =>
+          c.id === checklistId ? { ...c, items: [...(c.items || []), result.data!] } : c
+        )
+        onChecklistsChange(newChecklists)
+        toast.success('항목이 추가되었습니다.')
+      } else {
+        toast.error(result.error || '항목 추가에 실패했습니다.')
+      }
+    } finally {
+      setSubmittingItemId(null)
     }
   }
 
   // 항목 체크/해제
   const handleToggleItem = async (checklistId: string, item: ChecklistItem) => {
-    const result = await toggleChecklistItem({
-      id: item.id,
-      isChecked: !item.is_checked,
-    })
+    if (togglingItemId === item.id) return
+    
+    setTogglingItemId(item.id)
+    try {
+      const result = await toggleChecklistItem({
+        id: item.id,
+        isChecked: !item.is_checked,
+      })
 
-    if (result.success) {
-      onChecklistsChange(
-        checklists.map((c) =>
-          c.id === checklistId
-            ? {
-                ...c,
-                items: c.items?.map((i) =>
-                  i.id === item.id ? { ...i, is_checked: !i.is_checked } : i
-                ),
-              }
-            : c
+      if (result.success) {
+        onChecklistsChange(
+          checklists.map((c) =>
+            c.id === checklistId
+              ? {
+                  ...c,
+                  items: c.items?.map((i) =>
+                    i.id === item.id ? { ...i, is_checked: !i.is_checked } : i
+                  ),
+                }
+              : c
+          )
         )
-      )
-    } else {
-      toast.error(result.error || '업데이트에 실패했습니다.')
+      } else {
+        toast.error(result.error || '업데이트에 실패했습니다.')
+      }
+    } finally {
+      setTogglingItemId(null)
     }
   }
 
   // 항목 삭제
   const handleDeleteItem = async (checklistId: string, itemId: string) => {
-    const result = await deleteChecklistItem(itemId)
-    if (result.success) {
-      onChecklistsChange(
-        checklists.map((c) =>
-          c.id === checklistId ? { ...c, items: c.items?.filter((i) => i.id !== itemId) } : c
+    if (deletingItemId === itemId) return
+    
+    setDeletingItemId(itemId)
+    try {
+      const result = await deleteChecklistItem(itemId)
+      if (result.success) {
+        onChecklistsChange(
+          checklists.map((c) =>
+            c.id === checklistId ? { ...c, items: c.items?.filter((i) => i.id !== itemId) } : c
+          )
         )
-      )
-    } else {
-      toast.error(result.error || '삭제에 실패했습니다.')
+      } else {
+        toast.error(result.error || '삭제에 실패했습니다.')
+      }
+    } finally {
+      setDeletingItemId(null)
     }
   }
 
@@ -209,9 +237,14 @@ export function ChecklistSection({
                 {canEdit && (
                   <button
                     onClick={() => handleDeleteChecklist(checklist.id)}
-                    className='p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors'
+                    disabled={deletingChecklistId === checklist.id}
+                    className='p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors disabled:opacity-50'
                   >
-                    <Trash2 className='w-4 h-4' />
+                    {deletingChecklistId === checklist.id ? (
+                      <div className='w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin' />
+                    ) : (
+                      <Trash2 className='w-4 h-4' />
+                    )}
                   </button>
                 )}
               </div>
@@ -238,9 +271,12 @@ export function ChecklistSection({
                     {canEdit ? (
                       <button
                         onClick={() => handleToggleItem(checklist.id, item)}
-                        className='flex-shrink-0'
+                        disabled={togglingItemId === item.id}
+                        className='flex-shrink-0 disabled:opacity-50'
                       >
-                        {item.is_checked ? (
+                        {togglingItemId === item.id ? (
+                          <div className='w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin' />
+                        ) : item.is_checked ? (
                           <CheckSquare className='w-4 h-4 text-violet-500 dark:text-violet-400' />
                         ) : (
                           <Square className='w-4 h-4 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300' />
@@ -267,9 +303,14 @@ export function ChecklistSection({
                     {canEdit && (
                       <button
                         onClick={() => handleDeleteItem(checklist.id, item.id)}
-                        className='p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-all'
+                        disabled={deletingItemId === item.id}
+                        className='p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-all disabled:opacity-50'
                       >
-                        <Trash2 className='w-3 h-3' />
+                        {deletingItemId === item.id ? (
+                          <div className='w-3 h-3 border-2 border-red-500 border-t-transparent rounded-full animate-spin' />
+                        ) : (
+                          <Trash2 className='w-3 h-3' />
+                        )}
                       </button>
                     )}
                   </div>
@@ -302,8 +343,11 @@ export function ChecklistSection({
                       !newItemInputs[checklist.id]?.trim() || submittingItemId === checklist.id
                     }
                     className='px-2 py-1.5 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 
-                             disabled:opacity-50 disabled:cursor-not-allowed'
+                             disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1'
                   >
+                    {submittingItemId === checklist.id && (
+                      <div className='w-3 h-3 border-2 border-violet-600 dark:border-violet-400 border-t-transparent rounded-full animate-spin' />
+                    )}
                     {submittingItemId === checklist.id ? '추가 중...' : '추가'}
                   </button>
                 </div>
@@ -337,8 +381,11 @@ export function ChecklistSection({
             <button
               onClick={handleCreateChecklist}
               disabled={isSubmitting || !newTitle.trim()}
-              className='px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed'
+              className='px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'
             >
+              {isSubmitting && (
+                <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
+              )}
               {isSubmitting ? '추가 중...' : '추가'}
             </button>
             <button

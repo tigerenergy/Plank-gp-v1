@@ -53,6 +53,7 @@ export default function HomeClient({ user }: HomeClientProps) {
   const setNavigating = useNavigationStore((s) => s.setNavigating)
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isDeletingBoard, setIsDeletingBoard] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
   const isSubmittingRef = useRef(false)
 
@@ -137,37 +138,51 @@ export default function HomeClient({ user }: HomeClientProps) {
     }
   }
 
+  const [isUpdatingBoard, setIsUpdatingBoard] = useState(false)
+  
   const handleUpdateBoard = async (e: React.FormEvent, boardId: string) => {
     e.preventDefault()
     e.stopPropagation()
+
+    if (isUpdatingBoard) return
 
     if (!editingTitle.trim()) {
       toast.error('보드 제목을 입력해주세요.')
       return
     }
 
-    const result = await updateBoard(boardId, { title: editingTitle.trim() })
-    if (result.success && result.data) {
-      toast.success('보드가 수정되었습니다.')
-      updateBoardInStore(boardId, result.data)
-      cancelEditing()
-    } else {
-      toast.error(result.error || '보드 수정에 실패했습니다.')
+    setIsUpdatingBoard(true)
+    try {
+      const result = await updateBoard(boardId, { title: editingTitle.trim() })
+      if (result.success && result.data) {
+        toast.success('보드가 수정되었습니다.')
+        updateBoardInStore(boardId, result.data)
+        cancelEditing()
+      } else {
+        toast.error(result.error || '보드 수정에 실패했습니다.')
+      }
+    } finally {
+      setIsUpdatingBoard(false)
     }
   }
 
   const handleDeleteConfirm = async () => {
-    if (!deleteTarget) return
+    if (!deleteTarget || isDeletingBoard) return
 
     const boardId = deleteTarget.id
     setDeleteTarget(null)
+    setIsDeletingBoard(true)
 
-    const result = await deleteBoard(boardId)
-    if (result.success) {
-      toast.success('보드가 삭제되었습니다.')
-      removeBoard(boardId)
-    } else {
-      toast.error(result.error || '보드 삭제에 실패했습니다.')
+    try {
+      const result = await deleteBoard(boardId)
+      if (result.success) {
+        toast.success('보드가 삭제되었습니다.')
+        removeBoard(boardId)
+      } else {
+        toast.error(result.error || '보드 삭제에 실패했습니다.')
+      }
+    } finally {
+      setIsDeletingBoard(false)
     }
   }
 

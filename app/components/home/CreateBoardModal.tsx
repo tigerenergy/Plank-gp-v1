@@ -80,6 +80,9 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
+    // 중복 제출 방지
+    if (isSubmitting) return
+    
     // 검증
     const newErrors: FormErrors = {}
     
@@ -307,8 +310,11 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
                 <button
                   type='submit'
                   disabled={isSubmitting}
-                  className='flex-1 btn-primary py-3 text-sm font-semibold disabled:opacity-50'
+                  className='flex-1 btn-primary py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
                 >
+                  {isSubmitting && (
+                    <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
+                  )}
                   {isSubmitting ? '생성 중...' : '프로젝트 만들기'}
                 </button>
               </div>

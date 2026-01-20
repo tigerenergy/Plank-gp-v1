@@ -185,7 +185,7 @@ export default function BoardClient({ user }: BoardClientProps) {
         </DndContext>
       </div>
 
-      {isCardModalOpen && <CardModal canEdit={canEdit} isOwner={isOwner} />}
+      {isCardModalOpen && <CardModal isBoardMember={canEdit} isOwner={isOwner} />}
 
       {/* 팀원 모달 (초대 기능 포함) */}
       <BoardSettingsModal

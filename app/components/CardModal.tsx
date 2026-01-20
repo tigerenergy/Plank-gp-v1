@@ -19,11 +19,11 @@ import { fadeIn, slideUp, zoomIn, easeTransition } from '@/lib/animations'
 import type { Label } from '@/types'
 
 interface CardModalProps {
-  canEdit?: boolean
-  isOwner?: boolean
+  isBoardMember?: boolean  // 보드 멤버인지 (카드 생성 가능 여부)
+  isOwner?: boolean        // 보드 소유자인지
 }
 
-export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) {
+export function CardModal({ isBoardMember = false, isOwner = false }: CardModalProps) {
   const modalRef = useRef<HTMLDivElement>(null)
   const titleRef = useRef<HTMLInputElement>(null)
   const descriptionRef = useRef<HTMLTextAreaElement>(null)
@@ -63,6 +63,11 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
     due_date?: string
     description?: string
   }>({})
+
+  // ✅ 실제 편집 권한: 본인이 만든 카드 OR 보드 소유자
+  const canEdit = isNewCardMode || selectedCard?.created_by === currentUserId || isOwner
+  // ✅ 삭제 권한: 본인이 만든 카드만 (보드 소유자도 남의 카드 삭제 불가)
+  const canDelete = !isNewCardMode && selectedCard?.created_by === currentUserId
 
   useEscapeClose(closeCardModal, isCardModalOpen)
 
@@ -599,8 +604,8 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
               <ModalFooter
                 isDeleting={isDeleting}
                 isSubmitting={isSubmitting}
-                canEdit={canEdit || isNewCardMode}
-                canDelete={!isNewCardMode && selectedCard?.created_by === currentUserId}
+                canEdit={canEdit}
+                canDelete={canDelete}
                 currentTab={cardModalTab}
                 isNewCard={isNewCardMode}
                 onDeleteClick={() => setShowDeleteConfirm(true)}

@@ -2,7 +2,7 @@
 
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { Plus } from 'lucide-react'
+import { Plus, ClipboardList, Play, Search, CheckCircle2, Flag, Target } from 'lucide-react'
 import type { ListWithCards } from '@/types'
 import { useBoardStore } from '@/store/useBoardStore'
 import { Card } from './Card'
@@ -12,14 +12,14 @@ interface ColumnProps {
   canEdit?: boolean
 }
 
-// 컬럼 상태 아이콘 (인덱스 기반, 사무적 느낌)
+// 컬럼 상태 아이콘 (인덱스 기반, 비즈니스 스타일)
 const columnIcons = [
-  { emoji: '📋', color: 'bg-slate-100 dark:bg-slate-800' }, // 할 일
-  { emoji: '🔄', color: 'bg-blue-100 dark:bg-blue-900/50' }, // 진행 중
-  { emoji: '👀', color: 'bg-amber-100 dark:bg-amber-900/50' }, // 검토 요청
-  { emoji: '✓', color: 'bg-emerald-100 dark:bg-emerald-900/50' }, // 완료
-  { emoji: '📌', color: 'bg-purple-100 dark:bg-purple-900/50' }, // 추가
-  { emoji: '🎯', color: 'bg-rose-100 dark:bg-rose-900/50' }, // 추가
+  { icon: ClipboardList, color: 'bg-slate-100 dark:bg-slate-800', iconColor: 'text-slate-600 dark:text-slate-300' }, // 할 일
+  { icon: Play, color: 'bg-blue-100 dark:bg-blue-900/50', iconColor: 'text-blue-600 dark:text-blue-300' }, // 진행 중
+  { icon: Search, color: 'bg-amber-100 dark:bg-amber-900/50', iconColor: 'text-amber-600 dark:text-amber-300' }, // 검토 요청
+  { icon: CheckCircle2, color: 'bg-emerald-100 dark:bg-emerald-900/50', iconColor: 'text-emerald-600 dark:text-emerald-300' }, // 완료
+  { icon: Flag, color: 'bg-purple-100 dark:bg-purple-900/50', iconColor: 'text-purple-600 dark:text-purple-300' }, // 추가
+  { icon: Target, color: 'bg-rose-100 dark:bg-rose-900/50', iconColor: 'text-rose-600 dark:text-rose-300' }, // 추가
 ]
 
 // React Compiler가 자동으로 memoization 처리 (reactCompiler: true)
@@ -32,9 +32,10 @@ export function Column({ list, canEdit = false }: ColumnProps) {
   }
   const listIndex = lists.findIndex((l) => l.id === list.id)
   // 완료 리스트면 체크 아이콘, 아니면 기본 아이콘
-  const icon = list.is_done_list 
-    ? { emoji: '✅', color: 'bg-emerald-100 dark:bg-emerald-900/50' }
+  const iconConfig = list.is_done_list 
+    ? { icon: CheckCircle2, color: 'bg-emerald-100 dark:bg-emerald-900/50', iconColor: 'text-emerald-600 dark:text-emerald-300' }
     : columnIcons[listIndex % columnIcons.length]
+  const IconComponent = iconConfig.icon
 
   const { setNodeRef, isOver } = useDroppable({
     id: list.id,
@@ -60,9 +61,9 @@ export function Column({ list, canEdit = false }: ColumnProps) {
       <div className='flex items-center justify-between px-5 py-4'>
         <div className='flex items-center gap-3 flex-1 min-w-0'>
           <div
-            className={`w-9 h-9 rounded-xl ${icon.color} flex items-center justify-center text-lg`}
+            className={`w-9 h-9 rounded-xl ${iconConfig.color} flex items-center justify-center`}
           >
-            {icon.emoji}
+            <IconComponent className={`w-5 h-5 ${iconConfig.iconColor}`} />
           </div>
 
           <h2 className='text-lg font-bold text-[rgb(var(--foreground))] truncate'>

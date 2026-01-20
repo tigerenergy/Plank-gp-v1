@@ -27,6 +27,7 @@ export const updateCardSchema = z.object({
     .max(2000, { message: '설명은 2000자 이내로 입력해주세요.' })
     .nullable()
     .optional(),
+  start_date: z.string().nullable().optional(),
   due_date: z.string().nullable().optional(),
 })
 

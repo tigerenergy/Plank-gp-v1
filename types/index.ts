@@ -32,6 +32,7 @@ export interface Board {
   created_by: string | null
   created_at: string
   updated_at: string
+  due_date?: string | null  // 보드 마감일
   // 조인된 생성자 정보 (getAllBoards에서 포함)
   creator?: Profile | null
   // 조인된 멤버 정보 (getAllBoards에서 포함)
@@ -73,7 +74,8 @@ export interface Card {
   description: string | null
   position: number
   list_id: string
-  due_date: string | null
+  start_date?: string | null  // 시작일
+  due_date: string | null     // 마감일
   assignee_id: string | null
   created_by: string | null
   labels: Label[]
@@ -120,6 +122,7 @@ export interface UpdateCardInput {
   id: string
   title?: string
   description?: string | null
+  start_date?: string | null
   due_date?: string | null
 }
 

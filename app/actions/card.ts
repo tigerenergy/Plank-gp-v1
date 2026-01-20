@@ -167,6 +167,7 @@ export async function updateCard(input: {
   id: string
   title?: string
   description?: string | null
+  start_date?: string | null
   due_date?: string | null
   labels?: Label[]
 }): Promise<ActionResult<Card>> {
@@ -178,6 +179,7 @@ export async function updateCard(input: {
       id: input.id,
       title: input.title,
       description: input.description,
+      start_date: input.start_date,
       due_date: input.due_date,
     })
     if (!validation.success) {
@@ -219,6 +221,7 @@ export async function updateCard(input: {
     const updates: Record<string, unknown> = {}
     if (input.title !== undefined) updates.title = input.title
     if (input.description !== undefined) updates.description = input.description || null
+    if (input.start_date !== undefined) updates.start_date = input.start_date || null
     if (input.due_date !== undefined) updates.due_date = input.due_date || null
     if (input.labels !== undefined) updates.labels = input.labels
 

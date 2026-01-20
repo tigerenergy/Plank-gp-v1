@@ -57,7 +57,7 @@ export function LabelEditor({ labels, onChange }: LabelEditorProps) {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               style={{ backgroundColor: colorInfo.hex }}
-              className={`group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${isLightColor ? 'text-yellow-900' : 'text-white'}`}
+              className={`group inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold ${isLightColor ? 'text-yellow-900' : 'text-white'}`}
             >
               {label.name}
               <button
@@ -65,7 +65,7 @@ export function LabelEditor({ labels, onChange }: LabelEditorProps) {
                 onClick={() => handleRemoveLabel(idx)}
                 className='opacity-70 hover:opacity-100 transition-opacity'
               >
-                <X className='w-3.5 h-3.5' />
+                <X className='w-4 h-4' />
               </button>
             </motion.span>
           )
@@ -76,11 +76,11 @@ export function LabelEditor({ labels, onChange }: LabelEditorProps) {
           <button
             type='button'
             onClick={() => setIsAdding(true)}
-            className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
+            className='inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
                      bg-[rgb(var(--secondary))] text-[rgb(var(--muted-foreground))]
                      hover:bg-[rgb(var(--muted))] hover:text-[rgb(var(--foreground))] transition-colors'
           >
-            <Plus className='w-3.5 h-3.5' />
+            <Plus className='w-4 h-4' />
             라벨 추가
           </button>
         )}
@@ -106,14 +106,14 @@ export function LabelEditor({ labels, onChange }: LabelEditorProps) {
             />
 
             {/* 색상 선택 */}
-            <div className='flex gap-2'>
+            <div className='flex flex-wrap gap-2'>
               {LABEL_COLORS.map((colorOption) => (
                 <button
                   key={colorOption.color}
                   type='button'
                   onClick={() => setSelectedColor(colorOption.color)}
                   style={{ backgroundColor: colorOption.hex }}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
                     selectedColor === colorOption.color
                       ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-[rgb(var(--secondary))]'
                       : 'hover:scale-110'

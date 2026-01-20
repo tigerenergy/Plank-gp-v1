@@ -107,6 +107,7 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
       id: selectedCard?.id,
       title: selectedCard?.title,
       description: selectedCard?.description || '',
+      start_date: selectedCard?.start_date || '',
       due_date: selectedCard?.due_date || '',
     },
   })
@@ -279,7 +280,29 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                       </div>
                     </div>
 
-                    {/* 마감일 (편집 권한 있는 멤버) */}
+                    {/* 시작일 */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2'>
+                        시작일
+                      </label>
+                      {canEdit ? (
+                        <DatePicker
+                          value={watch('start_date') || null}
+                          onChange={(value) => setValue('start_date', value || '')}
+                          placeholder='시작일 선택'
+                        />
+                      ) : (
+                        <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm'>
+                          {selectedCard.start_date ? (
+                            new Date(selectedCard.start_date).toLocaleDateString('ko-KR')
+                          ) : (
+                            <span className='text-gray-400'>시작일 없음</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 마감일 */}
                     <div>
                       <label className='block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2'>
                         마감일
@@ -288,12 +311,12 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                         <DatePicker
                           value={watch('due_date') || null}
                           onChange={(value) => setValue('due_date', value || '')}
-                          placeholder='마감일을 선택해주세요'
+                          placeholder='마감일 선택'
                         />
                       ) : (
                         <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm'>
                           {selectedCard.due_date ? (
-                            new Date(selectedCard.due_date).toLocaleString('ko-KR')
+                            new Date(selectedCard.due_date).toLocaleDateString('ko-KR')
                           ) : (
                             <span className='text-gray-400'>마감일 없음</span>
                           )}

@@ -1,7 +1,32 @@
 'use client'
 
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2, Calendar } from 'lucide-react'
 import type { Board, Profile } from '@/types'
+
+// D-Day 계산 함수
+function formatDDay(dateString: string | null | undefined): { text: string; color: string } | null {
+  if (!dateString) return null
+  
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const targetDate = new Date(dateString)
+  targetDate.setHours(0, 0, 0, 0)
+  
+  const diffTime = targetDate.getTime() - today.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  
+  if (diffDays < 0) {
+    return { text: `D+${Math.abs(diffDays)}`, color: 'text-red-500' }
+  } else if (diffDays === 0) {
+    return { text: 'D-Day', color: 'text-amber-500' }
+  } else if (diffDays <= 3) {
+    return { text: `D-${diffDays}`, color: 'text-amber-500' }
+  } else if (diffDays <= 7) {
+    return { text: `D-${diffDays}`, color: 'text-blue-500' }
+  } else {
+    return { text: `D-${diffDays}`, color: 'text-[rgb(var(--muted-foreground))]' }
+  }
+}
 
 interface BoardCardProps {
   board: Board
@@ -145,14 +170,29 @@ export function BoardCard({
         {board.title}
       </h3>
 
-      {/* 날짜 */}
-      <p className='text-sm text-[rgb(var(--muted-foreground))] mb-4'>
-        {new Date(board.created_at).toLocaleDateString('ko-KR', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        })}
-      </p>
+      {/* D-Day 또는 작성일 */}
+      {board.due_date ? (
+        <div className='flex items-center gap-1.5 mb-4'>
+          <Calendar className='w-3.5 h-3.5 text-[rgb(var(--muted-foreground))]' />
+          {(() => {
+            const dday = formatDDay(board.due_date)
+            return dday ? (
+              <span className={`text-sm font-semibold ${dday.color}`}>{dday.text}</span>
+            ) : null
+          })()}
+          <span className='text-xs text-[rgb(var(--muted-foreground))]'>
+            ({new Date(board.due_date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })})
+          </span>
+        </div>
+      ) : (
+        <p className='text-sm text-[rgb(var(--muted-foreground))] mb-4'>
+          {new Date(board.created_at).toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+          })}
+        </p>
+      )}
 
       {/* 하단: 보드 멤버 아바타들 (생성자 + 초대된 멤버) */}
       <div className='absolute bottom-4 right-4 flex items-center -space-x-2'>

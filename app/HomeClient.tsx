@@ -55,6 +55,7 @@ export default function HomeClient({ user }: HomeClientProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
   const [selectedEmoji, setSelectedEmoji] = useState('📋')
+  const [newBoardDueDate, setNewBoardDueDate] = useState('')
   const isSubmittingRef = useRef(false)
 
   useEffect(() => {
@@ -121,19 +122,22 @@ export default function HomeClient({ user }: HomeClientProps) {
       // 입력값 즉시 초기화 (중복 제출 방지)
       clearNewBoardTitle()
       const emojiToSave = selectedEmoji
+      const dueDateToSave = newBoardDueDate
 
       try {
-        const result = await createBoard(title, emojiToSave)
+        const result = await createBoard(title, emojiToSave, dueDateToSave || undefined)
         if (result.success && result.data) {
           toast.success('보드가 생성되었습니다!')
           cancelCreating()
           setSelectedEmoji('📋') // 이모지 초기화
+          setNewBoardDueDate('') // 마감일 초기화
           setNavigating(true)
           router.push(`/board/${result.data.id}`)
         } else {
           // 실패 시 입력값 복원
           setNewBoardTitle(title)
           setSelectedEmoji(emojiToSave)
+          setNewBoardDueDate(dueDateToSave)
           toast.error(result.error || '보드 생성에 실패했습니다.')
         }
       } finally {
@@ -141,7 +145,7 @@ export default function HomeClient({ user }: HomeClientProps) {
         setIsSubmitting(false)
       }
     },
-    [newBoardTitle, clearNewBoardTitle, setNewBoardTitle, cancelCreating, setNavigating, router, selectedEmoji]
+    [newBoardTitle, clearNewBoardTitle, setNewBoardTitle, cancelCreating, setNavigating, router, selectedEmoji, newBoardDueDate]
   )
 
   const handleUpdateBoard = async (e: React.FormEvent, boardId: string) => {
@@ -305,9 +309,11 @@ export default function HomeClient({ user }: HomeClientProps) {
               <CreateBoardForm
                 title={newBoardTitle}
                 emoji={selectedEmoji}
+                dueDate={newBoardDueDate}
                 isSubmitting={isSubmitting}
                 onTitleChange={setNewBoardTitle}
                 onEmojiChange={setSelectedEmoji}
+                onDueDateChange={setNewBoardDueDate}
                 onSubmit={handleCreateBoard}
                 onCancel={cancelCreating}
               />

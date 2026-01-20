@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { MoreHorizontal } from 'lucide-react'
+import { MoreHorizontal, Calendar } from 'lucide-react'
 
 // 기본 이모지 (자주 사용)
 const DEFAULT_EMOJIS = ['📋', '💼', '🚀', '🎯', '💡', '🔧']
@@ -19,9 +19,11 @@ const ALL_EMOJIS = {
 interface CreateBoardFormProps {
   title: string
   emoji: string
+  dueDate: string
   isSubmitting: boolean
   onTitleChange: (title: string) => void
   onEmojiChange: (emoji: string) => void
+  onDueDateChange: (dueDate: string) => void
   onSubmit: (e: React.FormEvent) => void
   onCancel: () => void
 }
@@ -29,9 +31,11 @@ interface CreateBoardFormProps {
 export function CreateBoardForm({ 
   title, 
   emoji,
+  dueDate,
   isSubmitting, 
   onTitleChange, 
   onEmojiChange,
+  onDueDateChange,
   onSubmit, 
   onCancel 
 }: CreateBoardFormProps) {
@@ -139,6 +143,20 @@ export function CreateBoardForm({
             if (e.key === 'Escape' && !isSubmitting) onCancel()
           }}
         />
+
+        {/* 마감일 입력 */}
+        <div>
+          <label className='block text-xs text-[rgb(var(--muted-foreground))] mb-2 flex items-center gap-1'>
+            <Calendar className='w-3 h-3' />
+            프로젝트 마감일 (선택)
+          </label>
+          <input
+            type='date'
+            value={dueDate}
+            onChange={(e) => onDueDateChange(e.target.value)}
+            className='w-full px-4 py-3 rounded-xl input text-sm disabled:opacity-60 disabled:cursor-not-allowed'
+          />
+        </div>
 
         {/* 버튼 */}
         <div className='flex gap-2'>

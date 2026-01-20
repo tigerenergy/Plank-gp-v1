@@ -19,8 +19,8 @@ export interface EmailLog {
 export async function sendReportToEmail(input: {
   reportId: string
   recipients: string[]
+  boardId: string
   boardTitle: string
-  periodLabel: string
 }): Promise<ActionResult<{ emailId?: string }>> {
   try {
     const supabase = await createClient()
@@ -51,13 +51,21 @@ export async function sendReportToEmail(input: {
       return { success: false, error: '보고서를 찾을 수 없습니다.' }
     }
 
+    // 보고서 유형에 따른 라벨
+    const periodLabel = report.report_type === 'weekly' 
+      ? '주간' 
+      : report.report_type === 'monthly' 
+        ? '월간' 
+        : '커스텀'
+
     // 이메일 발송
     const result = await sendReportEmail({
       to: input.recipients.map((e) => e.trim()),
       title: report.title,
       content: report.content,
+      boardId: input.boardId,
       boardTitle: input.boardTitle,
-      periodLabel: input.periodLabel,
+      periodLabel,
     })
 
     // 발송 기록 저장

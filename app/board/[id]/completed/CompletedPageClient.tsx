@@ -342,17 +342,11 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
 
     setIsSendingEmail(true)
     try {
-      const periodLabel = period === 'week' 
-        ? '이번 주' 
-        : period === 'month' 
-          ? '이번 달' 
-          : '전체'
-
       const result = await sendReportToEmail({
         reportId: selectedReport.id,
         recipients: validEmails,
+        boardId: board.id,
         boardTitle: board.title,
-        periodLabel,
       })
 
       if (result.success) {

@@ -24,7 +24,7 @@ export async function generateReport(
     throw new Error('GEMINI_API_KEY가 설정되지 않았습니다.')
   }
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
   const cardList = cards
     .map((c, i) => {

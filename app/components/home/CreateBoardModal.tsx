@@ -8,6 +8,13 @@ import { DatePicker } from '../ui/DatePicker'
 // 기본 이모지 (자주 사용)
 const DEFAULT_EMOJIS = ['📋', '💼', '🚀', '🎯', '💡', '🔧']
 
+// 에러 상태 타입
+interface FormErrors {
+  title?: boolean
+  startDate?: boolean
+  dueDate?: boolean
+}
+
 // 전체 이모지 카테고리
 const ALL_EMOJIS = {
   '업무': ['📋', '💼', '📝', '📊', '📈', '📉', '🗂️', '📁', '📂', '🗃️'],
@@ -31,7 +38,9 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
   const [startDate, setStartDate] = useState<string | null>(null)
   const [dueDate, setDueDate] = useState<string | null>(null)
   const [showPicker, setShowPicker] = useState(false)
+  const [errors, setErrors] = useState<FormErrors>({})
   const pickerRef = useRef<HTMLDivElement>(null)
+  const titleInputRef = useRef<HTMLInputElement>(null)
 
   // 모달 열릴 때 초기화
   useEffect(() => {
@@ -40,6 +49,7 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
       setEmoji('📋')
       setStartDate(null)
       setDueDate(null)
+      setErrors({})
     }
   }, [isOpen])
 
@@ -69,6 +79,30 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // 검증
+    const newErrors: FormErrors = {}
+    
+    if (!title.trim()) {
+      newErrors.title = true
+    }
+    if (!startDate) {
+      newErrors.startDate = true
+    }
+    if (!dueDate) {
+      newErrors.dueDate = true
+    }
+    
+    setErrors(newErrors)
+    
+    // 에러가 있으면 첫 번째 에러 필드에 포커싱
+    if (Object.keys(newErrors).length > 0) {
+      if (newErrors.title && titleInputRef.current) {
+        titleInputRef.current.focus()
+      }
+      return
+    }
+    
     onSubmit({
       title: title.trim(),
       emoji,
@@ -102,7 +136,7 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', duration: 0.3 }}
-            className='relative w-full max-w-md bg-[rgb(var(--card))] rounded-2xl shadow-2xl overflow-hidden'
+            className='relative w-full max-w-md max-h-[90vh] bg-[rgb(var(--card))] rounded-2xl shadow-2xl overflow-hidden flex flex-col'
             style={{ boxShadow: 'var(--shadow-xl)' }}
           >
             {/* 헤더 */}
@@ -120,7 +154,7 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
             </div>
 
             {/* 폼 */}
-            <form onSubmit={handleSubmit} className='p-6 space-y-5'>
+            <form onSubmit={handleSubmit} className='p-6 space-y-5 overflow-y-auto flex-1'>
               {/* 이모지 선택 */}
               <div className='relative' ref={pickerRef}>
                 <label className='block text-sm font-medium text-[rgb(var(--muted-foreground))] mb-2'>
@@ -147,10 +181,10 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
                     className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all
                       ${showPicker
                         ? 'bg-indigo-100 dark:bg-indigo-500/20 ring-2 ring-indigo-500'
-                        : 'bg-[rgb(var(--secondary))] hover:bg-[rgb(var(--muted))] text-[rgb(var(--muted-foreground))]'
+                        : 'bg-[rgb(var(--secondary))] hover:bg-[rgb(var(--muted))]'
                       }`}
                   >
-                    <MoreHorizontal className='w-5 h-5' />
+                    <MoreHorizontal className='w-5 h-5 text-[rgb(var(--foreground))]' />
                   </button>
                   {!DEFAULT_EMOJIS.includes(emoji) && (
                     <div className='w-10 h-10 rounded-xl flex items-center justify-center text-xl bg-indigo-100 dark:bg-indigo-500/20 ring-2 ring-indigo-500'>
@@ -193,14 +227,29 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
                   보드 이름
                 </label>
                 <input
+                  ref={titleInputRef}
                   type='text'
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => {
+                    setTitle(e.target.value)
+                    if (e.target.value.trim()) {
+                      setErrors(prev => ({ ...prev, title: false }))
+                    }
+                  }}
                   placeholder='프로젝트 이름을 입력하세요'
-                  className='w-full px-4 py-3 rounded-xl input text-sm'
+                  className={`w-full px-4 py-3 rounded-xl input text-sm transition-all
+                    ${errors.title 
+                      ? 'ring-2 ring-red-500 border-red-500' 
+                      : title.trim() 
+                        ? 'ring-2 ring-emerald-500 border-emerald-500' 
+                        : ''
+                    }`}
                   autoFocus
                   disabled={isSubmitting}
                 />
+                {errors.title && (
+                  <p className='text-xs text-red-500 mt-1'>보드 이름을 입력해주세요.</p>
+                )}
               </div>
 
               {/* 시작일 */}
@@ -211,9 +260,17 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
                 </label>
                 <DatePicker
                   value={startDate}
-                  onChange={setStartDate}
+                  onChange={(val) => {
+                    setStartDate(val)
+                    if (val) setErrors(prev => ({ ...prev, startDate: false }))
+                  }}
                   placeholder='시작일 선택'
+                  hasError={errors.startDate}
+                  hasSuccess={!!startDate}
                 />
+                {errors.startDate && (
+                  <p className='text-xs text-red-500 mt-1'>시작일을 선택해주세요.</p>
+                )}
               </div>
 
               {/* 마감일 */}
@@ -224,9 +281,17 @@ export function CreateBoardModal({ isOpen, onClose, onSubmit, isSubmitting }: Cr
                 </label>
                 <DatePicker
                   value={dueDate}
-                  onChange={setDueDate}
+                  onChange={(val) => {
+                    setDueDate(val)
+                    if (val) setErrors(prev => ({ ...prev, dueDate: false }))
+                  }}
                   placeholder='마감일 선택'
+                  hasError={errors.dueDate}
+                  hasSuccess={!!dueDate}
                 />
+                {errors.dueDate && (
+                  <p className='text-xs text-red-500 mt-1'>마감일을 선택해주세요.</p>
+                )}
               </div>
 
               {/* 버튼 */}

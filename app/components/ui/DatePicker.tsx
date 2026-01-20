@@ -11,9 +11,11 @@ interface DatePickerProps {
   value: string | null
   onChange: (value: string | null) => void
   placeholder?: string
+  hasError?: boolean
+  hasSuccess?: boolean
 }
 
-export function DatePicker({ value, onChange, placeholder = '마감일 선택' }: DatePickerProps) {
+export function DatePicker({ value, onChange, placeholder = '마감일 선택', hasError, hasSuccess }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -46,12 +48,19 @@ export function DatePicker({ value, onChange, placeholder = '마감일 선택' }
     onChange(null)
   }
 
+  // 에러/성공 스타일
+  const getButtonStyle = () => {
+    if (hasError) return 'ring-2 ring-red-500 border-red-500'
+    if (hasSuccess) return 'ring-2 ring-emerald-500 border-emerald-500'
+    return ''
+  }
+
   return (
     <div ref={containerRef} className='relative'>
       <button
         type='button'
         onClick={() => setIsOpen(!isOpen)}
-        className='w-full flex items-center gap-3 px-4 py-3 rounded-xl input text-left'
+        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl input text-left transition-all ${getButtonStyle()}`}
       >
         <Calendar className='w-4 h-4 text-[rgb(var(--muted-foreground))] flex-shrink-0' />
         <span className={isValidDate ? 'text-[rgb(var(--foreground))]' : 'text-[rgb(var(--muted-foreground))]'}>

@@ -295,6 +295,7 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                           value={watch('start_date') || null}
                           onChange={(value) => setValue('start_date', value || '')}
                           placeholder='시작일 선택'
+                          hasSuccess={!!watch('start_date')}
                         />
                       ) : (
                         <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm'>
@@ -317,6 +318,7 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                           value={watch('due_date') || null}
                           onChange={(value) => setValue('due_date', value || '')}
                           placeholder='마감일 선택'
+                          hasSuccess={!!watch('due_date')}
                         />
                       ) : (
                         <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm'>

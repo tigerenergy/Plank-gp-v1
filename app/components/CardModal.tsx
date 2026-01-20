@@ -25,6 +25,8 @@ interface CardModalProps {
 
 export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) {
   const modalRef = useRef<HTMLDivElement>(null)
+  const titleRef = useRef<HTMLInputElement>(null)
+  const descriptionRef = useRef<HTMLTextAreaElement>(null)
 
   // Zustand 스토어에서 상태 가져오기
   const {
@@ -52,8 +54,16 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
   // 최소한의 로컬 상태 (UI 전용)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [newCardLabels, setNewCardLabels] = useState<Label[]>([]) // 새 카드용 라벨 상태
 
   useEscapeClose(closeCardModal, isCardModalOpen)
+
+  // 모달 열릴 때 새 카드 라벨 초기화
+  useEffect(() => {
+    if (isNewCardMode) {
+      setNewCardLabels([])
+    }
+  }, [isNewCardMode])
 
   // 🚀 댓글 & 체크리스트 병렬 로드 (async-parallel) - 새 카드 모드에서는 스킵
   useEffect(() => {
@@ -83,6 +93,13 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
 
   // 라벨 변경
   const handleLabelsChange = async (labels: Label[]) => {
+    // 새 카드 모드: 로컬 상태만 업데이트
+    if (isNewCardMode) {
+      setNewCardLabels(labels)
+      return
+    }
+
+    // 기존 카드 모드: 서버에 저장
     if (!selectedCard) return
 
     // 낙관적 업데이트
@@ -155,21 +172,26 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
     // 제목 필수 체크
     if (!title?.trim()) {
       toast.error('제목을 입력해주세요.')
+      titleRef.current?.focus()
       return
     }
     // 시작일 필수 체크
     if (!start_date) {
       toast.error('시작일을 입력해주세요.')
+      // DatePicker는 클릭으로 열어야 하므로 스크롤만
+      document.getElementById('start-date-picker')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
     // 마감일 필수 체크
     if (!due_date) {
       toast.error('마감일을 입력해주세요.')
+      document.getElementById('due-date-picker')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
     // 설명 필수 체크
     if (!description?.trim()) {
       toast.error('설명을 입력해주세요.')
+      descriptionRef.current?.focus()
       return
     }
 
@@ -181,6 +203,7 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
         description: description.trim(),
         start_date,
         due_date,
+        labels: newCardLabels, // 라벨도 함께 전송
       })
       if (result.success && result.data) {
         addCard(newCardListId, result.data)
@@ -260,7 +283,31 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
               </div>
 
               {/* 헤더 */}
-              <ModalHeader register={register} onClose={closeCardModal} />
+              {/* 헤더 - 인라인으로 렌더링 */}
+              <div className='sticky top-0 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-gray-200 dark:border-white/5 bg-white dark:bg-[#1a1a2e]'>
+                <div className='flex items-center gap-3 flex-1 mr-4'>
+                  <div className='w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0'>
+                    <svg className='w-4 h-4 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' />
+                    </svg>
+                  </div>
+                  <input
+                    {...register('title')}
+                    className='text-lg font-semibold text-gray-900 dark:text-gray-100 bg-transparent border-none focus:outline-none w-full placeholder-gray-400 dark:placeholder-gray-500'
+                    placeholder='카드 제목'
+                  />
+                </div>
+                <motion.button
+                  type='button'
+                  onClick={closeCardModal}
+                  className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-all flex-shrink-0'
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                  </svg>
+                </motion.button>
+              </div>
 
               {/* 탭 네비게이션 */}
               <div className='px-4 sm:px-6 pt-3 border-b border-gray-200 dark:border-white/5'>
@@ -300,7 +347,7 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                       </label>
                       {canEdit || isNewCardMode ? (
                         <LabelEditor
-                          labels={selectedCard?.labels || []}
+                          labels={isNewCardMode ? newCardLabels : (selectedCard?.labels || [])}
                           onChange={handleLabelsChange}
                         />
                       ) : (
@@ -426,9 +473,6 @@ export function CardModal({ canEdit = false, isOwner = false }: CardModalProps) 
                                      }`}
                             placeholder='카드에 대한 설명을 입력하세요...'
                           />
-                          {errors.description && (
-                            <p className='text-xs text-red-500 mt-1'>{errors.description.message}</p>
-                          )}
                         </>
                       ) : (
                         <div className='px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#252542] text-sm text-gray-900 dark:text-gray-100 min-h-[120px] whitespace-pre-wrap'>
@@ -553,37 +597,6 @@ function TabButton({ active, onClick, icon, label, count }: TabButtonProps) {
   )
 }
 
-interface ModalHeaderProps {
-  register: ReturnType<typeof useForm>['register']
-  onClose: () => void
-}
-
-function ModalHeader({ register, onClose }: ModalHeaderProps) {
-  return (
-    <div className='sticky top-0 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-gray-200 dark:border-white/5 bg-white dark:bg-[#1a1a2e]'>
-      <div className='flex items-center gap-3 flex-1 mr-4'>
-        <div className='w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0'>
-          <CardIcon />
-        </div>
-        <input
-          {...register('title')}
-          className='text-lg font-semibold text-gray-900 dark:text-gray-100 bg-transparent border-none 
-                   focus:outline-none w-full placeholder-gray-400 dark:placeholder-gray-500'
-          placeholder='카드 제목'
-        />
-      </div>
-      <motion.button
-        type='button'
-        onClick={onClose}
-        className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 dark:text-gray-500 
-                 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-all flex-shrink-0'
-        whileTap={{ scale: 0.9 }}
-      >
-        <CloseIcon />
-      </motion.button>
-    </div>
-  )
-}
 
 interface ModalFooterProps {
   isDeleting: boolean
@@ -660,24 +673,3 @@ function ModalFooter({
   )
 }
 
-// 아이콘 컴포넌트들
-function CardIcon() {
-  return (
-    <svg className='w-4 h-4 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-      <path
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        strokeWidth={2}
-        d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'
-      />
-    </svg>
-  )
-}
-
-function CloseIcon() {
-  return (
-    <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
-    </svg>
-  )
-}

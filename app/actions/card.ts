@@ -77,6 +77,7 @@ export async function createCard(input: {
   description?: string
   start_date?: string
   due_date?: string
+  labels?: Label[]
 }): Promise<ActionResult<Card>> {
   try {
     const supabase = await createClient()
@@ -121,6 +122,7 @@ export async function createCard(input: {
         description: input.description || null,
         start_date: input.start_date || null,
         due_date: input.due_date || null,
+        labels: input.labels || [],
         position: newPosition,
         assignee_id: user.id,
         created_by: user.id,

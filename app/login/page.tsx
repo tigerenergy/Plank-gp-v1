@@ -97,11 +97,11 @@ export default function LoginPage() {
           {/* 안내 문구 */}
           <p className='mt-8 text-center text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed tracking-wide'>
             로그인하면{' '}
-            <span className='inline-flex items-baseline text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer border-b border-slate-400 dark:border-slate-500 border-opacity-60 dark:border-opacity-60 pb-[0.5px]'>
+            <span className='text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer underline decoration-slate-400 dark:decoration-slate-500 decoration-[0.5px] underline-offset-[2px] [text-decoration-skip-ink:none] [vertical-align:baseline]'>
               서비스 이용약관
             </span>
             과{' '}
-            <span className='inline-flex items-baseline text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer border-b border-slate-400 dark:border-slate-500 border-opacity-60 dark:border-opacity-60 pb-[0.5px]'>
+            <span className='text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer underline decoration-slate-400 dark:decoration-slate-500 decoration-[0.5px] underline-offset-[2px] [text-decoration-skip-ink:none] [vertical-align:baseline]'>
               개인정보 처리방침
             </span>
             에 동의하게 됩니다.

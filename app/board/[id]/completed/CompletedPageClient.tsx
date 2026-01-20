@@ -45,7 +45,9 @@ import {
 } from '@/app/actions/completed'
 import { createAIReport, getReports, deleteReport, type Report } from '@/app/actions/report'
 import { sendReportToEmail, getEmailLogs, type EmailLog } from '@/app/actions/email'
+import { getBoardMembers } from '@/app/actions/member'
 import type { ReportType } from '@/lib/gemini'
+import type { Profile } from '@/types'
 
 interface CompletedPageClientProps {
   board: Board
@@ -73,6 +75,8 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
   const [emailRecipients, setEmailRecipients] = useState<string[]>([''])
   const [isSendingEmail, setIsSendingEmail] = useState(false)
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>([])
+  const [boardMembers, setBoardMembers] = useState<Profile[]>([])
+  const [showManualInput, setShowManualInput] = useState(false)
 
   const loadData = useCallback(async () => {
     setIsLoading(true)
@@ -220,12 +224,29 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
     }
   }, [board.id])
 
-  // 이메일 모달 열릴 때 로그 로드
+  // 보드 멤버 로드
+  const loadBoardMembers = useCallback(async () => {
+    const result = await getBoardMembers(board.id)
+    if (result.success && result.data) {
+      // 이메일이 있는 멤버만 필터링
+      const membersWithEmail = result.data.filter((m: Profile) => m.email)
+      setBoardMembers(membersWithEmail)
+      // 멤버가 없으면 직접 입력 모드 활성화
+      if (membersWithEmail.length === 0) {
+        setShowManualInput(true)
+      }
+    }
+  }, [board.id])
+
+  // 이메일 모달 열릴 때 로그 및 멤버 로드
   useEffect(() => {
     if (showEmailModal) {
       loadEmailLogs()
+      loadBoardMembers()
+      setShowManualInput(false)
+      setEmailRecipients([''])
     }
-  }, [showEmailModal, loadEmailLogs])
+  }, [showEmailModal, loadEmailLogs, loadBoardMembers])
 
   // 수신자 추가
   const addRecipient = () => {
@@ -243,6 +264,30 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
     const newRecipients = [...emailRecipients]
     newRecipients[index] = value
     setEmailRecipients(newRecipients)
+  }
+
+  // 멤버를 수신자로 추가
+  const addMemberAsRecipient = (email: string) => {
+    // 이미 추가된 이메일인지 확인
+    if (emailRecipients.includes(email)) {
+      toast.error('이미 추가된 수신자입니다.')
+      return
+    }
+    // 빈 항목이 있으면 그곳에 추가, 아니면 새로 추가
+    const emptyIndex = emailRecipients.findIndex((e) => !e.trim())
+    if (emptyIndex >= 0) {
+      const newRecipients = [...emailRecipients]
+      newRecipients[emptyIndex] = email
+      setEmailRecipients(newRecipients)
+    } else {
+      setEmailRecipients([...emailRecipients, email])
+    }
+    toast.success(`${email} 추가됨`)
+  }
+
+  // 멤버 수신자에서 제거
+  const removeMemberFromRecipient = (email: string) => {
+    setEmailRecipients(emailRecipients.filter((e) => e !== email))
   }
 
   // 이메일 발송
@@ -416,24 +461,48 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
               <div className='grid lg:grid-cols-2 gap-6'>
                 {/* 주간 완료 추이 */}
                 {weeklyChartData.length > 0 && (
-                  <div className='card p-6'>
-                    <h3 className='text-sm font-semibold text-[rgb(var(--foreground))] mb-4'>
-                      📈 주간 완료 추이
+                  <div className='card p-6 bg-gradient-to-br from-violet-500/5 to-indigo-500/5'>
+                    <h3 className='text-sm font-semibold text-[rgb(var(--foreground))] mb-4 flex items-center gap-2'>
+                      <span className='w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center'>📈</span>
+                      주간 완료 추이
                     </h3>
-                    <div className='h-64'>
+                    <div className='h-72'>
                       <ResponsiveContainer width='100%' height='100%'>
-                        <BarChart data={weeklyChartData}>
-                          <CartesianGrid strokeDasharray='3 3' stroke='rgb(var(--border))' />
-                          <XAxis dataKey='name' tick={{ fontSize: 12 }} />
-                          <YAxis tick={{ fontSize: 12 }} />
+                        <BarChart data={weeklyChartData} barSize={40}>
+                          <defs>
+                            <linearGradient id='barGradient' x1='0' y1='0' x2='0' y2='1'>
+                              <stop offset='0%' stopColor='#8b5cf6' stopOpacity={1} />
+                              <stop offset='100%' stopColor='#6366f1' stopOpacity={0.8} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray='3 3' stroke='rgb(var(--border))' opacity={0.5} vertical={false} />
+                          <XAxis 
+                            dataKey='name' 
+                            tick={{ fontSize: 12, fill: 'rgb(var(--muted-foreground))' }}
+                            axisLine={{ stroke: 'rgb(var(--border))' }}
+                            tickLine={false}
+                          />
+                          <YAxis 
+                            tick={{ fontSize: 12, fill: 'rgb(var(--muted-foreground))' }}
+                            axisLine={false}
+                            tickLine={false}
+                            allowDecimals={false}
+                          />
                           <Tooltip 
                             contentStyle={{ 
                               backgroundColor: 'rgb(var(--card))',
                               border: '1px solid rgb(var(--border))',
-                              borderRadius: '8px'
+                              borderRadius: '12px',
+                              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
                             }}
+                            cursor={{ fill: 'rgb(var(--secondary))', opacity: 0.5 }}
                           />
-                          <Bar dataKey='완료' fill='#8b5cf6' radius={[4, 4, 0, 0]} />
+                          <Bar 
+                            dataKey='완료' 
+                            fill='url(#barGradient)' 
+                            radius={[8, 8, 0, 0]}
+                            animationDuration={1000}
+                          />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -442,28 +511,51 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
 
                 {/* 팀원별 완료 */}
                 {memberChartData.length > 0 && (
-                  <div className='card p-6'>
-                    <h3 className='text-sm font-semibold text-[rgb(var(--foreground))] mb-4'>
-                      👥 팀원별 완료 현황
+                  <div className='card p-6 bg-gradient-to-br from-indigo-500/5 to-cyan-500/5'>
+                    <h3 className='text-sm font-semibold text-[rgb(var(--foreground))] mb-4 flex items-center gap-2'>
+                      <span className='w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center'>👥</span>
+                      팀원별 완료 현황
                     </h3>
-                    <div className='h-64 flex items-center justify-center'>
+                    <div className='h-72 flex items-center justify-center'>
                       <ResponsiveContainer width='100%' height='100%'>
                         <PieChart>
+                          <defs>
+                            {COLORS.map((color, index) => (
+                              <linearGradient key={`pieGradient-${index}`} id={`pieGradient-${index}`} x1='0' y1='0' x2='1' y2='1'>
+                                <stop offset='0%' stopColor={color} stopOpacity={1} />
+                                <stop offset='100%' stopColor={color} stopOpacity={0.7} />
+                              </linearGradient>
+                            ))}
+                          </defs>
                           <Pie
                             data={memberChartData}
                             cx='50%'
                             cy='50%'
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
+                            innerRadius={70}
+                            outerRadius={100}
+                            paddingAngle={3}
                             dataKey='value'
-                            label={({ name, value }) => `${name}: ${value}`}
+                            label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                            labelLine={{ stroke: 'rgb(var(--muted-foreground))', strokeWidth: 1 }}
+                            animationDuration={1000}
                           >
                             {memberChartData.map((_, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={`url(#pieGradient-${index % COLORS.length})`}
+                                stroke='rgb(var(--card))'
+                                strokeWidth={2}
+                              />
                             ))}
                           </Pie>
-                          <Tooltip />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'rgb(var(--card))',
+                              border: '1px solid rgb(var(--border))',
+                              borderRadius: '12px',
+                              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                            }}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -585,7 +677,7 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
       {/* AI 보고서 모달 */}
       {showReportModal && (
         <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm'>
-          <div className='w-full max-w-4xl max-h-[90vh] bg-[rgb(var(--card))] rounded-2xl shadow-2xl overflow-hidden flex flex-col'>
+          <div className='w-full max-w-6xl max-h-[90vh] bg-[rgb(var(--card))] rounded-2xl shadow-2xl overflow-hidden flex flex-col'>
             {/* 모달 헤더 */}
             <div className='px-6 py-4 border-b border-[rgb(var(--border))] flex items-center justify-between'>
               <div className='flex items-center gap-3'>
@@ -603,7 +695,7 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
             {/* 모달 본문 */}
             <div className='flex-1 overflow-hidden flex'>
               {/* 왼쪽: 보고서 목록 */}
-              <div className='w-64 border-r border-[rgb(var(--border))] flex flex-col'>
+              <div className='w-72 border-r border-[rgb(var(--border))] flex flex-col'>
                 {/* 새 보고서 생성 */}
                 <div className='p-4 border-b border-[rgb(var(--border))]'>
                   <div className='mb-3'>
@@ -721,7 +813,7 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
                         </button>
                         <button
                           onClick={openEmailModal}
-                          className='flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium transition-colors'
+                          className='flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500 hover:bg-violet-600 text-white text-sm font-medium transition-colors'
                           title='이메일 발송'
                         >
                           <Mail className='w-4 h-4' />
@@ -781,39 +873,132 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
                 <div className='font-medium text-[rgb(var(--foreground))]'>{selectedReport.title}</div>
               </div>
 
-              {/* 수신자 입력 */}
+              {/* 수신자 선택 */}
               <div>
                 <label className='text-sm font-medium text-[rgb(var(--foreground))] mb-2 block'>
                   수신자 이메일
                 </label>
-                <div className='space-y-2'>
-                  {emailRecipients.map((email, index) => (
-                    <div key={index} className='flex gap-2'>
-                      <input
-                        type='email'
-                        value={email}
-                        onChange={(e) => updateRecipient(index, e.target.value)}
-                        placeholder='example@email.com'
-                        className='flex-1 px-4 py-2 rounded-xl bg-[rgb(var(--secondary))] border border-[rgb(var(--border))] text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-blue-500'
-                      />
-                      {emailRecipients.length > 1 && (
-                        <button
-                          onClick={() => removeRecipient(index)}
-                          className='p-2 rounded-xl hover:bg-red-500/10 text-[rgb(var(--muted-foreground))] hover:text-red-500 transition-colors'
-                        >
-                          <X className='w-5 h-5' />
-                        </button>
-                      )}
+
+                {/* 보드 멤버 목록 */}
+                {boardMembers.length > 0 && !showManualInput && (
+                  <div className='mb-4'>
+                    <div className='text-xs text-[rgb(var(--muted-foreground))] mb-2'>팀원 목록에서 선택</div>
+                    <div className='space-y-2 max-h-40 overflow-y-auto'>
+                      {boardMembers.map((member) => {
+                        const isSelected = emailRecipients.includes(member.email || '')
+                        return (
+                          <div
+                            key={member.id}
+                            onClick={() => {
+                              if (member.email) {
+                                if (isSelected) {
+                                  removeMemberFromRecipient(member.email)
+                                } else {
+                                  addMemberAsRecipient(member.email)
+                                }
+                              }
+                            }}
+                            className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
+                              isSelected
+                                ? 'bg-violet-500/10 border-2 border-violet-500'
+                                : 'bg-[rgb(var(--secondary))] border-2 border-transparent hover:border-violet-300'
+                            }`}
+                          >
+                            {member.avatar_url ? (
+                              <img
+                                src={member.avatar_url}
+                                alt=''
+                                className='w-8 h-8 rounded-full'
+                                referrerPolicy='no-referrer'
+                              />
+                            ) : (
+                              <div className='w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center text-sm font-medium text-violet-600'>
+                                {(member.username || member.email || '?')[0].toUpperCase()}
+                              </div>
+                            )}
+                            <div className='flex-1 min-w-0'>
+                              <div className='text-sm font-medium text-[rgb(var(--foreground))] truncate'>
+                                {member.username || member.email?.split('@')[0]}
+                              </div>
+                              <div className='text-xs text-[rgb(var(--muted-foreground))] truncate'>
+                                {member.email}
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <Check className='w-5 h-5 text-violet-500' />
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
-                  ))}
-                </div>
-                <button
-                  onClick={addRecipient}
-                  className='mt-2 flex items-center gap-1 text-sm text-blue-500 hover:text-blue-600 transition-colors'
-                >
-                  <Plus className='w-4 h-4' />
-                  수신자 추가
-                </button>
+                    <button
+                      onClick={() => setShowManualInput(true)}
+                      className='mt-3 flex items-center gap-1 text-sm text-violet-500 hover:text-violet-600 transition-colors'
+                    >
+                      <Plus className='w-4 h-4' />
+                      직접 입력
+                    </button>
+                  </div>
+                )}
+
+                {/* 직접 입력 모드 또는 멤버가 없을 때 */}
+                {(showManualInput || boardMembers.length === 0) && (
+                  <div>
+                    {boardMembers.length > 0 && (
+                      <button
+                        onClick={() => setShowManualInput(false)}
+                        className='mb-2 text-xs text-violet-500 hover:text-violet-600'
+                      >
+                        ← 팀원 목록으로 돌아가기
+                      </button>
+                    )}
+                    <div className='space-y-2'>
+                      {emailRecipients.map((email, index) => (
+                        <div key={index} className='flex gap-2'>
+                          <input
+                            type='email'
+                            value={email}
+                            onChange={(e) => updateRecipient(index, e.target.value)}
+                            placeholder='example@email.com'
+                            className='flex-1 px-4 py-2 rounded-xl bg-[rgb(var(--secondary))] border border-[rgb(var(--border))] text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-violet-500'
+                          />
+                          {emailRecipients.length > 1 && (
+                            <button
+                              onClick={() => removeRecipient(index)}
+                              className='p-2 rounded-xl hover:bg-red-500/10 text-[rgb(var(--muted-foreground))] hover:text-red-500 transition-colors'
+                            >
+                              <X className='w-5 h-5' />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      onClick={addRecipient}
+                      className='mt-2 flex items-center gap-1 text-sm text-violet-500 hover:text-violet-600 transition-colors'
+                    >
+                      <Plus className='w-4 h-4' />
+                      수신자 추가
+                    </button>
+                  </div>
+                )}
+
+                {/* 선택된 수신자 표시 (멤버 선택 모드일 때) */}
+                {!showManualInput && boardMembers.length > 0 && emailRecipients.filter(e => e.trim()).length > 0 && (
+                  <div className='mt-3 p-3 bg-violet-500/5 rounded-xl'>
+                    <div className='text-xs text-[rgb(var(--muted-foreground))] mb-1'>선택된 수신자</div>
+                    <div className='flex flex-wrap gap-2'>
+                      {emailRecipients.filter(e => e.trim()).map((email, index) => (
+                        <span
+                          key={index}
+                          className='px-2 py-1 bg-violet-500/20 text-violet-600 text-xs rounded-lg'
+                        >
+                          {email}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* 발송 기록 */}
@@ -854,7 +1039,7 @@ export function CompletedPageClient({ board }: CompletedPageClientProps) {
               <button
                 onClick={handleSendEmail}
                 disabled={isSendingEmail}
-                className='flex items-center gap-2 px-6 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white font-medium transition-colors'
+                className='flex items-center gap-2 px-6 py-2 rounded-xl bg-violet-500 hover:bg-violet-600 disabled:opacity-50 text-white font-medium transition-colors'
               >
                 {isSendingEmail ? (
                   <>

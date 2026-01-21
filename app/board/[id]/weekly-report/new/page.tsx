@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getBoard } from '@/app/actions/board'
-import { createWeeklyReport } from '@/app/actions/weekly-report'
+import { createWeeklyReport, refreshWeeklyReportData } from '@/app/actions/weekly-report'
 import { WeeklyReportForm } from './WeeklyReportForm'
 
 interface PageProps {
@@ -46,13 +46,21 @@ export default async function WeeklyReportNewPage({ params }: PageProps) {
 
   let report = existingReport
 
-  // 없으면 생성
+  // 없으면 생성, 있으면 최신 데이터로 자동 갱신
   if (!report) {
     const createResult = await createWeeklyReport(boardId, weekStartStr)
     if (!createResult.success || !createResult.data) {
       redirect(`/board/${boardId}`)
     }
     report = createResult.data
+  } else {
+    // 기존 보고서가 있어도 최신 데이터로 자동 갱신 (draft 상태일 때만)
+    if (report.status === 'draft') {
+      const refreshResult = await refreshWeeklyReportData(report.id, boardId, weekStartStr)
+      if (refreshResult.success && refreshResult.data) {
+        report = refreshResult.data
+      }
+    }
   }
 
   return <WeeklyReportForm board={board} report={report} />

@@ -303,12 +303,12 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
                   {/* 이슈사항 */}
                   <div className='mt-4'>
                     <label className='text-xs font-medium text-[rgb(var(--muted-foreground))] mb-1 block'>
-                      이슈사항
+                      이슈사항 <span className='text-[rgb(var(--muted-foreground))]/60'>(선택사항)</span>
                     </label>
                     <textarea
                       value={card.user_input?.issues || ''}
                       onChange={(e) => updateCard(card.card_id, { issues: e.target.value })}
-                      className='w-full px-3 py-2 rounded-lg bg-[rgb(var(--background))] border border-red-500/30 text-sm min-h-[60px] focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all resize-y'
+                      className='w-full px-3 py-2 rounded-lg bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm min-h-[60px] focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all resize-y'
                       placeholder='이슈사항이 있다면 적어주세요...'
                     />
                   </div>

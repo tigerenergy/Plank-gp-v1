@@ -119,9 +119,19 @@ async function collectInProgressCards(
     }
   }
 
-  // 4단계: 결과 병합
+  // 4단계: 결과 병합 및 시간 로그 병렬 조회
   const inProgressCards: any[] = []
-  for (const { card, list } of allCards) {
+  
+  // 모든 카드의 주간 시간 로그를 병렬로 조회
+  const timeLogPromises = allCards.map(({ card }) => 
+    getCardWeeklyHours(card.id, weekStart, weekEnd)
+  )
+  const weeklyHoursArray = await Promise.all(timeLogPromises)
+  
+  for (let i = 0; i < allCards.length; i++) {
+    const { card, list } = allCards[i]
+    const weeklyHours = weeklyHoursArray[i]
+    
     // 체크리스트 진행률 계산
     const checklists = checklistsByCardId.get(card.id) || []
     const totalItems = checklists.reduce((sum, cl) => sum + (cl.items?.length || 0), 0)
@@ -153,15 +163,16 @@ async function collectInProgressCards(
         updated_at: card.updated_at,
         checklist_progress: checklistProgress,
         comments_count: commentsCount,
+        weekly_hours: weeklyHours,
       },
-      // 사용자 입력 필드 (초기값)
+      // 사용자 입력 필드 (카드 데이터로 자동 채움)
       user_input: {
         status: '진행중',
         progress: checklistProgress,
-        description: '',
-        expected_completion_date: null,
+        description: card.description || '', // 카드 설명 자동 반영
+        expected_completion_date: card.due_date || null, // 마감일 자동 반영
         issues: '',
-        hours_spent: 0,
+        hours_spent: weeklyHours, // 주간 시간 로그 자동 집계
       },
     })
   }
@@ -436,4 +447,74 @@ export async function getWeeklyReportsByBoard(
 // 주간보고 제출
 export async function submitWeeklyReport(reportId: string): Promise<ActionResult<WeeklyReport>> {
   return updateWeeklyReport(reportId, { status: 'submitted' })
+}
+
+// 주간보고 데이터 자동 갱신 (최신 카드 데이터로 업데이트)
+export async function refreshWeeklyReportData(
+  reportId: string,
+  boardId: string,
+  weekStartDate: string
+): Promise<ActionResult<WeeklyReport>> {
+  try {
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
+    // 작성자 확인
+    const { data: report } = await supabase
+      .from('weekly_reports')
+      .select('user_id, status, notes')
+      .eq('id', reportId)
+      .single()
+
+    if (!report || report.user_id !== user.id) {
+      return { success: false, error: '주간보고를 수정할 권한이 없습니다.' }
+    }
+
+    // 주간 날짜 계산
+    const weekStart = new Date(weekStartDate)
+    const weekEnd = getWeekEnd(weekStart)
+
+    // 최신 데이터 자동 수집 (병렬 처리)
+    const [completedCards, inProgressCards, cardActivities] = await Promise.all([
+      collectCompletedCards(boardId, weekStart, weekEnd),
+      collectInProgressCards(boardId, weekStart, weekEnd),
+      collectCardActivities(boardId, weekStart, weekEnd),
+    ])
+
+    // 시간 집계 (진행 중인 카드의 시간 로그 합계)
+    const totalHours = inProgressCards.reduce((sum, card) => {
+      return sum + (card.user_input?.hours_spent || card.auto_collected?.weekly_hours || 0)
+    }, 0)
+
+    // 최신 데이터로 업데이트 (기존 notes는 유지)
+    const { data, error } = await supabase
+      .from('weekly_reports')
+      .update({
+        completed_cards: completedCards,
+        in_progress_cards: inProgressCards,
+        card_activities: cardActivities,
+        total_hours: totalHours,
+        // notes는 기존 값 유지
+      })
+      .eq('id', reportId)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('주간보고 갱신 에러:', error)
+      return { success: false, error: '주간보고 갱신에 실패했습니다.' }
+    }
+
+    return { success: true, data }
+  } catch (error) {
+    console.error('주간보고 갱신 에러:', error)
+    return { success: false, error: '서버 연결에 실패했습니다.' }
+  }
 }

@@ -35,6 +35,16 @@
 
 ---
 
+## 📚 문서
+
+프로젝트 문서는 [`docs/`](./docs/) 폴더에 정리되어 있습니다.
+
+- **현재 기능**: [`docs/CURRENT_FEATURES.md`](./docs/CURRENT_FEATURES.md)
+- **주간보고 기능 계획**: [`docs/WEEKLY_REPORT_FEATURE.md`](./docs/WEEKLY_REPORT_FEATURE.md) ⭐ **최신**
+- **프로젝트 개요**: [`docs/PROJECT_OVERVIEW.md`](./docs/PROJECT_OVERVIEW.md)
+
+---
+
 ## ✨ 주요 기능
 
 ### 인증 시스템

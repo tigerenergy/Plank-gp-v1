@@ -141,11 +141,11 @@ export function Column({ list, canEdit = false }: ColumnProps) {
                   
                   {/* + 아이콘 (3D) */}
                   <div 
-                    className='absolute -bottom-3 -right-3 w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all'
+                    className='absolute -bottom-3 -right-3 w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all'
                     style={{ transform: 'translateZ(10px)' }}
                   >
                     <div className='absolute inset-0 rounded-xl bg-gradient-to-br from-white/30 to-transparent' />
-                    <Plus className='w-5 h-5 text-white relative z-10' />
+                    <Plus className='w-6 h-6 text-white relative z-10 drop-shadow-sm' />
                   </div>
                 </div>
               </div>

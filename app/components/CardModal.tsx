@@ -222,14 +222,18 @@ export function CardModal({ isBoardMember = false, isOwner = false }: CardModalP
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors)
       
-      // 첫 번째 에러 필드로 포커스
+      // 첫 번째 에러 메시지를 toast로 표시
       if (errors.title) {
+        toast.error('제목을 입력해주세요.')
         titleRef.current?.focus()
       } else if (errors.start_date) {
+        toast.error('시작일을 선택해주세요.')
         document.getElementById('start-date-picker')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       } else if (errors.due_date) {
+        toast.error('마감일을 선택해주세요.')
         document.getElementById('due-date-picker')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       } else if (errors.description) {
+        toast.error('설명을 입력해주세요.')
         descriptionRef.current?.focus()
       }
       return

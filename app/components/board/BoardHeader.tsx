@@ -76,14 +76,32 @@ export function BoardHeader({ boardId, title, user, members, onSettingsClick }: 
               </button>
             )}
 
-            {/* 주간보고 버튼 */}
-            <Link
-              href={`/board/${boardId}/weekly-report/share`}
-              className='w-10 h-10 rounded-xl flex items-center justify-center btn-ghost border border-[rgb(var(--border))]'
-              title='주간보고 공유'
-            >
-              <FileText className='w-5 h-5 text-violet-500' />
-            </Link>
+            {/* 주간보고 버튼 (드롭다운) */}
+            <div className='relative group'>
+              <Link
+                href={`/board/${boardId}/weekly-report/share`}
+                className='w-10 h-10 rounded-xl flex items-center justify-center btn-ghost border border-[rgb(var(--border))]'
+                title='주간보고'
+              >
+                <FileText className='w-5 h-5 text-violet-500' />
+              </Link>
+              <div className='absolute right-0 top-full mt-2 w-48 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50'>
+                <Link
+                  href={`/board/${boardId}/weekly-report/new`}
+                  className='w-full px-4 py-2.5 text-left text-sm hover:bg-[rgb(var(--secondary))] rounded-t-xl flex items-center gap-2'
+                >
+                  <FileText className='w-4 h-4' />
+                  주간보고 작성
+                </Link>
+                <Link
+                  href={`/board/${boardId}/weekly-report/share`}
+                  className='w-full px-4 py-2.5 text-left text-sm hover:bg-[rgb(var(--secondary))] rounded-b-xl flex items-center gap-2'
+                >
+                  <FileText className='w-4 h-4' />
+                  주간보고 공유
+                </Link>
+              </div>
+            </div>
 
             {/* 완료된 작업 버튼 */}
             <NavLink

@@ -50,6 +50,12 @@ export function AddCardForm({ listId, onClose }: AddCardFormProps) {
     // 중복 제출 방지
     if (isSubmitting) return
     
+    // 제목 검증 (추가 확인)
+    if (!data.title?.trim()) {
+      toast.error('제목을 입력해주세요.')
+      return
+    }
+    
     setIsSubmitting(true)
     try {
       const result = await createCard(data)

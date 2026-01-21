@@ -196,6 +196,29 @@ h1, h2, h3, .text-2xl, .text-xl, .text-lg {
 /* ============================================
    유틸리티 클래스
    ============================================ */
+/* 텍스트 정렬을 위한 유틸리티 - underline이 텍스트를 내리지 않도록 */
+.text-link-underline {
+  position: relative;
+  text-decoration: none;
+  vertical-align: baseline;
+  display: inline;
+}
+
+.text-link-underline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 0.5px;
+  background-color: rgb(148 163 184);
+  transform: translateY(1px);
+}
+
+.dark .text-link-underline::after {
+  background-color: rgb(100 116 139);
+}
+
 @layer utilities {
   /* 버튼 */
   .btn-primary {

@@ -172,7 +172,7 @@ async function collectInProgressCards(
         description: card.description || '', // 카드 설명 자동 반영
         expected_completion_date: card.due_date || null, // 마감일 자동 반영
         issues: '',
-        hours_spent: weeklyHours, // 주간 시간 로그 자동 집계
+        hours_spent: Number(weeklyHours) || 0, // 주간 시간 로그 자동 집계 (명시적 변환)
       },
     })
   }

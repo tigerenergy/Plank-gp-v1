@@ -212,21 +212,43 @@ export async function getCardWeeklyHours(
   try {
     const supabase = await createClient()
 
+    const weekStartStr = weekStart.toISOString().split('T')[0]
+    const weekEndStr = weekEnd.toISOString().split('T')[0]
+
     const { data, error } = await supabase
       .from('card_time_logs')
-      .select('hours')
+      .select('hours, logged_date')
       .eq('card_id', cardId)
-      .gte('logged_date', weekStart.toISOString().split('T')[0])
-      .lte('logged_date', weekEnd.toISOString().split('T')[0])
+      .gte('logged_date', weekStartStr)
+      .lte('logged_date', weekEndStr)
 
     if (error) {
-      console.error('시간 집계 에러:', error)
+      console.error('시간 집계 에러:', {
+        cardId,
+        weekStart: weekStartStr,
+        weekEnd: weekEndStr,
+        error,
+      })
       return 0
     }
 
-    return (data || []).reduce((sum, log) => sum + Number(log.hours || 0), 0)
+    if (!data || data.length === 0) {
+      return 0
+    }
+
+    const totalHours = data.reduce((sum, log) => {
+      const hours = Number(log.hours || 0)
+      return sum + hours
+    }, 0)
+
+    return totalHours
   } catch (error) {
-    console.error('시간 집계 에러:', error)
+    console.error('시간 집계 에러:', {
+      cardId,
+      weekStart: weekStart.toISOString().split('T')[0],
+      weekEnd: weekEnd.toISOString().split('T')[0],
+      error,
+    })
     return 0
   }
 }

@@ -20,10 +20,11 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
   const [totalHours, setTotalHours] = useState(report.total_hours || 0)
   const [notes, setNotes] = useState(report.notes || '')
 
-  // 시간 자동 집계
+  // 시간 자동 집계 (프런트엔드에서도 계산)
   useEffect(() => {
     const hours = inProgressCards.reduce((sum, card) => {
-      return sum + (card.user_input?.hours_spent || 0)
+      const cardHours = card.user_input?.hours_spent ?? card.auto_collected?.weekly_hours ?? 0
+      return sum + Number(cardHours || 0)
     }, 0)
     setTotalHours(hours)
   }, [inProgressCards])
@@ -278,7 +279,7 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
                       type='number'
                       min='0'
                       step='0.5'
-                      value={card.user_input?.hours_spent || 0}
+                      value={card.user_input?.hours_spent ?? card.auto_collected?.weekly_hours ?? 0}
                       onChange={(e) =>
                         updateCard(card.card_id, { hours_spent: parseFloat(e.target.value) || 0 })
                       }

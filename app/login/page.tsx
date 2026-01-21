@@ -97,20 +97,21 @@ export default function LoginPage() {
           {/* 안내 문구 */}
           <p className='mt-8 text-center text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed tracking-wide'>
             로그인하면{' '}
+            <br />
             <a 
               href='#' 
-              className='text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer text-link-underline relative inline'
+              className='text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer underline decoration-[0.5px] underline-offset-[2px] decoration-slate-400 dark:decoration-slate-500'
             >
               서비스 이용약관
             </a>
-            {' '}과{' '}
+            과{' '}
             <a 
               href='#' 
-              className='text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer text-link-underline relative inline'
+              className='text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer underline decoration-[0.5px] underline-offset-[2px] decoration-slate-400 dark:decoration-slate-500'
             >
               개인정보 처리방침
             </a>
-            {' '}에 동의하게 됩니다.
+            에 동의하게 됩니다.
           </p>
         </div>
 

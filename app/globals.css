@@ -202,17 +202,17 @@ h1, h2, h3, .text-2xl, .text-xl, .text-lg {
   text-decoration: none;
   vertical-align: baseline;
   display: inline;
+  line-height: inherit;
 }
 
 .text-link-underline::after {
   content: '';
   position: absolute;
   left: 0;
-  bottom: 0;
+  bottom: 0.5px;
   width: 100%;
   height: 0.5px;
   background-color: rgb(148 163 184);
-  transform: translateY(1px);
 }
 
 .dark .text-link-underline::after {

@@ -99,18 +99,18 @@ export default function LoginPage() {
             로그인하면{' '}
             <a 
               href='#' 
-              className='text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer text-link-underline'
+              className='text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer text-link-underline relative inline'
             >
               서비스 이용약관
             </a>
-            과{' '}
+            {' '}과{' '}
             <a 
               href='#' 
-              className='text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer text-link-underline'
+              className='text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer text-link-underline relative inline'
             >
               개인정보 처리방침
             </a>
-            에 동의하게 됩니다.
+            {' '}에 동의하게 됩니다.
           </p>
         </div>
 

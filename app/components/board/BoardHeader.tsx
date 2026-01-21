@@ -1,6 +1,7 @@
 'use client'
 
-import { Users } from 'lucide-react'
+import { Users, FileText } from 'lucide-react'
+import Link from 'next/link'
 import type { User } from '@supabase/supabase-js'
 import type { Profile } from '@/types'
 import { NavLink } from '../NavLink'
@@ -74,6 +75,15 @@ export function BoardHeader({ boardId, title, user, members, onSettingsClick }: 
                 )}
               </button>
             )}
+
+            {/* 주간보고 버튼 */}
+            <Link
+              href={`/board/${boardId}/weekly-report/share`}
+              className='w-10 h-10 rounded-xl flex items-center justify-center btn-ghost border border-[rgb(var(--border))]'
+              title='주간보고 공유'
+            >
+              <FileText className='w-5 h-5 text-violet-500' />
+            </Link>
 
             {/* 완료된 작업 버튼 */}
             <NavLink

@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageSquare, CheckSquare2, FileText } from 'lucide-react'
+import { MessageSquare, CheckSquare2, FileText, Clock } from 'lucide-react'
 import { useBoardStore } from '@/store/useBoardStore'
 import { updateCard, deleteCard, createCard } from '@/app/actions/card'
 import { getComments } from '@/app/actions/comment'
@@ -13,6 +13,7 @@ import { useEscapeClose } from '@/hooks'
 import { ConfirmModal } from './ConfirmModal'
 import { CommentList } from './card/CommentList'
 import { ChecklistSection } from './card/ChecklistSection'
+import { TimeLogSection } from './card/TimeLogSection'
 import { LabelEditor } from './card/LabelEditor'
 import { DatePicker } from './ui/DatePicker'
 import { fadeIn, slideUp, zoomIn, easeTransition } from '@/lib/animations'
@@ -620,6 +621,17 @@ export function CardModal({ isBoardMember = false, isOwner = false }: CardModalP
                       canEdit={canEdit}
                     />
                   ) : null)}
+
+                {/* 시간 추적 탭 - 새 카드 모드에서는 비활성화 */}
+                {cardModalTab === 'time' &&
+                  (isNewCardMode ? (
+                    <div className='flex flex-col items-center justify-center py-8 text-gray-400'>
+                      <Clock className='w-8 h-8 mb-2' />
+                      <p className='text-sm'>카드를 먼저 저장해주세요</p>
+                    </div>
+                  ) : selectedCard ? (
+                    <TimeLogSection cardId={selectedCard.id} currentUserId={currentUserId} canEdit={canEdit} />
+                  ) : null)}
               </div>
 
               {/* 푸터 (편집 권한자: 수정 가능, 본인 카드만: 삭제 가능) */}
@@ -693,7 +705,7 @@ interface ModalFooterProps {
   isSubmitting: boolean
   canEdit: boolean // 편집 권한 여부
   canDelete: boolean // 삭제 권한 여부 (보드 소유자 OR 카드 생성자)
-  currentTab: 'details' | 'comments' | 'checklist'
+  currentTab: 'details' | 'comments' | 'checklist' | 'time'
   isNewCard?: boolean // 새 카드 생성 모드 여부
   onDeleteClick: () => void
   onClose: () => void

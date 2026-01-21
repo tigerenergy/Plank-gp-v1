@@ -5,7 +5,7 @@ import { immer } from 'zustand/middleware/immer'
 import type { Board, ListWithCards, Card, Profile, Comment, Checklist } from '@/types'
 
 // 탭 타입
-export type CardModalTab = 'details' | 'comments' | 'checklist'
+export type CardModalTab = 'details' | 'comments' | 'checklist' | 'time'
 
 // 스토어 상태 타입
 interface BoardState {

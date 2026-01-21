@@ -222,3 +222,22 @@ export interface Notification {
   sender?: Profile | null
   board?: Board | null
 }
+
+// 주간보고
+export interface WeeklyReport {
+  id: string
+  board_id: string
+  user_id: string
+  week_start_date: string
+  week_end_date: string
+  status: 'draft' | 'submitted'
+  completed_cards: any[]
+  in_progress_cards: any[]
+  card_activities: any[]
+  total_hours: number
+  notes: string | null
+  created_at: string
+  updated_at: string
+  // 조인된 정보
+  user?: Profile | null
+}

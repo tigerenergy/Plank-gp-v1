@@ -12,21 +12,19 @@
 - **[PROJECT_SUMMARY.md](./PROJECT_SUMMARY.md)** - 프로젝트 요약
 
 ### 🚀 개발 계획
-- **[WEEKLY_REPORT_FEATURE.md](./WEEKLY_REPORT_FEATURE.md)** - 주간보고 기능 개발 계획서 ⭐ **최신**
-- **[TASK_BREAKDOWN.md](./TASK_BREAKDOWN.md)** - 주간보고 기능 태스크 분해 ⭐ **작업 시작 전 필독**
-- **[FEATURE_ROADMAP.md](./FEATURE_ROADMAP.md)** - 기능 로드맵
-- **[PLANK_V2_ROADMAP.md](./PLANK_V2_ROADMAP.md)** - V2 로드맵
-- **[PLANK_REFACTOR_ORDER_V3.md](./PLANK_REFACTOR_ORDER_V3.md)** - 리팩토링 순서
+- **[DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md)** - 주간보고 기능 종합 개발 계획서 ⭐ **개발 시작 전 필수**
+- **[MIGRATION_PLAN.md](./MIGRATION_PLAN.md)** - 개발 전 마이그레이션 계획 (상세)
+- **[WEEKLY_REPORT_FEATURE.md](./WEEKLY_REPORT_FEATURE.md)** - 주간보고 기능 개발 계획서 (상세)
+- **[INTEGRATION_ANALYSIS.md](./INTEGRATION_ANALYSIS.md)** - 기존 기능과의 통합 분석
+- **[TASK_BREAKDOWN.md](./TASK_BREAKDOWN.md)** - 주간보고 기능 태스크 분해 (상세)
+- **[BUSINESS_STRATEGY.md](./BUSINESS_STRATEGY.md)** - 비즈니스 전략 및 수익화 방안 ⭐ **제품화 전략**
+- **[COMPETITIVE_ADVANTAGES.md](./COMPETITIVE_ADVANTAGES.md)** - 경쟁 우위 및 차별화 포인트 ⭐ **비즈니스 전략**
 
 ### 🛠️ 개발 가이드
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - 아키텍처 문서
 - **[DEVELOPMENT_RULES.md](./DEVELOPMENT_RULES.md)** - 개발 규칙
 - **[SETUP_GUIDE.md](./SETUP_GUIDE.md)** - 설정 가이드
 
-### 📝 진행 상황
-- **[PROGRESS_CHECKLIST.md](./PROGRESS_CHECKLIST.md)** - 진행 체크리스트
-- **[TODO_IMPROVEMENTS.md](./TODO_IMPROVEMENTS.md)** - 개선 사항 TODO
-- **[AGENT_TASK.md](./AGENT_TASK.md)** - 에이전트 작업 목록
 
 ---
 
@@ -34,14 +32,18 @@
 
 ### 주간보고 기능 개발
 **계획서**: [WEEKLY_REPORT_FEATURE.md](./WEEKLY_REPORT_FEATURE.md)  
+**통합 분석**: [INTEGRATION_ANALYSIS.md](./INTEGRATION_ANALYSIS.md) ⭐ **기존 기능과의 충돌 방지**  
 **태스크 분해**: [TASK_BREAKDOWN.md](./TASK_BREAKDOWN.md)
 
 주요 목표:
 1. 개인별 주간보고 작성 기능 (완료/진행중/이슈 포함)
-2. 부장 통합 보고서 생성 (AI 기반 요약)
-3. 상급자 보고 기능 (이메일/PDF 전송)
+2. 웹페이지로 주간보고 공유 (실시간 업데이트)
+3. 작업 시간 추적 (Jira 스타일)
 
-**개발 시작 전**: [TASK_BREAKDOWN.md](./TASK_BREAKDOWN.md)의 태스크를 확인하고 체크리스트를 따라 진행하세요.
+**개발 시작 전** (순서대로):
+1. **[MIGRATION_PLAN.md](./MIGRATION_PLAN.md)** ⭐ **최우선** - 기존 기능 삭제/수정 계획 확인
+2. [INTEGRATION_ANALYSIS.md](./INTEGRATION_ANALYSIS.md) - 기존 기능과의 통합 방안 확인
+3. [TASK_BREAKDOWN.md](./TASK_BREAKDOWN.md) - 태스크 확인 및 체크리스트 따라 진행
 
 ---
 
@@ -57,5 +59,6 @@
 
 - **현재 기능 확인**: [CURRENT_FEATURES.md](./CURRENT_FEATURES.md)
 - **주간보고 기능**: [WEEKLY_REPORT_FEATURE.md](./WEEKLY_REPORT_FEATURE.md)
+- **통합 분석**: [INTEGRATION_ANALYSIS.md](./INTEGRATION_ANALYSIS.md) ⭐ **기존 기능과 충돌 방지**
 - **아키텍처**: [ARCHITECTURE.md](./ARCHITECTURE.md)
 - **개발 규칙**: [DEVELOPMENT_RULES.md](./DEVELOPMENT_RULES.md)

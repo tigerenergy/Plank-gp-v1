@@ -519,15 +519,23 @@ export function ChecklistSection({
                         )}
                       </div>
                     )}
-                    <span
-                      className={`flex-1 text-sm ${
-                        item.is_checked
-                          ? 'text-gray-400 dark:text-gray-500 line-through'
-                          : 'text-gray-700 dark:text-gray-300'
-                      }`}
-                    >
-                      {item.content}
-                    </span>
+                    <div className='flex-1 flex items-center gap-2'>
+                      <span
+                        className={`text-sm ${
+                          item.is_checked
+                            ? 'text-gray-400 dark:text-gray-500 line-through'
+                            : 'text-gray-700 dark:text-gray-300'
+                        }`}
+                      >
+                        {item.content}
+                      </span>
+                      {/* 항목별 진척도 표시 */}
+                      {item.is_checked && (
+                        <span className='text-xs px-1.5 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded font-medium'>
+                          100%
+                        </span>
+                      )}
+                    </div>
                     {canEdit && (
                       <button
                         onClick={() => handleDeleteItem(checklist.id, item.id)}

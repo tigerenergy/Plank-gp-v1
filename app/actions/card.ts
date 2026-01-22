@@ -522,6 +522,13 @@ export async function uncompleteCard(cardId: string): Promise<ActionResult<Card>
       return { success: false, error: '보드 멤버만 완료 취소할 수 있습니다.' }
     }
 
+    // 카드 정보 조회 (보드 ID 확인용)
+    const { data: cardInfo } = await supabase
+      .from('cards')
+      .select('list_id, lists!inner(board_id)')
+      .eq('id', cardId)
+      .single()
+
     // 완료 취소
     const { data, error } = await supabase
       .from('cards')
@@ -537,6 +544,38 @@ export async function uncompleteCard(cardId: string): Promise<ActionResult<Card>
     if (error) {
       console.error('완료 취소 에러:', error)
       return { success: false, error: '완료 취소에 실패했습니다.' }
+    }
+
+    // 주간보고 자동 업데이트 (해당 주간의 주간보고가 있으면 업데이트)
+    if (cardInfo && (cardInfo.lists as any)?.board_id) {
+      const boardId = (cardInfo.lists as any).board_id
+      try {
+        // 현재 주간의 주간보고 찾기
+        const weekStart = new Date()
+        const day = weekStart.getDay()
+        const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1)
+        const weekStartDate = new Date(weekStart.setDate(diff))
+        weekStartDate.setHours(0, 0, 0, 0)
+
+        const { data: weeklyReport } = await supabase
+          .from('weekly_reports')
+          .select('id, week_start_date')
+          .eq('board_id', boardId)
+          .eq('user_id', user.id)
+          .eq('week_start_date', weekStartDate.toISOString().split('T')[0])
+          .maybeSingle()
+
+        if (weeklyReport) {
+          // 주간보고 데이터 새로고침 (비동기로 처리, 에러는 무시)
+          const { refreshWeeklyReportData } = await import('./weekly-report')
+          refreshWeeklyReportData(weeklyReport.id, boardId, weekStartDate.toISOString().split('T')[0]).catch(
+            (err) => console.error('주간보고 자동 업데이트 실패:', err)
+          )
+        }
+      } catch (err) {
+        // 주간보고 업데이트 실패는 무시 (완료 취소는 성공으로 처리)
+        console.error('주간보고 자동 업데이트 에러:', err)
+      }
     }
 
     return { success: true, data }

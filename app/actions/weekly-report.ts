@@ -46,7 +46,8 @@ function getWeekEnd(date: Date = new Date()): Date {
 async function collectCompletedCards(
   boardId: string,
   weekStart: Date,
-  weekEnd: Date
+  weekEnd: Date,
+  userId: string
 ): Promise<any[]> {
   const result = await getCompletedCards(boardId, 'all')
   if (!result.success || !result.data) return []
@@ -61,7 +62,7 @@ async function collectCompletedCards(
   // 완료된 카드의 주간 시간 로그도 수집
   const completedCardsWithHours = await Promise.all(
     filteredCards.map(async (card) => {
-      const weeklyHours = await getCardWeeklyHours(card.id, weekStart, weekEnd)
+      const weeklyHours = await getCardWeeklyHours(card.id, weekStart, weekEnd, userId)
       return {
         ...card,
         weekly_hours: weeklyHours,
@@ -76,7 +77,8 @@ async function collectCompletedCards(
 async function collectInProgressCards(
   boardId: string,
   weekStart: Date,
-  weekEnd: Date
+  weekEnd: Date,
+  userId: string
 ): Promise<any[]> {
   const boardDataResult = await getBoardData(boardId)
   if (!boardDataResult.success || !boardDataResult.data) return []
@@ -140,7 +142,7 @@ async function collectInProgressCards(
   
   // 모든 카드의 주간 시간 로그를 병렬로 조회
   const timeLogPromises = allCards.map(({ card }) => 
-    getCardWeeklyHours(card.id, weekStart, weekEnd)
+    getCardWeeklyHours(card.id, weekStart, weekEnd, userId)
   )
   const weeklyHoursArray = await Promise.all(timeLogPromises)
   
@@ -335,8 +337,8 @@ export async function createWeeklyReport(
 
     // 자동 수집 (병렬 처리)
     const [completedCards, inProgressCards, cardActivities] = await Promise.all([
-      collectCompletedCards(boardId, weekStart, weekEnd),
-      collectInProgressCards(boardId, weekStart, weekEnd),
+      collectCompletedCards(boardId, weekStart, weekEnd, user.id),
+      collectInProgressCards(boardId, weekStart, weekEnd, user.id),
       collectCardActivities(boardId, weekStart, weekEnd),
     ])
 
@@ -545,8 +547,8 @@ export async function refreshWeeklyReportData(
 
     // 최신 데이터 자동 수집 (병렬 처리)
     const [completedCards, inProgressCards, cardActivities] = await Promise.all([
-      collectCompletedCards(boardId, weekStart, weekEnd),
-      collectInProgressCards(boardId, weekStart, weekEnd),
+      collectCompletedCards(boardId, weekStart, weekEnd, user.id),
+      collectInProgressCards(boardId, weekStart, weekEnd, user.id),
       collectCardActivities(boardId, weekStart, weekEnd),
     ])
 

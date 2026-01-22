@@ -207,10 +207,22 @@ export async function deleteTimeLog(timeLogId: string): Promise<ActionResult<voi
 export async function getCardWeeklyHours(
   cardId: string,
   weekStart: Date,
-  weekEnd: Date
+  weekEnd: Date,
+  userId?: string
 ): Promise<number> {
   try {
     const supabase = await createClient()
+
+    // userId가 없으면 현재 사용자 ID 가져오기
+    if (!userId) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        return 0
+      }
+      userId = user.id
+    }
 
     // 날짜를 로컬 시간 기준으로 YYYY-MM-DD 형식으로 변환 (시간대 문제 방지)
     const formatDate = (date: Date): string => {
@@ -227,6 +239,7 @@ export async function getCardWeeklyHours(
       .from('card_time_logs')
       .select('hours, logged_date')
       .eq('card_id', cardId)
+      .eq('user_id', userId) // 현재 사용자의 시간만 집계
       .gte('logged_date', weekStartStr)
       .lte('logged_date', weekEndStr)
 

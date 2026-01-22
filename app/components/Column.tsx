@@ -115,17 +115,17 @@ export function Column({ list, canEdit = false }: ColumnProps) {
         {list.cards.length === 0 && canEdit && (
           <button 
             onClick={handleAddCard}
-            className='flex flex-col items-center justify-center py-4 w-full hover:bg-[rgb(var(--secondary))]/30 rounded-xl transition-colors cursor-pointer group'
+            className='flex flex-col items-center justify-center py-4 w-full rounded-xl cursor-pointer group'
           >
             {/* 심플한 카드 아이콘 */}
-            <div className='relative mb-2'>
+            <div className='relative mb-2 group-hover:scale-110 transition-transform duration-200'>
               <div className='w-12 h-16 rounded-lg bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-700 dark:to-slate-600 border border-slate-200 dark:border-slate-500 flex flex-col items-center justify-center gap-1.5 shadow-sm'>
                 <div className='w-8 h-0.5 rounded-full bg-slate-300 dark:bg-slate-500' />
                 <div className='w-7 h-0.5 rounded-full bg-slate-300 dark:bg-slate-500' />
                 <div className='w-6 h-0.5 rounded-full bg-slate-300 dark:bg-slate-500' />
               </div>
               {/* + 버튼 */}
-              <div className='absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all'>
+              <div className='absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-md'>
                 <Plus className='w-3.5 h-3.5 text-white' />
               </div>
             </div>

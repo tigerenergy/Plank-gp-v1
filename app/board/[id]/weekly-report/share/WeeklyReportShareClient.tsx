@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Users, Clock, CheckCircle2, TrendingUp, FileText, BarChart3, Download, History } from 'lucide-react'
+import { ArrowLeft, Users, Clock, CheckCircle2, TrendingUp, FileText, BarChart3, Download } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Board } from '@/types'
 import type { WeeklyReport } from '@/app/actions/weekly-report'
 import { generateWeeklyReportPDF, generateWeeklyReportCSV } from '@/app/lib/weekly-report-export'
-import { ReportHistoryModal } from '@/app/components/weekly-report/ReportHistoryModal'
 import { WeeklyReportDetailModal } from '@/app/components/weekly-report/WeeklyReportDetailModal'
 
 interface WeeklyReportShareClientProps {
@@ -22,8 +21,6 @@ export function WeeklyReportShareClient({
   selectedWeek,
 }: WeeklyReportShareClientProps) {
   const [reports, setReports] = useState(initialReports)
-  const [selectedReportId, setSelectedReportId] = useState<string | null>(null)
-  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
   const [selectedReport, setSelectedReport] = useState<WeeklyReport | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
 
@@ -233,17 +230,6 @@ export function WeeklyReportShareClient({
                         </div>
                       </div>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setSelectedReportId(report.id)
-                        setIsHistoryModalOpen(true)
-                      }}
-                      className='p-1.5 rounded-lg hover:bg-[rgb(var(--secondary))] transition-colors'
-                      title='수정 이력 보기'
-                    >
-                      <History className='w-3.5 h-3.5 text-[rgb(var(--muted-foreground))]' />
-                    </button>
                   </div>
 
                   {/* 통계 */}
@@ -289,18 +275,6 @@ export function WeeklyReportShareClient({
           </div>
         )}
       </main>
-
-      {/* 수정 이력 모달 */}
-      {selectedReportId && (
-        <ReportHistoryModal
-          reportId={selectedReportId}
-          isOpen={isHistoryModalOpen}
-          onClose={() => {
-            setIsHistoryModalOpen(false)
-            setSelectedReportId(null)
-          }}
-        />
-      )}
 
       {/* 상세 보기 모달 */}
       <WeeklyReportDetailModal

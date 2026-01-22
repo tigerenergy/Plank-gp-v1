@@ -86,6 +86,35 @@ export function WeeklyReportDetailModal({ report, isOpen, onClose }: WeeklyRepor
                     {card.description && (
                       <div className='text-xs text-[rgb(var(--muted-foreground))] mt-2'>{card.description}</div>
                     )}
+                    
+                    {/* 체크리스트 표시 */}
+                    {card.checklists && card.checklists.length > 0 && (
+                      <div className='mt-3 space-y-2'>
+                        {card.checklists.map((checklist: any) => (
+                          <div key={checklist.id} className='bg-emerald-500/5 rounded-lg p-2 border border-emerald-500/10'>
+                            <div className='flex items-center justify-between mb-1.5'>
+                              <span className='text-xs font-medium text-[rgb(var(--foreground))]'>{checklist.title}</span>
+                              <span className='text-xs text-emerald-600 dark:text-emerald-400'>{checklist.progress}%</span>
+                            </div>
+                            <div className='space-y-1'>
+                              {checklist.items?.map((item: any) => (
+                                <div key={item.id} className='flex items-center gap-2 text-xs'>
+                                  {item.is_checked ? (
+                                    <CheckCircle2 className='w-3 h-3 text-emerald-500 flex-shrink-0' />
+                                  ) : (
+                                    <div className='w-3 h-3 rounded border border-[rgb(var(--border))] flex-shrink-0' />
+                                  )}
+                                  <span className={item.is_checked ? 'text-[rgb(var(--muted-foreground))] line-through' : 'text-[rgb(var(--foreground))]'}>
+                                    {item.content}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
                     {card.completed_at && (
                       <div className='flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 mt-2'>
                         <Calendar className='w-3 h-3' />

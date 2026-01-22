@@ -59,13 +59,56 @@ async function collectCompletedCards(
     return completedAt >= weekStart && completedAt <= weekEnd
   })
 
-  // 완료된 카드의 주간 시간 로그도 수집
+  // 완료된 카드의 주간 시간 로그와 체크리스트 정보 수집
+  const supabase = await createClient()
+  const cardIds = filteredCards.map((card) => card.id)
+  
+  // 모든 체크리스트와 체크리스트 항목을 한 번에 조회
+  const { data: checklistsData } = await supabase
+    .from('checklists')
+    .select(`
+      *,
+      items:checklist_items(*)
+    `)
+    .in('card_id', cardIds)
+    .order('position', { ascending: true })
+
+  // 카드별 체크리스트 매핑
+  const checklistsByCardId = new Map<string, any[]>()
+  if (checklistsData) {
+    for (const checklist of checklistsData) {
+      if (!checklistsByCardId.has(checklist.card_id)) {
+        checklistsByCardId.set(checklist.card_id, [])
+      }
+      checklistsByCardId.get(checklist.card_id)!.push(checklist)
+    }
+  }
+
   const completedCardsWithHours = await Promise.all(
     filteredCards.map(async (card) => {
       const weeklyHours = await getCardWeeklyHours(card.id, weekStart, weekEnd, userId)
+      const checklists = checklistsByCardId.get(card.id) || []
+      
+      // 체크리스트 진행률 계산
+      const totalItems = checklists.reduce((sum, cl) => sum + (cl.items?.length || 0), 0)
+      const completedItems = checklists.reduce(
+        (sum, cl) => sum + (cl.items?.filter((item: any) => item.is_checked)?.length || 0),
+        0
+      )
+      const checklistProgress = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0
+      
       return {
         ...card,
         weekly_hours: weeklyHours,
+        checklists: checklists.map((cl) => ({
+          id: cl.id,
+          title: cl.title,
+          items: cl.items || [],
+          progress: cl.items?.length > 0 
+            ? Math.round((cl.items.filter((item: any) => item.is_checked).length / cl.items.length) * 100)
+            : 0,
+        })),
+        checklist_progress: checklistProgress,
       }
     })
   )

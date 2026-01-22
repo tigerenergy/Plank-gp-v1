@@ -8,6 +8,7 @@ import type { Board } from '@/types'
 import type { WeeklyReport } from '@/app/actions/weekly-report'
 import { generateWeeklyReportPDF, generateWeeklyReportCSV } from '@/app/lib/weekly-report-export'
 import { ReportHistoryModal } from '@/app/components/weekly-report/ReportHistoryModal'
+import { WeeklyReportDetailModal } from '@/app/components/weekly-report/WeeklyReportDetailModal'
 
 interface WeeklyReportShareClientProps {
   board: Board
@@ -23,6 +24,8 @@ export function WeeklyReportShareClient({
   const [reports, setReports] = useState(initialReports)
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null)
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
+  const [selectedReport, setSelectedReport] = useState<WeeklyReport | null>(null)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
 
   // 실시간 업데이트
   useEffect(() => {
@@ -192,152 +195,97 @@ export function WeeklyReportShareClient({
             </Link>
           </div>
         ) : (
-          <div className='grid gap-6'>
-            {Array.from(reportsByUser.entries()).map(([userId, report]) => (
-              <div
-                key={report.id}
-                className='card p-6 hover:shadow-lg transition-shadow border-2 border-transparent hover:border-violet-500/20'
-              >
-                <div className='flex items-center justify-between mb-6'>
-                  <div className='flex items-center gap-3'>
-                    <div className='w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold'>
-                      {((report as any).user?.username || (report as any).user?.email?.split('@')[0] || '익명')[0].toUpperCase()}
-                    </div>
-                    <div>
-                      <div className='font-semibold text-[rgb(var(--foreground))]'>
-                        {(report as any).user?.username || (report as any).user?.email?.split('@')[0] || '익명'}
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+            {Array.from(reportsByUser.entries()).map(([userId, report]) => {
+              const completedCount = report.completed_cards?.length || 0
+              const inProgressCount = report.in_progress_cards?.length || 0
+              return (
+                <div
+                  key={report.id}
+                  onClick={() => {
+                    setSelectedReport(report)
+                    setIsDetailModalOpen(true)
+                  }}
+                  className='card p-4 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-violet-500/30 hover:scale-[1.02]'
+                >
+                  {/* 헤더 */}
+                  <div className='flex items-center justify-between mb-4'>
+                    <div className='flex items-center gap-2.5'>
+                      <div className='w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm'>
+                        {((report as any).user?.username || (report as any).user?.email?.split('@')[0] || '익명')[0].toUpperCase()}
                       </div>
-                      <div className='text-xs text-[rgb(var(--muted-foreground))] flex items-center gap-1 mt-0.5'>
-                        {report.status === 'submitted' ? (
-                          <>
-                            <span className='w-2 h-2 bg-emerald-500 rounded-full' />
-                            <span>제출 완료</span>
-                          </>
-                        ) : (
-                          <>
-                            <span className='w-2 h-2 bg-yellow-500 rounded-full' />
-                            <span>작성 중</span>
-                          </>
-                        )}
+                      <div>
+                        <div className='text-sm font-semibold text-[rgb(var(--foreground))]'>
+                          {(report as any).user?.username || (report as any).user?.email?.split('@')[0] || '익명'}
+                        </div>
+                        <div className='text-xs text-[rgb(var(--muted-foreground))] flex items-center gap-1 mt-0.5'>
+                          {report.status === 'submitted' ? (
+                            <>
+                              <span className='w-1.5 h-1.5 bg-emerald-500 rounded-full' />
+                              <span>제출 완료</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className='w-1.5 h-1.5 bg-yellow-500 rounded-full' />
+                              <span>작성 중</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className='flex items-center gap-2'>
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation()
                         setSelectedReportId(report.id)
                         setIsHistoryModalOpen(true)
                       }}
-                      className='p-2 rounded-xl hover:bg-[rgb(var(--secondary))] transition-colors'
+                      className='p-1.5 rounded-lg hover:bg-[rgb(var(--secondary))] transition-colors'
                       title='수정 이력 보기'
                     >
-                      <History className='w-4 h-4 text-[rgb(var(--muted-foreground))]' />
+                      <History className='w-3.5 h-3.5 text-[rgb(var(--muted-foreground))]' />
                     </button>
-                    <div className='flex items-center gap-2 px-3 py-1.5 bg-violet-500/10 rounded-lg'>
-                      <Clock className='w-4 h-4 text-violet-600 dark:text-violet-400' />
-                      <span className='font-semibold text-violet-600 dark:text-violet-400'>{report.total_hours}시간</span>
+                  </div>
+
+                  {/* 통계 */}
+                  <div className='flex items-center gap-3 mb-3'>
+                    <div className='flex items-center gap-1.5 px-2.5 py-1 bg-violet-500/10 rounded-lg'>
+                      <Clock className='w-3.5 h-3.5 text-violet-600 dark:text-violet-400' />
+                      <span className='text-xs font-semibold text-violet-600 dark:text-violet-400'>{report.total_hours || 0}시간</span>
                     </div>
+                    <div className='flex items-center gap-2 text-xs text-[rgb(var(--muted-foreground))]'>
+                      <CheckCircle2 className='w-3.5 h-3.5 text-emerald-500' />
+                      <span>{completedCount}</span>
+                      <TrendingUp className='w-3.5 h-3.5 text-blue-500 ml-1' />
+                      <span>{inProgressCount}</span>
+                    </div>
+                  </div>
+
+                  {/* 미리보기 */}
+                  <div className='space-y-2'>
+                    {completedCount > 0 && (
+                      <div className='text-xs text-[rgb(var(--muted-foreground))]'>
+                        완료: {report.completed_cards?.[0]?.title || '작업 없음'}
+                      </div>
+                    )}
+                    {inProgressCount > 0 && (
+                      <div className='text-xs text-[rgb(var(--muted-foreground))]'>
+                        진행중: {report.in_progress_cards?.[0]?.title || '작업 없음'}
+                      </div>
+                    )}
+                    {completedCount === 0 && inProgressCount === 0 && (
+                      <div className='text-xs text-[rgb(var(--muted-foreground))] text-center py-2'>
+                        작업 없음
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 클릭 안내 */}
+                  <div className='mt-3 pt-3 border-t border-[rgb(var(--border))] text-xs text-center text-[rgb(var(--muted-foreground))]'>
+                    클릭하여 상세 보기
                   </div>
                 </div>
-
-                {/* 완료된 작업 */}
-                {report.completed_cards && report.completed_cards.length > 0 && (
-                  <div className='mb-4'>
-                    <div className='text-xs font-medium text-[rgb(var(--muted-foreground))] mb-2 flex items-center gap-2'>
-                      <CheckCircle2 className='w-4 h-4 text-emerald-500' />
-                      완료된 작업 ({report.completed_cards.length}개)
-                    </div>
-                    <div className='space-y-2'>
-                      {report.completed_cards.slice(0, 5).map((card: any, idx: number) => (
-                        <div
-                          key={idx}
-                          className='p-3 bg-emerald-500/5 rounded-lg border border-emerald-500/20'
-                        >
-                          <div className='text-sm font-medium text-[rgb(var(--foreground))]'>{card.title}</div>
-                          {card.list_title && (
-                            <div className='text-xs text-[rgb(var(--muted-foreground))] mt-1'>{card.list_title}</div>
-                          )}
-                        </div>
-                      ))}
-                      {report.completed_cards.length > 5 && (
-                        <div className='text-xs text-[rgb(var(--muted-foreground))] text-center'>
-                          +{report.completed_cards.length - 5}개 더
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* 진행 중인 작업 */}
-                {report.in_progress_cards && report.in_progress_cards.length > 0 && (
-                  <div>
-                    <div className='text-xs font-medium text-[rgb(var(--muted-foreground))] mb-2 flex items-center gap-2'>
-                      <TrendingUp className='w-4 h-4 text-blue-500' />
-                      진행 중인 작업 ({report.in_progress_cards.length}개)
-                    </div>
-                    <div className='space-y-2'>
-                      {report.in_progress_cards.slice(0, 5).map((card: any, idx: number) => {
-                        const progress = card.user_input?.progress || card.auto_collected?.checklist_progress || 0
-                        return (
-                          <div
-                            key={card.card_id || idx}
-                            className='p-3 bg-blue-500/5 rounded-lg border border-blue-500/20 hover:border-blue-500/40 transition-colors'
-                          >
-                            <div className='flex items-center justify-between mb-2'>
-                              <div className='text-sm font-medium text-[rgb(var(--foreground))] flex-1'>
-                                {card.title}
-                              </div>
-                              <div className='flex items-center gap-2 text-xs ml-2'>
-                                <span className='px-2 py-0.5 bg-violet-500/10 text-violet-600 dark:text-violet-400 rounded'>
-                                  {card.user_input?.status || '진행중'}
-                                </span>
-                              </div>
-                            </div>
-                            {/* 진척도 프로그레스 바 */}
-                            <div className='mb-2'>
-                              <div className='flex items-center justify-between mb-1'>
-                                <span className='text-xs text-[rgb(var(--muted-foreground))]'>진척도</span>
-                                <span className='text-xs font-medium text-[rgb(var(--foreground))]'>{progress}%</span>
-                              </div>
-                              <div className='w-full h-2 bg-[rgb(var(--secondary))] rounded-full overflow-hidden'>
-                                <div
-                                  className='h-full bg-gradient-to-r from-blue-500 to-violet-500 transition-all duration-300'
-                                  style={{ width: `${progress}%` }}
-                                />
-                              </div>
-                            </div>
-                            {card.user_input?.description && (
-                              <div className='text-xs text-[rgb(var(--muted-foreground))] mt-2 line-clamp-2'>
-                                {card.user_input.description}
-                              </div>
-                            )}
-                            {card.user_input?.issues && (
-                              <div className='text-xs text-red-500 dark:text-red-400 mt-2 flex items-start gap-1'>
-                                <span>⚠️</span>
-                                <span>{card.user_input.issues}</span>
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })}
-                      {report.in_progress_cards.length > 5 && (
-                        <div className='text-xs text-[rgb(var(--muted-foreground))] text-center py-2'>
-                          +{report.in_progress_cards.length - 5}개 더
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* 추가 메모 */}
-                {report.notes && (
-                  <div className='mt-4 p-3 bg-[rgb(var(--secondary))] rounded-lg'>
-                    <div className='text-xs font-medium text-[rgb(var(--muted-foreground))] mb-1'>추가 메모</div>
-                    <div className='text-sm text-[rgb(var(--foreground))] whitespace-pre-wrap'>{report.notes}</div>
-                  </div>
-                )}
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </main>
@@ -353,6 +301,16 @@ export function WeeklyReportShareClient({
           }}
         />
       )}
+
+      {/* 상세 보기 모달 */}
+      <WeeklyReportDetailModal
+        report={selectedReport}
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false)
+          setSelectedReport(null)
+        }}
+      />
     </div>
   )
 }

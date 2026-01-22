@@ -217,8 +217,14 @@ export async function addChecklistItem(input: {
       .eq('id', input.checklistId)
       .single()
 
-    // 보드의 모든 멤버에게 알림
+    // 카드의 updated_at 업데이트 (주간보고 자동 수집을 위해)
     if (checklist?.card_id) {
+      await supabase
+        .from('cards')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', checklist.card_id)
+      
+      // 보드의 모든 멤버에게 알림
       const boardInfo = await getCardBoardInfo(supabase, checklist.card_id)
       if (boardInfo) {
         await notifyBoardMembers({
@@ -272,8 +278,8 @@ export async function toggleChecklistItem(input: {
       return { success: false, error: '항목 업데이트에 실패했습니다.' }
     }
 
-    // 체크 완료 시에만 알림 (해제 시에는 알림 안 함)
-    if (input.isChecked && item?.checklist_id) {
+    // 카드의 updated_at 업데이트 (주간보고 자동 수집을 위해)
+    if (item?.checklist_id) {
       const { data: checklist } = await supabase
         .from('checklists')
         .select('card_id, title')
@@ -281,17 +287,25 @@ export async function toggleChecklistItem(input: {
         .single()
 
       if (checklist?.card_id) {
-        const boardInfo = await getCardBoardInfo(supabase, checklist.card_id)
-        if (boardInfo) {
-          await notifyBoardMembers({
-            boardId: boardInfo.boardId,
-            excludeUserId: user.id,
-            type: 'checklist_item_checked',
-            title: '할 일이 완료되었습니다 ✅',
-            message: `"${boardInfo.cardTitle}" 카드에서 "${item.content}" 항목이 완료되었습니다`,
-            link: `/board/${boardInfo.boardId}`,
-            cardId: checklist.card_id,
-          })
+        await supabase
+          .from('cards')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', checklist.card_id)
+
+        // 체크 완료 시에만 알림 (해제 시에는 알림 안 함)
+        if (input.isChecked) {
+          const boardInfo = await getCardBoardInfo(supabase, checklist.card_id)
+          if (boardInfo) {
+            await notifyBoardMembers({
+              boardId: boardInfo.boardId,
+              excludeUserId: user.id,
+              type: 'checklist_item_checked',
+              title: '할 일이 완료되었습니다 ✅',
+              message: `"${boardInfo.cardTitle}" 카드에서 "${item.content}" 항목이 완료되었습니다`,
+              link: `/board/${boardInfo.boardId}`,
+              cardId: checklist.card_id,
+            })
+          }
         }
       }
     }
@@ -308,6 +322,13 @@ export async function deleteChecklistItem(id: string): Promise<ActionResult> {
   try {
     const supabase = await createClient()
 
+    // 삭제 전에 체크리스트 ID 가져오기
+    const { data: item } = await supabase
+      .from('checklist_items')
+      .select('checklist_id')
+      .eq('id', id)
+      .single()
+
     const { error } = await supabase
       .from('checklist_items')
       .delete()
@@ -316,6 +337,22 @@ export async function deleteChecklistItem(id: string): Promise<ActionResult> {
     if (error) {
       console.error('항목 삭제 에러:', error)
       return { success: false, error: '항목 삭제에 실패했습니다.' }
+    }
+
+    // 카드의 updated_at 업데이트 (주간보고 자동 수집을 위해)
+    if (item?.checklist_id) {
+      const { data: checklist } = await supabase
+        .from('checklists')
+        .select('card_id')
+        .eq('id', item.checklist_id)
+        .single()
+
+      if (checklist?.card_id) {
+        await supabase
+          .from('cards')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', checklist.card_id)
+      }
     }
 
     return { success: true }

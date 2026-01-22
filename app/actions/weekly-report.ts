@@ -621,13 +621,19 @@ export async function refreshWeeklyReportData(
     // 새로 수집된 진행 중인 카드에 기존 user_input 병합
     const mergedInProgressCards = inProgressCards.map((card) => {
       const existingInput = existingUserInputs.get(card.card_id)
+      // 최신 자동 수집 시간 (시간 로그에서 최신 집계)
+      const latestAutoHours = card.auto_collected?.weekly_hours || 0
+      
       if (existingInput) {
         return {
           ...card,
           user_input: {
             ...card.user_input,
-            // 기존 사용자 입력 유지 (시간, 상태, 설명, 이슈 등)
-            hours_spent: existingInput.hours_spent ?? card.user_input?.hours_spent ?? card.auto_collected?.weekly_hours ?? 0,
+            // 시간은 최신 자동 수집 시간을 우선 사용 (시간 로그가 추가되면 자동으로 반영)
+            // 사용자가 수동으로 입력한 시간이 있고, 그것이 최신 자동 수집 시간보다 크면 사용자 입력 사용
+            hours_spent: existingInput.hours_spent && existingInput.hours_spent > latestAutoHours
+              ? existingInput.hours_spent
+              : latestAutoHours,
             status: existingInput.status ?? card.user_input?.status ?? '진행중',
             description: existingInput.description || card.user_input?.description || card.description || '',
             issues: existingInput.issues || card.user_input?.issues || '',
@@ -641,11 +647,14 @@ export async function refreshWeeklyReportData(
     })
 
     // 시간 집계 (완료된 카드 + 진행 중인 카드의 시간 로그 합계)
+    // 최신 자동 수집 시간을 우선 사용
     const completedHours = mergedCompletedCards.reduce((sum, card) => {
       return sum + (card.weekly_hours || 0)
     }, 0)
     const inProgressHours = mergedInProgressCards.reduce((sum, card) => {
-      return sum + (card.user_input?.hours_spent || card.auto_collected?.weekly_hours || 0)
+      // 최신 자동 수집 시간 우선, 없으면 사용자 입력 시간
+      const hours = card.auto_collected?.weekly_hours || card.user_input?.hours_spent || 0
+      return sum + hours
     }, 0)
     const totalHours = completedHours + inProgressHours
 

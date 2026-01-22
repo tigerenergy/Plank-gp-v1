@@ -94,6 +94,12 @@ export async function createTimeLog(input: {
       return { success: false, error: '시간 로그 생성에 실패했습니다.' }
     }
 
+    // 카드의 updated_at 업데이트 (주간보고 자동 수집을 위해)
+    await supabase
+      .from('cards')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', input.cardId)
+
     return { success: true, data }
   } catch (error) {
     console.error('시간 로그 생성 에러:', error)
@@ -158,6 +164,21 @@ export async function updateTimeLog(
       return { success: false, error: '시간 로그 수정에 실패했습니다.' }
     }
 
+    // 카드 ID 가져오기
+    const { data: timeLog } = await supabase
+      .from('card_time_logs')
+      .select('card_id')
+      .eq('id', timeLogId)
+      .single()
+
+    // 카드의 updated_at 업데이트 (주간보고 자동 수집을 위해)
+    if (timeLog?.card_id) {
+      await supabase
+        .from('cards')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', timeLog.card_id)
+    }
+
     return { success: true, data }
   } catch (error) {
     console.error('시간 로그 수정 에러:', error)
@@ -189,11 +210,26 @@ export async function deleteTimeLog(timeLogId: string): Promise<ActionResult<voi
       return { success: false, error: '시간 로그를 삭제할 권한이 없습니다.' }
     }
 
+    // 삭제 전에 카드 ID 가져오기
+    const { data: timeLog } = await supabase
+      .from('card_time_logs')
+      .select('card_id')
+      .eq('id', timeLogId)
+      .single()
+
     const { error } = await supabase.from('card_time_logs').delete().eq('id', timeLogId)
 
     if (error) {
       console.error('시간 로그 삭제 에러:', error)
       return { success: false, error: '시간 로그 삭제에 실패했습니다.' }
+    }
+
+    // 카드의 updated_at 업데이트 (주간보고 자동 수집을 위해)
+    if (timeLog?.card_id) {
+      await supabase
+        .from('cards')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', timeLog.card_id)
     }
 
     return { success: true, data: undefined }

@@ -115,62 +115,36 @@ export function Column({ list, canEdit = false }: ColumnProps) {
         {list.cards.length === 0 && canEdit && (
           <button 
             onClick={handleAddCard}
-            className='flex flex-col items-center justify-center py-6 w-full hover:bg-[rgb(var(--secondary))]/30 rounded-xl transition-colors cursor-pointer group'
+            className='flex flex-col items-center justify-center py-4 w-full hover:bg-[rgb(var(--secondary))]/30 rounded-xl transition-colors cursor-pointer group'
           >
-            {/* 3D 스타일 빈 상태 일러스트 - 카드 크기에 맞춤 */}
-            <div className='relative mb-3' style={{ perspective: '500px' }}>
-              {/* 그림자 */}
-              <div className='absolute -bottom-2 left-1/2 -translate-x-1/2 w-12 h-3 bg-slate-300 dark:bg-slate-600 rounded-full blur-md opacity-50 group-hover:opacity-70 transition-opacity' />
-              
-              {/* 3D 카드 스택 */}
-              <div 
-                className='relative transition-transform duration-300 group-hover:scale-105'
-                style={{ transform: 'rotateX(12deg) rotateY(-8deg)', transformStyle: 'preserve-3d' }}
-              >
-                {/* 뒤쪽 카드 */}
-                <div className='absolute -top-1 -left-1 w-14 h-18 rounded-lg bg-gradient-to-br from-slate-200 to-slate-100 dark:from-slate-700 dark:to-slate-600 border border-slate-300/50 dark:border-slate-500/50 shadow-sm' />
-                
-                {/* 앞쪽 카드 */}
-                <div className='relative w-14 h-18 rounded-lg bg-gradient-to-br from-white to-slate-50 dark:from-slate-600 dark:to-slate-500 border border-slate-200 dark:border-slate-400 shadow-lg flex flex-col items-center justify-center gap-1.5'>
-                  {/* 하이라이트 */}
-                  <div className='absolute inset-0 rounded-lg bg-gradient-to-br from-white/40 to-transparent dark:from-white/10' />
-                  {/* 점선들 */}
-                  <div className='w-8 h-1 rounded-full bg-slate-200 dark:bg-slate-400' />
-                  <div className='w-7 h-1 rounded-full bg-slate-200 dark:bg-slate-400' />
-                  <div className='w-6 h-1 rounded-full bg-slate-200 dark:bg-slate-400' />
-                  
-                  {/* + 아이콘 (3D) */}
-                  <div 
-                    className='absolute -bottom-2 -right-2 w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all'
-                    style={{ transform: 'translateZ(10px)' }}
-                  >
-                    <div className='absolute inset-0 rounded-lg bg-gradient-to-br from-white/30 to-transparent' />
-                    <Plus className='w-4 h-4 text-white relative z-10 drop-shadow-sm' />
-                  </div>
-                </div>
+            {/* 심플한 카드 아이콘 */}
+            <div className='relative mb-2'>
+              <div className='w-12 h-16 rounded-lg bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-700 dark:to-slate-600 border border-slate-200 dark:border-slate-500 flex flex-col items-center justify-center gap-1.5 shadow-sm'>
+                <div className='w-8 h-0.5 rounded-full bg-slate-300 dark:bg-slate-500' />
+                <div className='w-7 h-0.5 rounded-full bg-slate-300 dark:bg-slate-500' />
+                <div className='w-6 h-0.5 rounded-full bg-slate-300 dark:bg-slate-500' />
+              </div>
+              {/* + 버튼 */}
+              <div className='absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all'>
+                <Plus className='w-3.5 h-3.5 text-white' />
               </div>
             </div>
-            <p className='text-sm font-medium text-[rgb(var(--muted-foreground))]'>카드가 없습니다</p>
-            <p className='text-xs text-[rgb(var(--muted-foreground))] mt-0.5 group-hover:text-indigo-500 transition-colors'>클릭하여 추가</p>
+            <p className='text-xs font-medium text-[rgb(var(--muted-foreground))]'>카드가 없습니다</p>
+            <p className='text-xs text-[rgb(var(--muted-foreground))] mt-0.5 group-hover:text-violet-500 transition-colors'>클릭하여 추가</p>
           </button>
         )}
 
         {list.cards.length === 0 && !canEdit && (
-          <div className='flex flex-col items-center justify-center py-6'>
-            {/* 3D 스타일 빈 상태 일러스트 (편집 불가) - 카드 크기에 맞춤 */}
-            <div className='relative mb-3' style={{ perspective: '500px' }}>
-              <div className='absolute -bottom-2 left-1/2 -translate-x-1/2 w-12 h-3 bg-slate-300 dark:bg-slate-600 rounded-full blur-md opacity-40' />
-              <div className='relative' style={{ transform: 'rotateX(12deg) rotateY(-8deg)' }}>
-                <div className='absolute -top-1 -left-1 w-14 h-18 rounded-lg bg-gradient-to-br from-slate-200 to-slate-100 dark:from-slate-700 dark:to-slate-600 border border-slate-300/50 dark:border-slate-500/50' />
-                <div className='relative w-14 h-18 rounded-lg bg-gradient-to-br from-white to-slate-50 dark:from-slate-600 dark:to-slate-500 border border-slate-200 dark:border-slate-400 shadow-lg flex flex-col items-center justify-center gap-1.5'>
-                  <div className='absolute inset-0 rounded-lg bg-gradient-to-br from-white/40 to-transparent dark:from-white/10' />
-                  <div className='w-8 h-1 rounded-full bg-slate-200 dark:bg-slate-400' />
-                  <div className='w-7 h-1 rounded-full bg-slate-200 dark:bg-slate-400' />
-                  <div className='w-6 h-1 rounded-full bg-slate-200 dark:bg-slate-400' />
-                </div>
+          <div className='flex flex-col items-center justify-center py-4'>
+            {/* 심플한 카드 아이콘 (편집 불가) */}
+            <div className='relative mb-2'>
+              <div className='w-12 h-16 rounded-lg bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-700 dark:to-slate-600 border border-slate-200 dark:border-slate-500 flex flex-col items-center justify-center gap-1.5 shadow-sm'>
+                <div className='w-8 h-0.5 rounded-full bg-slate-300 dark:bg-slate-500' />
+                <div className='w-7 h-0.5 rounded-full bg-slate-300 dark:bg-slate-500' />
+                <div className='w-6 h-0.5 rounded-full bg-slate-300 dark:bg-slate-500' />
               </div>
             </div>
-            <p className='text-sm text-[rgb(var(--muted-foreground))]'>카드가 없습니다</p>
+            <p className='text-xs text-[rgb(var(--muted-foreground))]'>카드가 없습니다</p>
           </div>
         )}
       </div>

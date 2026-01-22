@@ -14,8 +14,5 @@ export { useNavigationStore } from './useNavigationStore'
 // 임시 저장 상태 관리 (드래프트)
 export { useDraftStore } from './useDraftStore'
 
-// 완료 페이지 상태 관리 (통계, 보고서, 이메일)
-export { useCompletedStore } from './useCompletedStore'
-
 // 알림 상태 관리 (알림, 초대)
 export { useNotificationStore } from './useNotificationStore'

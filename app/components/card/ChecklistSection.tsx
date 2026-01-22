@@ -89,7 +89,11 @@ export function ChecklistSection({
         boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
         border: '1px solid rgb(var(--border))',
         backgroundColor: 'rgb(var(--card))',
-        zIndex: 10000,
+        zIndex: 99999,
+      }),
+      menuPortal: (base) => ({
+        ...base,
+        zIndex: 99999,
       }),
       menuList: (base) => ({
         ...base,
@@ -660,8 +664,9 @@ export function ChecklistSection({
           onClick={handleCancelTimeInput}
         >
           <div
-            className='w-full max-w-md bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150'
+            className='w-full max-w-md bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-2xl shadow-2xl animate-in zoom-in-95 duration-150'
             onClick={(e) => e.stopPropagation()}
+            style={{ overflow: 'visible' }}
           >
             {/* 헤더 */}
             <div className='flex items-start gap-4 p-6 border-b border-[rgb(var(--border))]'>
@@ -684,7 +689,7 @@ export function ChecklistSection({
             </div>
 
             {/* 내용 */}
-            <div className='p-6 space-y-5'>
+            <div className='p-6 space-y-5' style={{ overflow: 'visible' }}>
               {/* 완료한 항목 표시 */}
               <div className='p-4 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 rounded-xl border border-violet-200 dark:border-violet-800/50'>
                 <p className='text-xs font-semibold text-violet-600 dark:text-violet-400 mb-2 uppercase tracking-wide'>
@@ -719,6 +724,7 @@ export function ChecklistSection({
                       menuPosition='fixed'
                       menuShouldScrollIntoView={true}
                       classNamePrefix='time-select'
+                      openMenuOnFocus={true}
                     />
                   </div>
                 ) : (

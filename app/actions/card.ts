@@ -5,6 +5,43 @@ import type { ActionResult, Card, Label } from '@/types'
 import { createCardSchema, updateCardSchema, moveCardSchema } from '@/schema/validation'
 import { notifyBoardMembers } from './notification'
 
+// 카드 제목 기반 체크리스트 자동 생성 (제목과 동일한 항목 하나만 생성)
+async function autoCreateChecklistFromTitle(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  cardId: string,
+  cardTitle: string
+): Promise<void> {
+  // 체크리스트 생성
+  const { data: checklist, error: checklistError } = await supabase
+    .from('checklists')
+    .insert({
+      card_id: cardId,
+      title: cardTitle, // 카드 제목을 체크리스트 제목으로 사용
+      position: 0,
+    })
+    .select()
+    .single()
+  
+  if (checklistError || !checklist) {
+    console.error('체크리스트 생성 에러:', checklistError)
+    return
+  }
+  
+  // 카드 제목과 동일한 체크리스트 항목 하나 생성
+  const { error: itemsError } = await supabase
+    .from('checklist_items')
+    .insert({
+      checklist_id: checklist.id,
+      content: cardTitle, // 카드 제목과 동일
+      is_checked: false,
+      position: 1,
+    })
+  
+  if (itemsError) {
+    console.error('체크리스트 항목 생성 에러:', itemsError)
+  }
+}
+
 // 보드 멤버인지 확인하는 헬퍼 함수 (소유자 OR board_members)
 async function checkBoardMembership(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -138,6 +175,14 @@ export async function createCard(input: {
     if (error) {
       console.error('카드 생성 에러:', error)
       return { success: false, error: '카드 생성에 실패했습니다.' }
+    }
+
+    // 카드 제목 기반 체크리스트 자동 생성
+    try {
+      await autoCreateChecklistFromTitle(supabase, data.id, input.title)
+    } catch (checklistError) {
+      // 체크리스트 생성 실패는 무시 (카드 생성은 성공으로 처리)
+      console.error('체크리스트 자동 생성 에러:', checklistError)
     }
 
     // 보드의 모든 멤버에게 알림 (본인 제외)

@@ -108,7 +108,6 @@ export function BoardHeader({ boardId, title, user, members, onSettingsClick }: 
               <button
                 onClick={onSettingsClick}
                 className='w-9 h-9 rounded-lg flex items-center justify-center btn-ghost border border-[rgb(var(--border))]'
-                title='팀원 관리'
               >
                 <Users className='w-5 h-5' />
               </button>

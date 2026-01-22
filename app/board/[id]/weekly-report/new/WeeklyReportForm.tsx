@@ -353,29 +353,19 @@ export function WeeklyReportForm({ board, report: initialReport }: WeeklyReportF
                 완료된 작업 ({report.completed_cards.length}개)
               </h2>
               <div className='space-y-3'>
-                {report.completed_cards.map((card: any) => {
-                  // 완료 취소된 카드인지 확인
-                  const isUncompleted = card.is_completed === false && card.was_completed === true
-                  
-                  return (
+                {report.completed_cards
+                  .filter((card: any) => {
+                    // 완료 취소된 카드는 제외 (진행 중인 작업으로 이동했으므로)
+                    return !(card.is_completed === false && card.was_completed === true)
+                  })
+                  .map((card: any) => (
                     <div
                       key={card.id || card.card_id}
-                      className={`p-4 rounded-xl border transition-colors ${
-                        isUncompleted
-                          ? 'bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40'
-                          : 'bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40'
-                      }`}
+                      className='p-4 bg-emerald-500/5 rounded-xl border border-emerald-500/20 hover:border-emerald-500/40 transition-colors'
                     >
                       <div className='flex items-start justify-between mb-2'>
                         <div className='flex-1'>
-                          <div className='flex items-center gap-2'>
-                            <div className='font-medium text-[rgb(var(--foreground))]'>{card.title}</div>
-                            {isUncompleted && (
-                              <span className='px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs rounded'>
-                                완료 취소됨
-                              </span>
-                            )}
-                          </div>
+                          <div className='font-medium text-[rgb(var(--foreground))]'>{card.title}</div>
                           {card.description && (
                             <div className='text-sm text-[rgb(var(--muted-foreground))] mt-1 line-clamp-2'>
                               {card.description}
@@ -383,22 +373,14 @@ export function WeeklyReportForm({ board, report: initialReport }: WeeklyReportF
                           )}
                         </div>
                         {card.weekly_hours && card.weekly_hours > 0 && (
-                          <div className={`flex items-center gap-1 text-xs ml-2 ${
-                            isUncompleted
-                              ? 'text-amber-600 dark:text-amber-400'
-                              : 'text-emerald-600 dark:text-emerald-400'
-                          }`}>
+                          <div className='flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 ml-2'>
                             <Clock className='w-3 h-3' />
                             {card.weekly_hours}시간
                           </div>
                         )}
                       </div>
                       <div className='flex items-center gap-3 mt-2 text-xs text-[rgb(var(--muted-foreground))]'>
-                        <span className={`px-2 py-0.5 rounded ${
-                          isUncompleted
-                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                        }`}>
+                        <span className='px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded'>
                           {card.list_title}
                         </span>
                         {card.completed_at && (
@@ -408,8 +390,7 @@ export function WeeklyReportForm({ board, report: initialReport }: WeeklyReportF
                         )}
                       </div>
                     </div>
-                  )
-                })}
+                  ))}
               </div>
             </div>
           ) : (
@@ -438,9 +419,16 @@ export function WeeklyReportForm({ board, report: initialReport }: WeeklyReportF
                 >
                   {/* 카드 헤더 */}
                   <div className='mb-6 pb-4 border-b border-[rgb(var(--border))]'>
-                    <h3 className='text-base font-semibold text-[rgb(var(--foreground))] mb-1'>
-                      {card.title}
-                    </h3>
+                    <div className='flex items-center gap-2 mb-1'>
+                      <h3 className='text-base font-semibold text-[rgb(var(--foreground))]'>
+                        {card.title}
+                      </h3>
+                      {card.was_completed && (
+                        <span className='px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs rounded-md font-medium'>
+                          완료 취소됨
+                        </span>
+                      )}
+                    </div>
                     <div className='flex items-center gap-2'>
                       <span className='text-xs px-2 py-1 bg-blue-500/10 text-blue-600 rounded-md font-medium'>
                         {card.list_title}

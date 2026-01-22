@@ -39,11 +39,16 @@ export function ChecklistSection({
   const [togglingItemId, setTogglingItemId] = useState<string | null>(null)
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null)
   
-  // 시간 입력 모달 상태
-  const [showTimeInputModal, setShowTimeInputModal] = useState(false)
-  const [pendingToggleItem, setPendingToggleItem] = useState<{ checklistId: string; item: ChecklistItem } | null>(null)
-  const [timeInputHours, setTimeInputHours] = useState('')
-  const [isSavingTime, setIsSavingTime] = useState(false)
+  // 시간 입력 상태 (항목별)
+  const [timeInputs, setTimeInputs] = useState<Record<string, string>>({})
+  const [customTimeInputs, setCustomTimeInputs] = useState<Record<string, string>>({})
+  const [savingTimeItemId, setSavingTimeItemId] = useState<string | null>(null)
+  
+  // 30분 단위 시간 옵션 생성 (0.5시간 ~ 24시간)
+  const timeOptions = Array.from({ length: 48 }, (_, i) => {
+    const hours = (i + 1) * 0.5
+    return { value: hours.toString(), label: hours % 1 === 0 ? `${hours}시간` : `${hours}시간` }
+  })
 
   // 체크리스트 생성
   const handleCreateChecklist = async () => {

@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import type { Board } from '@/types'
 import { updateWeeklyReport, submitWeeklyReport } from '@/app/actions/weekly-report'
 import type { WeeklyReport } from '@/app/actions/weekly-report'
+import { ConfirmModal } from '@/app/components/ConfirmModal'
 
 interface WeeklyReportFormProps {
   board: Board
@@ -19,6 +20,7 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
   const [inProgressCards, setInProgressCards] = useState(report.in_progress_cards || [])
   const [totalHours, setTotalHours] = useState(report.total_hours || 0)
   const [notes, setNotes] = useState(report.notes || '')
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
 
   // 시간 자동 집계 (프런트엔드에서도 계산)
   useEffect(() => {
@@ -46,6 +48,17 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
     )
   }
 
+  // 시간 입력 검증 (주간 최대 168시간, 현실적으로 80시간 제한)
+  const validateHours = (hours: number): { valid: boolean; error?: string } => {
+    if (hours < 0) {
+      return { valid: false, error: '작업 시간은 0 이상이어야 합니다.' }
+    }
+    if (hours > 80) {
+      return { valid: false, error: '작업 시간은 주간 최대 80시간까지 입력 가능합니다.' }
+    }
+    return { valid: true }
+  }
+
   // 저장
   const handleSave = async () => {
     setIsSaving(true)
@@ -70,10 +83,14 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
     }
   }
 
-  // 제출
-  const handleSubmit = async () => {
-    if (!confirm('주간보고를 제출하시겠습니까?')) return
+  // 제출 확인 모달 열기
+  const handleSubmitClick = () => {
+    setShowSubmitConfirm(true)
+  }
 
+  // 제출 실행
+  const handleSubmit = async () => {
+    setShowSubmitConfirm(false)
     setIsSubmitting(true)
     try {
       // 먼저 저장
@@ -145,7 +162,7 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
                 )}
               </button>
               <button
-                onClick={handleSubmit}
+                onClick={handleSubmitClick}
                 disabled={isSaving || isSubmitting}
                 className='flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500 hover:bg-violet-600 disabled:opacity-50 text-white transition-colors'
               >
@@ -288,11 +305,30 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
                         <input
                           type='number'
                           min='0'
+                          max='80'
                           step='0.5'
                           value={card.user_input?.hours_spent ?? card.auto_collected?.weekly_hours ?? 0}
-                          onChange={(e) =>
-                            updateCard(card.card_id, { hours_spent: parseFloat(e.target.value) || 0 })
-                          }
+                          onChange={(e) => {
+                            const value = parseFloat(e.target.value) || 0
+                            const validation = validateHours(value)
+                            if (validation.valid) {
+                              updateCard(card.card_id, { hours_spent: value })
+                            } else {
+                              toast.error(validation.error || '잘못된 시간 값입니다.')
+                              // 잘못된 값이면 이전 값으로 되돌림
+                              e.target.value = String(card.user_input?.hours_spent ?? card.auto_collected?.weekly_hours ?? 0)
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const value = parseFloat(e.target.value) || 0
+                            const validation = validateHours(value)
+                            if (!validation.valid) {
+                              toast.error(validation.error || '잘못된 시간 값입니다.')
+                              // 최대값으로 제한
+                              const maxValue = Math.min(value, 80)
+                              updateCard(card.card_id, { hours_spent: maxValue })
+                            }
+                          }}
                           className='w-full px-4 py-2.5 rounded-xl bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all'
                           placeholder='0'
                         />
@@ -300,6 +336,9 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
                           시간
                         </span>
                       </div>
+                      <p className='text-xs text-[rgb(var(--muted-foreground))] mt-1'>
+                        최대 80시간까지 입력 가능 (자동 집계된 시간이 표시됩니다)
+                      </p>
                     </div>
                   </div>
 
@@ -372,6 +411,18 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
           </div>
         </div>
       </main>
+
+      {/* 제출 확인 모달 */}
+      <ConfirmModal
+        isOpen={showSubmitConfirm}
+        title='주간보고 제출'
+        message='주간보고를 제출하시겠습니까? 제출 후에는 수정할 수 없습니다.'
+        confirmText='제출하기'
+        cancelText='취소'
+        variant='default'
+        onConfirm={handleSubmit}
+        onCancel={() => setShowSubmitConfirm(false)}
+      />
     </div>
   )
 }

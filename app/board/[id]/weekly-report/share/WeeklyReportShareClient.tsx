@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Users, Clock, CheckCircle2, TrendingUp, FileText, BarChart3, Download } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import type { Board } from '@/types'
+import type { Board, Profile } from '@/types'
 import type { WeeklyReport } from '@/app/actions/weekly-report'
 import { generateWeeklyReportPDF, generateWeeklyReportCSV } from '@/app/lib/weekly-report-export'
 import { WeeklyReportDetailModal } from '@/app/components/weekly-report/WeeklyReportDetailModal'
@@ -15,6 +15,13 @@ interface WeeklyReportShareClientProps {
   selectedWeek?: string
 }
 
+interface PresenceUser {
+  userId: string
+  username: string
+  email: string
+  avatarUrl: string | null
+}
+
 export function WeeklyReportShareClient({
   board,
   reports: initialReports,
@@ -23,13 +30,53 @@ export function WeeklyReportShareClient({
   const [reports, setReports] = useState(initialReports)
   const [selectedReport, setSelectedReport] = useState<WeeklyReport | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [presenceUsers, setPresenceUsers] = useState<PresenceUser[]>([])
+  const [currentUser, setCurrentUser] = useState<{ id: string; username: string; email: string; avatarUrl: string | null } | null>(null)
 
-  // 실시간 업데이트
+  // 현재 사용자 정보 가져오기
+  useEffect(() => {
+    const loadCurrentUser = async () => {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
+
+      // 프로필 정보 가져오기
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, email, username, avatar_url')
+        .eq('id', user.id)
+        .single()
+
+      if (profile) {
+        setCurrentUser({
+          id: profile.id,
+          username: profile.username || profile.email?.split('@')[0] || '익명',
+          email: profile.email || '',
+          avatarUrl: profile.avatar_url,
+        })
+      }
+    }
+
+    loadCurrentUser()
+  }, [])
+
+  // 실시간 업데이트 및 Presence
   useEffect(() => {
     const supabase = createClient()
+    if (!currentUser) return
 
+    const channelName = `weekly_reports:${board.id}:${selectedWeek || 'current'}`
     const channel = supabase
-      .channel('weekly_reports_changes')
+      .channel(channelName, {
+        config: {
+          presence: {
+            key: currentUser.id,
+          },
+        },
+      })
+      // Postgres 변경사항 구독
       .on(
         'postgres_changes',
         {
@@ -38,32 +85,96 @@ export function WeeklyReportShareClient({
           table: 'weekly_reports',
           filter: `board_id=eq.${board.id}`,
         },
-        (payload) => {
+        async (payload) => {
           // 실시간 업데이트
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            setReports((prev) => {
-              const existing = prev.find((r) => r.id === payload.new.id)
-              if (existing) {
-                return prev.map((r) => (r.id === payload.new.id ? (payload.new as WeeklyReport) : r))
-              } else {
-                return [...prev, payload.new as WeeklyReport]
-              }
-            })
+            // 업데이트된 보고서의 사용자 정보도 함께 가져오기
+            const { data: updatedReport } = await supabase
+              .from('weekly_reports')
+              .select(`
+                *,
+                user:profiles!weekly_reports_user_id_fkey(id, email, username, avatar_url)
+              `)
+              .eq('id', payload.new.id)
+              .single()
+
+            if (updatedReport) {
+              const weekStart = selectedWeek || getWeekOptions()[0]
+              setReports((prev) => {
+                const existing = prev.find((r) => r.id === updatedReport.id)
+                if (existing) {
+                  return prev.map((r) => (r.id === updatedReport.id ? { ...updatedReport, user: updatedReport.user } as WeeklyReport : r))
+                } else {
+                  // 현재 주간의 보고서만 추가
+                  if (updatedReport.week_start_date === weekStart) {
+                    return [...prev, { ...updatedReport, user: updatedReport.user } as WeeklyReport]
+                  }
+                  return prev
+                }
+              })
+            }
+          } else if (payload.eventType === 'DELETE') {
+            // 삭제된 보고서 제거
+            setReports((prev) => prev.filter((r) => r.id !== payload.old.id))
           }
         }
       )
-      .subscribe((status) => {
+      // Presence 구독
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState<{ userId: string; username: string; email: string; avatarUrl: string | null }>()
+        const users: PresenceUser[] = []
+        Object.values(state).forEach((presences) => {
+          presences.forEach((presence) => {
+            if (presence.userId && presence.userId !== currentUser.id) {
+              users.push({
+                userId: presence.userId,
+                username: presence.username,
+                email: presence.email,
+                avatarUrl: presence.avatarUrl,
+              })
+            }
+          })
+        })
+        setPresenceUsers(users)
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        const newUsers = newPresences
+          .map((p: any) => ({
+            userId: p.userId,
+            username: p.username,
+            email: p.email,
+            avatarUrl: p.avatarUrl,
+          }))
+          .filter((u: PresenceUser) => u.userId !== currentUser.id)
+        setPresenceUsers((prev) => {
+          const existing = prev.find((u) => u.userId === newUsers[0]?.userId)
+          if (existing) return prev
+          return [...prev, ...newUsers]
+        })
+      })
+      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        const leftUserIds = leftPresences.map((p: any) => p.userId)
+        setPresenceUsers((prev) => prev.filter((u) => !leftUserIds.includes(u.userId)))
+      })
+      .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('실시간 업데이트 구독 성공')
+          // Presence에 자신 등록
+          await channel.track({
+            userId: currentUser.id,
+            username: currentUser.username,
+            email: currentUser.email,
+            avatarUrl: currentUser.avatarUrl,
+          })
         } else if (status === 'CHANNEL_ERROR') {
           console.error('실시간 업데이트 구독 실패')
         }
       })
 
     return () => {
+      channel.untrack()
       supabase.removeChannel(channel)
     }
-  }, [board.id])
+  }, [board.id, selectedWeek, currentUser])
 
   // 주간 계산
   const getWeekOptions = () => {
@@ -113,6 +224,35 @@ export function WeeklyReportShareClient({
             </div>
 
             <div className='flex items-center gap-2'>
+              {/* 현재 보고 있는 사용자 목록 */}
+              {presenceUsers.length > 0 && (
+                <div className='flex items-center gap-2 px-3 py-2 rounded-xl bg-[rgb(var(--secondary))] border border-[rgb(var(--border))]'>
+                  <Users className='w-4 h-4 text-[rgb(var(--muted-foreground))]' />
+                  <div className='flex items-center gap-1.5'>
+                    {presenceUsers.slice(0, 3).map((user) => (
+                      <div
+                        key={user.userId}
+                        className='w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold'
+                        title={user.username}
+                      >
+                        {user.avatarUrl ? (
+                          <img src={user.avatarUrl} alt={user.username} className='w-full h-full rounded-full object-cover' />
+                        ) : (
+                          user.username[0].toUpperCase()
+                        )}
+                      </div>
+                    ))}
+                    {presenceUsers.length > 3 && (
+                      <span className='text-xs text-[rgb(var(--muted-foreground))] ml-1'>
+                        +{presenceUsers.length - 3}
+                      </span>
+                    )}
+                  </div>
+                  <span className='text-xs text-[rgb(var(--muted-foreground))] ml-1'>
+                    {presenceUsers.length}명이 보고 있음
+                  </span>
+                </div>
+              )}
               <div className='relative group'>
                 <button className='px-3 py-2 rounded-xl bg-[rgb(var(--secondary))] hover:bg-[rgb(var(--secondary))]/80 border border-[rgb(var(--border))] text-sm font-medium transition-colors flex items-center gap-2'>
                   <Download className='w-4 h-4' />

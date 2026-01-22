@@ -89,7 +89,7 @@ export async function createBoard(title: string, emoji: string = '📋', startDa
 
     // 기본 리스트 생성 (완료 리스트는 is_done_list: true)
     await supabase.from('lists').insert([
-      { board_id: newBoard.id, title: '할 일', position: 1 },
+      { board_id: newBoard.id, title: '준비중', position: 1 },
       { board_id: newBoard.id, title: '진행 중', position: 2 },
       { board_id: newBoard.id, title: '검토 요청', position: 3 },
       { board_id: newBoard.id, title: '완료', position: 4, is_done_list: true },

@@ -76,14 +76,14 @@ export function BoardHeader({ boardId, title, user, members, onSettingsClick }: 
               </button>
             )}
 
-            {/* 주간보고 버튼 (드롭다운) */}
+            {/* 주간보고 버튼 (드롭다운) - 완료된 작업 포함 */}
             <div className='relative group'>
               <Link
                 href={`/board/${boardId}/weekly-report/share`}
                 className='w-9 h-9 rounded-lg flex items-center justify-center btn-ghost border border-[rgb(var(--border))]'
-                title='주간보고'
+                title='주간보고 (완료된 작업 포함)'
               >
-                <FileText className='w-5 h-5 text-violet-500' />
+                <FileText className='w-4 h-4 text-violet-500' />
               </Link>
               <div className='absolute right-0 top-full mt-2 w-48 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50'>
                 <Link
@@ -102,17 +102,6 @@ export function BoardHeader({ boardId, title, user, members, onSettingsClick }: 
                 </Link>
               </div>
             </div>
-
-            {/* 완료된 작업 버튼 - 주간보고로 통합 */}
-            <Link
-              href={`/board/${boardId}/weekly-report/share`}
-              className='w-9 h-9 rounded-lg flex items-center justify-center btn-ghost border border-[rgb(var(--border))]'
-              title='주간보고 (완료된 작업 포함)'
-            >
-              <svg className='w-4 h-4 text-emerald-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
-              </svg>
-            </Link>
 
             {/* 팀원 관리 버튼 */}
             {onSettingsClick && (

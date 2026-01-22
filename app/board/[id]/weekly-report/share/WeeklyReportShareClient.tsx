@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Users, Clock, CheckCircle2, TrendingUp, FileText, BarChart3, Download } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -8,6 +8,7 @@ import type { Board, Profile } from '@/types'
 import type { WeeklyReport } from '@/app/actions/weekly-report'
 import { generateWeeklyReportPDF, generateWeeklyReportCSV } from '@/app/lib/weekly-report-export'
 import { WeeklyReportDetailModal } from '@/app/components/weekly-report/WeeklyReportDetailModal'
+import { getWeeklyReportsByBoard } from '@/app/actions/weekly-report'
 
 interface WeeklyReportShareClientProps {
   board: Board
@@ -20,6 +21,15 @@ interface PresenceUser {
   username: string
   email: string
   avatarUrl: string | null
+  cursor?: {
+    x: number
+    y: number
+  }
+  click?: {
+    x: number
+    y: number
+    timestamp: number
+  }
 }
 
 export function WeeklyReportShareClient({
@@ -32,6 +42,9 @@ export function WeeklyReportShareClient({
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [presenceUsers, setPresenceUsers] = useState<PresenceUser[]>([])
   const [currentUser, setCurrentUser] = useState<{ id: string; username: string; email: string; avatarUrl: string | null } | null>(null)
+  const [remoteCursors, setRemoteCursors] = useState<Map<string, { x: number; y: number; username: string; avatarUrl: string | null }>>(new Map())
+  const [remoteClicks, setRemoteClicks] = useState<Map<string, { x: number; y: number; username: string; timestamp: number }>>(new Map())
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // 현재 사용자 정보 가져오기
   useEffect(() => {
@@ -86,43 +99,64 @@ export function WeeklyReportShareClient({
           filter: `board_id=eq.${board.id}`,
         },
         async (payload) => {
+          console.log('📡 실시간 업데이트 이벤트:', payload.eventType, payload.new || payload.old)
+          
           // 실시간 업데이트
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            // 업데이트된 보고서의 사용자 정보도 함께 가져오기
-            const { data: updatedReport } = await supabase
-              .from('weekly_reports')
-              .select(`
-                *,
-                user:profiles!weekly_reports_user_id_fkey(id, email, username, avatar_url)
-              `)
-              .eq('id', payload.new.id)
-              .single()
+            try {
+              // 업데이트된 보고서의 사용자 정보도 함께 가져오기
+              const { data: updatedReport, error } = await supabase
+                .from('weekly_reports')
+                .select(`
+                  *,
+                  user:profiles!weekly_reports_user_id_fkey(id, email, username, avatar_url)
+                `)
+                .eq('id', payload.new.id)
+                .single()
 
-            if (updatedReport) {
-              const weekStart = selectedWeek || getWeekOptions()[0]
-              setReports((prev) => {
-                const existing = prev.find((r) => r.id === updatedReport.id)
-                if (existing) {
-                  return prev.map((r) => (r.id === updatedReport.id ? { ...updatedReport, user: updatedReport.user } as WeeklyReport : r))
-                } else {
-                  // 현재 주간의 보고서만 추가
-                  if (updatedReport.week_start_date === weekStart) {
-                    return [...prev, { ...updatedReport, user: updatedReport.user } as WeeklyReport]
+              if (error) {
+                console.error('❌ 보고서 조회 에러:', error)
+                return
+              }
+
+              if (updatedReport) {
+                const weekStart = selectedWeek || getWeekOptions()[0]
+                console.log('✅ 보고서 업데이트:', updatedReport.id, '주간:', updatedReport.week_start_date, '현재 주간:', weekStart)
+                
+                setReports((prev) => {
+                  const existing = prev.find((r) => r.id === updatedReport.id)
+                  if (existing) {
+                    console.log('🔄 기존 보고서 업데이트')
+                    return prev.map((r) => (r.id === updatedReport.id ? { ...updatedReport, user: updatedReport.user } as WeeklyReport : r))
+                  } else {
+                    // 현재 주간의 보고서만 추가
+                    if (updatedReport.week_start_date === weekStart) {
+                      console.log('➕ 새 보고서 추가')
+                      return [...prev, { ...updatedReport, user: updatedReport.user } as WeeklyReport]
+                    } else {
+                      console.log('⏭️ 다른 주간 보고서이므로 추가하지 않음')
+                      return prev
+                    }
                   }
-                  return prev
-                }
-              })
+                })
+              }
+            } catch (error) {
+              console.error('❌ 실시간 업데이트 처리 에러:', error)
             }
           } else if (payload.eventType === 'DELETE') {
             // 삭제된 보고서 제거
+            console.log('🗑️ 보고서 삭제:', payload.old.id)
             setReports((prev) => prev.filter((r) => r.id !== payload.old.id))
           }
         }
       )
       // Presence 구독
       .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState<{ userId: string; username: string; email: string; avatarUrl: string | null }>()
+        const state = channel.presenceState<PresenceUser & { cursor?: { x: number; y: number }; click?: { x: number; y: number; timestamp: number } }>()
         const users: PresenceUser[] = []
+        const cursors = new Map<string, { x: number; y: number; username: string; avatarUrl: string | null }>()
+        const clicks = new Map<string, { x: number; y: number; username: string; timestamp: number }>()
+        
         Object.values(state).forEach((presences) => {
           presences.forEach((presence) => {
             if (presence.userId && presence.userId !== currentUser.id) {
@@ -131,11 +165,36 @@ export function WeeklyReportShareClient({
                 username: presence.username,
                 email: presence.email,
                 avatarUrl: presence.avatarUrl,
+                cursor: presence.cursor,
+                click: presence.click,
               })
+              
+              // 커서 위치 업데이트
+              if (presence.cursor) {
+                cursors.set(presence.userId, {
+                  x: presence.cursor.x,
+                  y: presence.cursor.y,
+                  username: presence.username,
+                  avatarUrl: presence.avatarUrl,
+                })
+              }
+              
+              // 클릭 위치 업데이트
+              if (presence.click && Date.now() - presence.click.timestamp < 2000) {
+                clicks.set(presence.userId, {
+                  x: presence.click.x,
+                  y: presence.click.y,
+                  username: presence.username,
+                  timestamp: presence.click.timestamp,
+                })
+              }
             }
           })
         })
+        
         setPresenceUsers(users)
+        setRemoteCursors(cursors)
+        setRemoteClicks(clicks)
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
         const newUsers = newPresences
@@ -144,6 +203,8 @@ export function WeeklyReportShareClient({
             username: p.username,
             email: p.email,
             avatarUrl: p.avatarUrl,
+            cursor: p.cursor,
+            click: p.click,
           }))
           .filter((u: PresenceUser) => u.userId !== currentUser.id)
         setPresenceUsers((prev) => {
@@ -155,9 +216,20 @@ export function WeeklyReportShareClient({
       .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
         const leftUserIds = leftPresences.map((p: any) => p.userId)
         setPresenceUsers((prev) => prev.filter((u) => !leftUserIds.includes(u.userId)))
+        setRemoteCursors((prev) => {
+          const next = new Map(prev)
+          leftUserIds.forEach((id) => next.delete(id))
+          return next
+        })
+        setRemoteClicks((prev) => {
+          const next = new Map(prev)
+          leftUserIds.forEach((id) => next.delete(id))
+          return next
+        })
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
+          console.log('✅ 실시간 업데이트 구독 성공')
           // Presence에 자신 등록
           await channel.track({
             userId: currentUser.id,
@@ -165,8 +237,11 @@ export function WeeklyReportShareClient({
             email: currentUser.email,
             avatarUrl: currentUser.avatarUrl,
           })
+          console.log('✅ Presence 등록 완료')
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('실시간 업데이트 구독 실패')
+          console.error('❌ 실시간 업데이트 구독 실패:', status)
+        } else {
+          console.log('⏳ 구독 상태:', status)
         }
       })
 
@@ -175,6 +250,86 @@ export function WeeklyReportShareClient({
       supabase.removeChannel(channel)
     }
   }, [board.id, selectedWeek, currentUser])
+
+  // 마우스 이벤트 추적
+  useEffect(() => {
+    if (!currentUser || !containerRef.current) return
+
+    const container = containerRef.current
+    const supabase = createClient()
+    const channelName = `weekly_reports:${board.id}:${selectedWeek || 'current'}`
+    const channel = supabase.channel(channelName)
+    
+    let mouseMoveThrottle: NodeJS.Timeout | null = null
+
+    // 마우스 이동 추적 (throttle 적용)
+    const handleMouseMove = (e: MouseEvent) => {
+      if (mouseMoveThrottle) return
+      
+      mouseMoveThrottle = setTimeout(() => {
+        const rect = container.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const y = e.clientY - rect.top
+        
+        channel.track({
+          userId: currentUser.id,
+          username: currentUser.username,
+          email: currentUser.email,
+          avatarUrl: currentUser.avatarUrl,
+          cursor: { x, y },
+        })
+        mouseMoveThrottle = null
+      }, 50) // 50ms마다 업데이트
+    }
+
+    // 클릭 이벤트 추적
+    const handleClick = (e: MouseEvent) => {
+      const rect = container.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
+      
+      channel.track({
+        userId: currentUser.id,
+        username: currentUser.username,
+        email: currentUser.email,
+        avatarUrl: currentUser.avatarUrl,
+        cursor: { x, y },
+        click: { x, y, timestamp: Date.now() },
+      })
+      
+      // 클릭 애니메이션 표시
+      setRemoteClicks((prev) => {
+        const next = new Map(prev)
+        next.set(currentUser.id, {
+          x,
+          y,
+          username: currentUser.username,
+          timestamp: Date.now(),
+        })
+        return next
+      })
+      
+      // 2초 후 클릭 표시 제거
+      setTimeout(() => {
+        setRemoteClicks((prev) => {
+          const next = new Map(prev)
+          next.delete(currentUser.id)
+          return next
+        })
+      }, 2000)
+    }
+
+    container.addEventListener('mousemove', handleMouseMove, { passive: true })
+    container.addEventListener('click', handleClick, { passive: true })
+
+    return () => {
+      if (mouseMoveThrottle) {
+        clearTimeout(mouseMoveThrottle)
+      }
+      container.removeEventListener('mousemove', handleMouseMove)
+      container.removeEventListener('click', handleClick)
+    }
+  }, [currentUser, board.id, selectedWeek])
 
   // 주간 계산
   const getWeekOptions = () => {
@@ -204,7 +359,54 @@ export function WeeklyReportShareClient({
   }
 
   return (
-    <div className='min-h-screen bg-[rgb(var(--background))]'>
+    <div ref={containerRef} className='min-h-screen bg-[rgb(var(--background))] relative'>
+      {/* 원격 커서 표시 */}
+      {Array.from(remoteCursors.entries()).map(([userId, cursor]) => {
+        const containerRect = containerRef.current?.getBoundingClientRect()
+        if (!containerRect) return null
+        
+        return (
+          <div
+            key={userId}
+            className='fixed pointer-events-none z-50 transition-all duration-75 ease-linear'
+            style={{
+              left: `${containerRect.left + cursor.x}px`,
+              top: `${containerRect.top + cursor.y}px`,
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            <div className='flex items-center gap-2'>
+              <div className='w-4 h-4 border-2 border-violet-500 rounded-full bg-violet-500/20' />
+              <div className='px-2 py-1 bg-violet-500/90 text-white text-xs rounded-md font-medium whitespace-nowrap shadow-lg'>
+                {cursor.username}
+              </div>
+            </div>
+          </div>
+        )
+      })}
+      
+      {/* 원격 클릭 표시 */}
+      {Array.from(remoteClicks.entries()).map(([userId, click]) => {
+        const containerRect = containerRef.current?.getBoundingClientRect()
+        if (!containerRect) return null
+        
+        return (
+          <div
+            key={`click-${userId}-${click.timestamp}`}
+            className='fixed pointer-events-none z-50'
+            style={{
+              left: `${containerRect.left + click.x}px`,
+              top: `${containerRect.top + click.y}px`,
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            <div className='relative'>
+              <div className='absolute inset-0 w-8 h-8 border-2 border-violet-500 rounded-full animate-ping opacity-75' />
+              <div className='relative w-8 h-8 border-2 border-violet-500 rounded-full bg-violet-500/30' />
+            </div>
+          </div>
+        )
+      })}
       {/* 헤더 */}
       <header className='sticky top-0 z-40 bg-[rgb(var(--background))]/80 backdrop-blur-xl border-b border-[rgb(var(--border))]'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>

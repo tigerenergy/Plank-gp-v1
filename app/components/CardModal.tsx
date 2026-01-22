@@ -397,6 +397,14 @@ export function CardModal({ isBoardMember = false, isOwner = false }: CardModalP
                     label='체크리스트'
                     count={cardChecklists.length}
                   />
+                  {!isNewCardMode && selectedCard && (
+                    <TabButton
+                      active={cardModalTab === 'time'}
+                      onClick={() => setCardModalTab('time')}
+                      icon={<Clock className='w-4 h-4' />}
+                      label='시간 추적'
+                    />
+                  )}
                 </div>
               </div>
 

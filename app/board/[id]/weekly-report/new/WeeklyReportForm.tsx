@@ -215,35 +215,39 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
           {/* 진행 중인 카드 */}
           {inProgressCards.length > 0 ? (
             <div className='card p-6'>
-              <h2 className='text-lg font-bold text-[rgb(var(--foreground))] mb-4 flex items-center gap-2'>
+              <h2 className='text-lg font-bold text-[rgb(var(--foreground))] mb-6 flex items-center gap-2'>
                 <TrendingUp className='w-5 h-5 text-blue-500' />
                 진행 중인 작업 ({inProgressCards.length}개)
               </h2>
-              <div className='space-y-4'>
+              <div className='space-y-6'>
                 {inProgressCards.map((card: any) => (
                 <div
                   key={card.card_id}
-                  className='p-4 bg-[rgb(var(--secondary))] rounded-xl border border-[rgb(var(--border))]'
+                  className='p-6 bg-gradient-to-br from-[rgb(var(--card))] to-[rgb(var(--secondary))]/30 rounded-2xl border border-[rgb(var(--border))] shadow-sm hover:shadow-md transition-all'
                 >
-                  <div className='flex items-start justify-between mb-3'>
-                    <div className='flex-1'>
-                      <div className='font-medium text-[rgb(var(--foreground))]'>{card.title}</div>
-                      <div className='text-xs text-[rgb(var(--muted-foreground))] mt-1'>
+                  {/* 카드 헤더 */}
+                  <div className='mb-6 pb-4 border-b border-[rgb(var(--border))]'>
+                    <h3 className='text-base font-semibold text-[rgb(var(--foreground))] mb-1'>
+                      {card.title}
+                    </h3>
+                    <div className='flex items-center gap-2'>
+                      <span className='text-xs px-2 py-1 bg-blue-500/10 text-blue-600 rounded-md font-medium'>
                         {card.list_title}
-                      </div>
+                      </span>
                     </div>
                   </div>
 
-                  {/* 진행 상태 */}
-                  <div className='grid grid-cols-2 gap-4 mt-4'>
+                  {/* 주요 정보 그리드 */}
+                  <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-6'>
+                    {/* 진행 상태 */}
                     <div>
-                      <label className='text-xs font-medium text-[rgb(var(--muted-foreground))] mb-1 block'>
+                      <label className='text-xs font-semibold text-[rgb(var(--muted-foreground))] mb-2 block uppercase tracking-wide'>
                         진행 상태
                       </label>
                       <select
                         value={card.user_input?.status || '진행중'}
                         onChange={(e) => updateCard(card.card_id, { status: e.target.value })}
-                        className='w-full px-3 py-2 rounded-lg bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm'
+                        className='w-full px-4 py-2.5 rounded-xl bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all'
                       >
                         <option value='진행중'>진행중</option>
                         <option value='완료'>완료</option>
@@ -252,64 +256,75 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
                       </select>
                     </div>
 
+                    {/* 진척도 */}
                     <div>
-                      <label className='text-xs font-medium text-[rgb(var(--muted-foreground))] mb-1 block'>
-                        진척도 ({card.user_input?.progress || card.auto_collected?.checklist_progress || 0}%)
+                      <label className='text-xs font-semibold text-[rgb(var(--muted-foreground))] mb-2 block uppercase tracking-wide'>
+                        진척도
                       </label>
-                      <input
-                        type='number'
-                        min='0'
-                        max='100'
-                        value={card.user_input?.progress || card.auto_collected?.checklist_progress || 0}
-                        onChange={(e) =>
-                          updateCard(card.card_id, { progress: parseInt(e.target.value) || 0 })
-                        }
-                        className='w-full px-3 py-2 rounded-lg bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm'
-                      />
+                      <div className='relative'>
+                        <input
+                          type='number'
+                          min='0'
+                          max='100'
+                          value={card.user_input?.progress || card.auto_collected?.checklist_progress || 0}
+                          onChange={(e) =>
+                            updateCard(card.card_id, { progress: parseInt(e.target.value) || 0 })
+                          }
+                          className='w-full px-4 py-2.5 rounded-xl bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all'
+                        />
+                        <span className='absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-[rgb(var(--muted-foreground))]'>
+                          %
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 작업 시간 */}
+                    <div>
+                      <label className='text-xs font-semibold text-[rgb(var(--muted-foreground))] mb-2 block uppercase tracking-wide flex items-center gap-1.5'>
+                        <Clock className='w-3.5 h-3.5' />
+                        작업 시간
+                      </label>
+                      <div className='relative'>
+                        <input
+                          type='number'
+                          min='0'
+                          step='0.5'
+                          value={card.user_input?.hours_spent ?? card.auto_collected?.weekly_hours ?? 0}
+                          onChange={(e) =>
+                            updateCard(card.card_id, { hours_spent: parseFloat(e.target.value) || 0 })
+                          }
+                          className='w-full px-4 py-2.5 rounded-xl bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all'
+                          placeholder='0'
+                        />
+                        <span className='absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-[rgb(var(--muted-foreground))]'>
+                          시간
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* 작업 시간 */}
-                  <div className='mt-4'>
-                    <label className='text-xs font-medium text-[rgb(var(--muted-foreground))] mb-1 block flex items-center gap-2'>
-                      <Clock className='w-3 h-3' />
-                      작업 시간 (시간)
-                    </label>
-                    <input
-                      type='number'
-                      min='0'
-                      step='0.5'
-                      value={card.user_input?.hours_spent ?? card.auto_collected?.weekly_hours ?? 0}
-                      onChange={(e) =>
-                        updateCard(card.card_id, { hours_spent: parseFloat(e.target.value) || 0 })
-                      }
-                      className='w-full px-3 py-2 rounded-lg bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm'
-                      placeholder='0'
-                    />
-                  </div>
-
                   {/* 추가 설명 */}
-                  <div className='mt-4'>
-                    <label className='text-xs font-medium text-[rgb(var(--muted-foreground))] mb-1 block'>
+                  <div className='mb-4'>
+                    <label className='text-xs font-semibold text-[rgb(var(--muted-foreground))] mb-2 block uppercase tracking-wide'>
                       추가 설명
                     </label>
                     <textarea
                       value={card.user_input?.description || ''}
                       onChange={(e) => updateCard(card.card_id, { description: e.target.value })}
-                      className='w-full px-3 py-2 rounded-lg bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm min-h-[80px] focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all resize-y'
+                      className='w-full px-4 py-3 rounded-xl bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm min-h-[100px] focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all resize-y placeholder:text-[rgb(var(--muted-foreground))]'
                       placeholder='작업 내용을 자세히 설명해주세요...'
                     />
                   </div>
 
                   {/* 이슈사항 */}
-                  <div className='mt-4'>
-                    <label className='text-xs font-medium text-[rgb(var(--muted-foreground))] mb-1 block'>
-                      이슈사항 <span className='text-[rgb(var(--muted-foreground))]/60'>(선택사항)</span>
+                  <div>
+                    <label className='text-xs font-semibold text-[rgb(var(--muted-foreground))] mb-2 block uppercase tracking-wide'>
+                      이슈사항 <span className='normal-case font-normal text-[rgb(var(--muted-foreground))]/60'>(선택사항)</span>
                     </label>
                     <textarea
                       value={card.user_input?.issues || ''}
                       onChange={(e) => updateCard(card.card_id, { issues: e.target.value })}
-                      className='w-full px-3 py-2 rounded-lg bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm min-h-[60px] focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all resize-y'
+                      className='w-full px-4 py-3 rounded-xl bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm min-h-[80px] focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all resize-y placeholder:text-[rgb(var(--muted-foreground))]'
                       placeholder='이슈사항이 있다면 적어주세요...'
                     />
                   </div>
@@ -329,25 +344,29 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
           )}
 
           {/* 총 작업 시간 */}
-          <div className='card p-6'>
+          <div className='card p-6 bg-gradient-to-br from-violet-500/10 to-blue-500/10 border-violet-500/20'>
             <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-2'>
-                <Clock className='w-5 h-5 text-violet-500' />
-                <span className='font-medium text-[rgb(var(--foreground))]'>주간 총 작업 시간</span>
+              <div className='flex items-center gap-3'>
+                <div className='p-3 bg-violet-500/20 rounded-xl'>
+                  <Clock className='w-6 h-6 text-violet-600' />
+                </div>
+                <div>
+                  <div className='text-sm font-medium text-[rgb(var(--muted-foreground))]'>주간 총 작업 시간</div>
+                  <div className='text-3xl font-bold text-[rgb(var(--foreground))] mt-1'>{totalHours.toFixed(1)}시간</div>
+                </div>
               </div>
-              <span className='text-2xl font-bold text-[rgb(var(--foreground))]'>{totalHours}시간</span>
             </div>
           </div>
 
           {/* 추가 메모 */}
           <div className='card p-6'>
-            <label className='text-sm font-medium text-[rgb(var(--foreground))] mb-2 block'>
+            <label className='text-sm font-semibold text-[rgb(var(--foreground))] mb-3 block'>
               추가 메모
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className='w-full px-4 py-3 rounded-xl bg-[rgb(var(--secondary))] border border-[rgb(var(--border))] text-sm min-h-[120px]'
+              className='w-full px-4 py-3 rounded-xl bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm min-h-[120px] focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all resize-y placeholder:text-[rgb(var(--muted-foreground))]'
               placeholder='추가로 기록하고 싶은 내용이 있다면 적어주세요...'
             />
           </div>

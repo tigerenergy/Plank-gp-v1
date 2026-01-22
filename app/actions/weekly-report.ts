@@ -23,19 +23,22 @@ export interface WeeklyReport {
   updated_at: string
 }
 
-// 주간 시작일 계산 (월요일)
+// 주간 시작일 계산 (월요일) - 시간을 00:00:00으로 설정
 function getWeekStart(date: Date = new Date()): Date {
   const d = new Date(date)
   const day = d.getDay()
   const diff = d.getDate() - day + (day === 0 ? -6 : 1) // 월요일로 조정
-  return new Date(d.setDate(diff))
+  const weekStart = new Date(d.setDate(diff))
+  weekStart.setHours(0, 0, 0, 0) // 시간을 00:00:00으로 설정
+  return weekStart
 }
 
-// 주간 종료일 계산 (일요일)
+// 주간 종료일 계산 (일요일) - 시간을 23:59:59로 설정
 function getWeekEnd(date: Date = new Date()): Date {
   const weekStart = getWeekStart(date)
   const weekEnd = new Date(weekStart)
   weekEnd.setDate(weekStart.getDate() + 6)
+  weekEnd.setHours(23, 59, 59, 999) // 시간을 23:59:59로 설정
   return weekEnd
 }
 

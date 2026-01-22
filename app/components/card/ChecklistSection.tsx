@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Trash2, CheckSquare, Square } from 'lucide-react'
+import { Plus, Trash2, CheckSquare, Square, Clock, X } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Checklist, ChecklistItem } from '@/types'
 import {
@@ -13,6 +13,7 @@ import {
   toggleChecklistItem,
   deleteChecklistItem,
 } from '@/app/actions/checklist'
+import { createTimeLog } from '@/app/actions/time-log'
 
 interface ChecklistSectionProps {
   cardId: string
@@ -37,6 +38,12 @@ export function ChecklistSection({
   const [deletingChecklistId, setDeletingChecklistId] = useState<string | null>(null)
   const [togglingItemId, setTogglingItemId] = useState<string | null>(null)
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null)
+  
+  // 시간 입력 모달 상태
+  const [showTimeInputModal, setShowTimeInputModal] = useState(false)
+  const [pendingToggleItem, setPendingToggleItem] = useState<{ checklistId: string; item: ChecklistItem } | null>(null)
+  const [timeInputHours, setTimeInputHours] = useState('')
+  const [isSavingTime, setIsSavingTime] = useState(false)
 
   // 체크리스트 생성
   const handleCreateChecklist = async () => {
@@ -129,11 +136,21 @@ export function ChecklistSection({
   const handleToggleItem = async (checklistId: string, item: ChecklistItem) => {
     if (togglingItemId === item.id) return
     
+    // 체크하는 경우 (현재 체크되지 않은 상태에서 체크로 변경)
+    if (!item.is_checked) {
+      // 시간 입력 모달 표시
+      setPendingToggleItem({ checklistId, item })
+      setShowTimeInputModal(true)
+      setTimeInputHours('')
+      return
+    }
+    
+    // 해제하는 경우는 바로 처리
     setTogglingItemId(item.id)
     try {
       const result = await toggleChecklistItem({
         id: item.id,
-        isChecked: !item.is_checked,
+        isChecked: false,
       })
 
       if (result.success) {
@@ -143,7 +160,7 @@ export function ChecklistSection({
               ? {
                   ...c,
                   items: c.items?.map((i) =>
-                    i.id === item.id ? { ...i, is_checked: !i.is_checked } : i
+                    i.id === item.id ? { ...i, is_checked: false } : i
                   ),
                 }
               : c
@@ -155,6 +172,78 @@ export function ChecklistSection({
     } finally {
       setTogglingItemId(null)
     }
+  }
+
+  // 시간 입력 후 체크 처리
+  const handleConfirmTimeAndToggle = async () => {
+    if (!pendingToggleItem || !timeInputHours || isSavingTime) return
+
+    const hours = parseFloat(timeInputHours)
+    if (isNaN(hours) || hours <= 0) {
+      toast.error('올바른 시간을 입력해주세요.')
+      return
+    }
+
+    if (hours > 24) {
+      toast.error('하루 최대 24시간까지 입력 가능합니다.')
+      return
+    }
+
+    setIsSavingTime(true)
+    try {
+      // 1. 시간 로그 생성 (체크리스트 항목 내용을 설명으로 사용)
+      const timeLogResult = await createTimeLog({
+        cardId,
+        hours,
+        description: `체크리스트: ${pendingToggleItem.item.content}`,
+        loggedDate: new Date().toISOString().split('T')[0],
+      })
+
+      if (!timeLogResult.success) {
+        toast.error(timeLogResult.error || '시간 로그 저장에 실패했습니다.')
+        setIsSavingTime(false)
+        return
+      }
+
+      // 2. 체크리스트 항목 체크
+      const toggleResult = await toggleChecklistItem({
+        id: pendingToggleItem.item.id,
+        isChecked: true,
+      })
+
+      if (toggleResult.success) {
+        onChecklistsChange(
+          checklists.map((c) =>
+            c.id === pendingToggleItem.checklistId
+              ? {
+                  ...c,
+                  items: c.items?.map((i) =>
+                    i.id === pendingToggleItem.item.id ? { ...i, is_checked: true } : i
+                  ),
+                }
+              : c
+          )
+        )
+        toast.success(`${hours}시간이 기록되었습니다.`)
+        setShowTimeInputModal(false)
+        setPendingToggleItem(null)
+        setTimeInputHours('')
+      } else {
+        toast.error(toggleResult.error || '체크리스트 업데이트에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('시간 입력 및 체크 처리 에러:', error)
+      toast.error('처리 중 오류가 발생했습니다.')
+    } finally {
+      setIsSavingTime(false)
+    }
+  }
+
+  // 시간 입력 취소
+  const handleCancelTimeInput = () => {
+    setShowTimeInputModal(false)
+    setPendingToggleItem(null)
+    setTimeInputHours('')
   }
 
   // 항목 삭제
@@ -413,6 +502,101 @@ export function ChecklistSection({
       {/* 비소유자용 안내 */}
       {!canEdit && checklists.length === 0 && (
         <p className='text-center text-sm text-gray-400 py-4'>체크리스트가 없습니다.</p>
+      )}
+
+      {/* 시간 입력 모달 */}
+      {showTimeInputModal && pendingToggleItem && (
+        <div
+          className='fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-150'
+          onClick={handleCancelTimeInput}
+        >
+          <div
+            className='w-full max-w-md bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150'
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 헤더 */}
+            <div className='flex items-start gap-4 p-6'>
+              <div className='w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-violet-100 text-violet-600 dark:bg-violet-900/50 dark:text-violet-400'>
+                <Clock className='w-6 h-6' />
+              </div>
+              <div className='flex-1 min-w-0'>
+                <h3 className='text-base font-bold text-[rgb(var(--foreground))]'>작업 시간 입력</h3>
+                <p className='mt-2 text-sm text-[rgb(var(--muted-foreground))] leading-relaxed'>
+                  체크리스트 항목을 완료하셨나요? 작업 시간을 입력해주세요.
+                </p>
+              </div>
+              <button onClick={handleCancelTimeInput} className='p-1.5 rounded-lg btn-ghost flex-shrink-0'>
+                <X className='w-4 h-4' />
+              </button>
+            </div>
+
+            {/* 내용 */}
+            <div className='px-6 pb-4 space-y-4'>
+              {pendingToggleItem && (
+                <div className='p-3 bg-[rgb(var(--secondary))] rounded-lg border border-[rgb(var(--border))]'>
+                  <p className='text-xs text-[rgb(var(--muted-foreground))] mb-1'>완료한 항목</p>
+                  <p className='text-sm font-medium text-[rgb(var(--foreground))]'>
+                    {pendingToggleItem.item.content}
+                  </p>
+                </div>
+              )}
+              <div>
+                <label className='text-xs font-medium text-[rgb(var(--muted-foreground))] mb-2 block'>
+                  작업 시간 (시간)
+                </label>
+                <div className='relative'>
+                  <input
+                    type='number'
+                    min='0'
+                    max='24'
+                    step='0.5'
+                    value={timeInputHours}
+                    onChange={(e) => setTimeInputHours(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !isSavingTime && timeInputHours) {
+                        handleConfirmTimeAndToggle()
+                      }
+                    }}
+                    className='w-full px-4 py-2.5 rounded-xl bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all'
+                    placeholder='0'
+                    autoFocus
+                  />
+                  <span className='absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-[rgb(var(--muted-foreground))]'>
+                    시간
+                  </span>
+                </div>
+                <p className='text-xs text-[rgb(var(--muted-foreground))] mt-1'>
+                  입력한 시간은 자동으로 주간보고에 반영됩니다.
+                </p>
+              </div>
+            </div>
+
+            {/* 버튼 */}
+            <div className='flex justify-end gap-3 px-6 py-4 border-t border-[rgb(var(--border))] bg-[rgb(var(--secondary))]/50'>
+              <button
+                onClick={handleCancelTimeInput}
+                disabled={isSavingTime}
+                className='btn-secondary px-4 py-2.5 text-sm disabled:opacity-50'
+              >
+                취소
+              </button>
+              <button
+                onClick={handleConfirmTimeAndToggle}
+                disabled={isSavingTime || !timeInputHours || parseFloat(timeInputHours) <= 0}
+                className='px-4 py-2.5 text-sm rounded-xl font-medium transition-colors btn-primary disabled:opacity-50'
+              >
+                {isSavingTime ? (
+                  <>
+                    <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block mr-2' />
+                    저장 중...
+                  </>
+                ) : (
+                  '완료'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

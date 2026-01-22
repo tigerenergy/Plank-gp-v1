@@ -198,13 +198,14 @@ export function Card({ card, isDoneList = false }: CardProps) {
 
       {/* 완료된 카드: 완료 시간 표시 */}
       {isCompleted && card.completed_at && (
-        <div className='text-xs text-emerald-600 dark:text-emerald-400 mb-2 font-medium'>
-          ✅ 완료: {new Date(card.completed_at).toLocaleDateString('ko-KR', { 
+        <div className='text-xs text-emerald-600 dark:text-emerald-400 mb-2 font-medium flex items-center gap-1.5'>
+          <CheckCircle2 className='w-3.5 h-3.5 flex-shrink-0' />
+          <span>완료: {new Date(card.completed_at).toLocaleDateString('ko-KR', { 
             month: 'short', 
             day: 'numeric', 
             hour: '2-digit', 
             minute: '2-digit' 
-          })}
+          })}</span>
         </div>
       )}
 

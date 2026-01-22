@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { X, Clock, User, FileEdit, CheckCircle2, Plus } from 'lucide-react'
 import { getWeeklyReportHistory, type WeeklyReportHistory } from '@/app/actions/weekly-report-history'
 import { formatDistanceToNow } from 'date-fns'
@@ -97,7 +97,7 @@ export function ReportHistoryModal({ reportId, isOpen, onClose }: ReportHistoryM
   const formatPreviousData = (data: any) => {
     if (!data || typeof data !== 'object') return null
 
-    const sections: JSX.Element[] = []
+    const sections: React.ReactElement[] = []
 
     if (data.status !== undefined) {
       const statusText = data.status === 'draft' ? '작성 중' : data.status === 'submitted' ? '제출 완료' : data.status || '없음'

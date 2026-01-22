@@ -604,57 +604,8 @@ export async function refreshWeeklyReportData(
       collectCardActivities(boardId, weekStart, weekEnd),
     ])
 
-    // 기존 완료된 카드 중 완료 취소된 카드 찾기
-    // 완료 취소된 카드는 진행 중인 작업으로 이동해야 함
-    const existingCompletedCardIds = new Set<string>()
-    const existingCompletedCards = new Map<string, any>()
-    
-    if (existingReport?.completed_cards && Array.isArray(existingReport.completed_cards)) {
-      for (const card of existingReport.completed_cards) {
-        if (card.id) {
-          existingCompletedCardIds.add(card.id)
-          existingCompletedCards.set(card.id, card)
-        }
-      }
-    }
-
-    // 새로 수집된 완료 카드 ID
-    const newCompletedCardIds = new Set(newCompletedCards.map(card => card.id))
-
-    // 완료 취소된 카드 찾기 (기존에는 있었지만 새로 수집된 카드에는 없음)
-    // 이 카드들은 진행 중인 작업으로 이동해야 함
-    const uncompletedCards: any[] = []
-    for (const cardId of existingCompletedCardIds) {
-      if (!newCompletedCardIds.has(cardId)) {
-        const existingCard = existingCompletedCards.get(cardId)
-        if (existingCard) {
-          // 완료 취소된 카드를 진행 중인 카드 형식으로 변환
-          uncompletedCards.push({
-            card_id: existingCard.id,
-            title: existingCard.title,
-            description: existingCard.description,
-            list_title: existingCard.list_title,
-            auto_collected: {
-              created_at: existingCard.created_at,
-              updated_at: existingCard.updated_at,
-              checklist_progress: existingCard.checklist_progress || 0,
-              weekly_hours: existingCard.weekly_hours || 0,
-            },
-            user_input: {
-              status: '진행중',
-              progress: existingCard.checklist_progress || 0,
-              hours_spent: existingCard.weekly_hours || 0,
-              description: existingCard.description || '',
-              issues: '',
-              expected_completion_date: existingCard.due_date || null,
-            },
-            was_completed: true, // 원래 완료되었던 카드임을 표시
-          })
-        }
-      }
-    }
-
-    // 완료된 카드는 새로 수집된 카드만 유지 (완료 취소된 카드는 제거)
+    // 완료된 카드는 새로 수집된 카드만 유지
+    // 완료 취소된 카드는 완전히 삭제 (completed_cards에서 제거, in_progress_cards에도 추가하지 않음)
     const mergedCompletedCards = [...newCompletedCards]
 
     // 기존 user_input 데이터를 새로 수집된 카드와 병합
@@ -688,30 +639,6 @@ export async function refreshWeeklyReportData(
       }
       return card
     })
-
-    // 완료 취소된 카드를 진행 중인 카드에 추가
-    // 기존 user_input이 있으면 유지, 없으면 기본값 사용
-    for (const uncompletedCard of uncompletedCards) {
-      const existingInput = existingUserInputs.get(uncompletedCard.card_id)
-      if (existingInput) {
-        // 기존 user_input이 있으면 병합
-        uncompletedCard.user_input = {
-          ...uncompletedCard.user_input,
-          ...existingInput,
-        }
-      }
-      // 진행 중인 카드 목록에 추가 (중복 방지)
-      const existingIndex = mergedInProgressCards.findIndex(c => c.card_id === uncompletedCard.card_id)
-      if (existingIndex === -1) {
-        mergedInProgressCards.push(uncompletedCard)
-      } else {
-        // 이미 있으면 was_completed 플래그만 추가
-        mergedInProgressCards[existingIndex] = {
-          ...mergedInProgressCards[existingIndex],
-          was_completed: true,
-        }
-      }
-    }
 
     // 시간 집계 (완료된 카드 + 진행 중인 카드의 시간 로그 합계)
     const completedHours = mergedCompletedCards.reduce((sum, card) => {

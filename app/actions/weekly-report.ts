@@ -126,11 +126,13 @@ async function collectInProgressCards(
   const boardDataResult = await getBoardData(boardId)
   if (!boardDataResult.success || !boardDataResult.data) return []
 
-  // 1단계: 모든 미완료 카드 수집
+  // 1단계: 모든 미완료 카드 수집 (완료 취소된 카드도 포함)
   const allCards: Array<{ card: any; list: any }> = []
   for (const list of boardDataResult.data) {
     if (list.is_done_list) continue
     for (const card of list.cards) {
+      // 완료 취소된 카드도 진행 중인 카드로 포함
+      // (해당 주간에 작업한 모든 카드를 포함하기 위해)
       if (card.is_completed) continue
       allCards.push({ card, list })
     }

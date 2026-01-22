@@ -55,6 +55,7 @@ export default async function WeeklyReportNewPage({ params }: PageProps) {
     report = createResult.data
   } else {
     // 기존 보고서가 있어도 최신 데이터로 자동 갱신 (draft 상태일 때만)
+    // 완료 취소 후 이동 등으로 인한 데이터 변경을 반영하기 위해 항상 갱신
     if (report.status === 'draft') {
       const refreshResult = await refreshWeeklyReportData(report.id, boardId, weekStartStr)
       if (refreshResult.success && refreshResult.data) {

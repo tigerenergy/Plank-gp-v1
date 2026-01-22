@@ -369,6 +369,35 @@ export async function moveCard(input: {
         link: `/board/${listForNotif.board_id}`,
         cardId: input.cardId,
       })
+
+      // 주간보고 자동 업데이트 (해당 주간의 주간보고가 있으면 업데이트)
+      try {
+        // 현재 주간의 주간보고 찾기
+        const weekStart = new Date()
+        const day = weekStart.getDay()
+        const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1)
+        const weekStartDate = new Date(weekStart.setDate(diff))
+        weekStartDate.setHours(0, 0, 0, 0)
+
+        const { data: weeklyReport } = await supabase
+          .from('weekly_reports')
+          .select('id, week_start_date, status')
+          .eq('board_id', listForNotif.board_id)
+          .eq('user_id', user.id)
+          .eq('week_start_date', weekStartDate.toISOString().split('T')[0])
+          .maybeSingle()
+
+        if (weeklyReport && weeklyReport.status === 'draft') {
+          // 주간보고 데이터 새로고침 (비동기로 처리, 에러는 무시)
+          const { refreshWeeklyReportData } = await import('./weekly-report')
+          refreshWeeklyReportData(weeklyReport.id, listForNotif.board_id, weekStartDate.toISOString().split('T')[0]).catch(
+            (err) => console.error('주간보고 자동 업데이트 실패:', err)
+          )
+        }
+      } catch (err) {
+        // 주간보고 업데이트 실패는 무시 (카드 이동은 성공으로 처리)
+        console.error('주간보고 자동 업데이트 에러:', err)
+      }
     }
 
     return { success: true }

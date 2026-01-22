@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Save, Send, Clock, CheckCircle2, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Save, Send, Clock, CheckCircle2, TrendingUp, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import Select from 'react-select'
 import type { StylesConfig, SingleValue } from 'react-select'
 import type { Board } from '@/types'
-import { updateWeeklyReport, submitWeeklyReport } from '@/app/actions/weekly-report'
+import { updateWeeklyReport, submitWeeklyReport, refreshWeeklyReportData } from '@/app/actions/weekly-report'
 import type { WeeklyReport } from '@/app/actions/weekly-report'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
 
@@ -16,13 +16,15 @@ interface WeeklyReportFormProps {
   report: WeeklyReport
 }
 
-export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
+export function WeeklyReportForm({ board, report: initialReport }: WeeklyReportFormProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [inProgressCards, setInProgressCards] = useState(report.in_progress_cards || [])
-  const [totalHours, setTotalHours] = useState(report.total_hours || 0)
-  const [notes, setNotes] = useState(report.notes || '')
+  const [report, setReport] = useState(initialReport)
+  const [inProgressCards, setInProgressCards] = useState(initialReport.in_progress_cards || [])
+  const [totalHours, setTotalHours] = useState(initialReport.total_hours || 0)
+  const [notes, setNotes] = useState(initialReport.notes || '')
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // 진행 상태 옵션
   const statusOptions = [
@@ -113,14 +115,48 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
     }),
   }
 
-  // 시간 자동 집계 (프런트엔드에서도 계산)
+  // 시간 자동 집계 (완료된 카드 + 진행 중인 카드)
   useEffect(() => {
-    const hours = inProgressCards.reduce((sum, card) => {
+    // 진행 중인 카드 시간
+    const inProgressHours = inProgressCards.reduce((sum, card) => {
       const cardHours = card.user_input?.hours_spent ?? card.auto_collected?.weekly_hours ?? 0
       return sum + Number(cardHours || 0)
     }, 0)
-    setTotalHours(hours)
-  }, [inProgressCards])
+    
+    // 완료된 카드 시간
+    const completedHours = (report.completed_cards || []).reduce((sum: number, card: any) => {
+      const cardHours = card.weekly_hours || 0
+      return sum + Number(cardHours || 0)
+    }, 0)
+    
+    setTotalHours(inProgressHours + completedHours)
+  }, [inProgressCards, report.completed_cards])
+
+  // 주간보고 데이터 새로고침
+  const handleRefresh = async () => {
+    if (isRefreshing || report.status === 'submitted') return
+    
+    setIsRefreshing(true)
+    try {
+      const weekStartStr = report.week_start_date
+      const refreshResult = await refreshWeeklyReportData(report.id, board.id, weekStartStr)
+      
+      if (refreshResult.success && refreshResult.data) {
+        setReport(refreshResult.data)
+        setInProgressCards(refreshResult.data.in_progress_cards || [])
+        setTotalHours(refreshResult.data.total_hours || 0)
+        // notes는 사용자가 입력한 값 유지
+        toast.success('주간보고 데이터가 새로고침되었습니다.')
+      } else {
+        toast.error(refreshResult.error || '새로고침에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('새로고침 에러:', error)
+      toast.error('새로고침 중 오류가 발생했습니다.')
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
 
   // 카드 업데이트
   const updateCard = (cardId: string, updates: any) => {
@@ -276,6 +312,21 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
 
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
         <div className='space-y-6'>
+          {/* 총 작업 시간 - 맨 위로 이동 */}
+          <div className='card p-6 bg-gradient-to-br from-violet-500/10 to-blue-500/10 border-violet-500/20'>
+            <div className='flex items-center justify-between'>
+              <div className='flex items-center gap-3'>
+                <div className='p-3 bg-violet-500/20 rounded-xl'>
+                  <Clock className='w-6 h-6 text-violet-600' />
+                </div>
+                <div>
+                  <div className='text-sm font-medium text-[rgb(var(--muted-foreground))]'>주간 총 작업 시간</div>
+                  <div className='text-3xl font-bold text-[rgb(var(--foreground))] mt-1'>{totalHours.toFixed(1)}시간</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* 완료된 카드 */}
           {report.completed_cards && report.completed_cards.length > 0 ? (
             <div className='card p-6'>
@@ -289,12 +340,22 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
                     key={card.id || card.card_id}
                     className='p-4 bg-emerald-500/5 rounded-xl border border-emerald-500/20 hover:border-emerald-500/40 transition-colors'
                   >
-                    <div className='font-medium text-[rgb(var(--foreground))]'>{card.title}</div>
-                    {card.description && (
-                      <div className='text-sm text-[rgb(var(--muted-foreground))] mt-1 line-clamp-2'>
-                        {card.description}
+                    <div className='flex items-start justify-between mb-2'>
+                      <div className='flex-1'>
+                        <div className='font-medium text-[rgb(var(--foreground))]'>{card.title}</div>
+                        {card.description && (
+                          <div className='text-sm text-[rgb(var(--muted-foreground))] mt-1 line-clamp-2'>
+                            {card.description}
+                          </div>
+                        )}
                       </div>
-                    )}
+                      {card.weekly_hours && card.weekly_hours > 0 && (
+                        <div className='flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 ml-2'>
+                          <Clock className='w-3 h-3' />
+                          {card.weekly_hours}시간
+                        </div>
+                      )}
+                    </div>
                     <div className='flex items-center gap-3 mt-2 text-xs text-[rgb(var(--muted-foreground))]'>
                       <span className='px-2 py-0.5 bg-emerald-500/10 text-emerald-600 rounded'>
                         {card.list_title}
@@ -477,21 +538,6 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
               </div>
             </div>
           )}
-
-          {/* 총 작업 시간 */}
-          <div className='card p-6 bg-gradient-to-br from-violet-500/10 to-blue-500/10 border-violet-500/20'>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-3'>
-                <div className='p-3 bg-violet-500/20 rounded-xl'>
-                  <Clock className='w-6 h-6 text-violet-600' />
-                </div>
-                <div>
-                  <div className='text-sm font-medium text-[rgb(var(--muted-foreground))]'>주간 총 작업 시간</div>
-                  <div className='text-3xl font-bold text-[rgb(var(--foreground))] mt-1'>{totalHours.toFixed(1)}시간</div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* 추가 메모 */}
           <div className='card p-6'>

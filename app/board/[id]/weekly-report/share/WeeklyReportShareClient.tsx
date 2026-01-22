@@ -80,7 +80,7 @@ export function WeeklyReportShareClient({
     const supabase = createClient()
     if (!currentUser) return
 
-    const channelName = `weekly_reports:${board.id}:${selectedWeek || 'current'}`
+    const channelName = `weekly_reports:${board?.id || 'all'}:${selectedWeek || 'current'}`
     const channel = supabase
       .channel(channelName, {
         config: {
@@ -249,7 +249,7 @@ export function WeeklyReportShareClient({
       channel.untrack()
       supabase.removeChannel(channel)
     }
-  }, [board.id, selectedWeek, currentUser])
+  }, [board?.id, selectedWeek, currentUser])
 
   // 마우스 이벤트 추적
   useEffect(() => {
@@ -257,7 +257,7 @@ export function WeeklyReportShareClient({
 
     const container = containerRef.current
     const supabase = createClient()
-    const channelName = `weekly_reports:${board.id}:${selectedWeek || 'current'}`
+    const channelName = `weekly_reports:${board?.id || 'all'}:${selectedWeek || 'current'}`
     const channel = supabase.channel(channelName)
     
     let mouseMoveThrottle: NodeJS.Timeout | null = null
@@ -329,7 +329,7 @@ export function WeeklyReportShareClient({
       container.removeEventListener('mousemove', handleMouseMove)
       container.removeEventListener('click', handleClick)
     }
-  }, [currentUser, board.id, selectedWeek])
+  }, [currentUser, board?.id, selectedWeek])
 
   // 주간 계산
   const getWeekOptions = () => {
@@ -413,7 +413,13 @@ export function WeeklyReportShareClient({
           <div className='h-16 flex items-center justify-between'>
             <div className='flex items-center gap-4'>
               {board ? (
+                {board && (
                 <Link href={`/board/${board.id}`} className='p-2 rounded-xl btn-ghost'>
+                  <ArrowLeft className='w-5 h-5' />
+                </Link>
+              )}
+              {!board && (
+                <Link href='/' className='p-2 rounded-xl btn-ghost'>
                   <ArrowLeft className='w-5 h-5' />
                 </Link>
               ) : (
@@ -483,7 +489,8 @@ export function WeeklyReportShareClient({
                     onClick={() => {
                       const weekStart = currentWeekReports[0]?.week_start_date || currentWeek
                       const weekEnd = currentWeekReports[0]?.week_end_date || new Date(new Date(currentWeek).getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-                      generateWeeklyReportCSV(board, currentWeekReports, weekStart, weekEnd)
+                      const boardForExport = board || { id: 'all', title: '전체', emoji: '📋' } as Board
+                      generateWeeklyReportCSV(boardForExport, currentWeekReports, weekStart, weekEnd)
                     }}
                     className='w-full px-4 py-2 text-left text-sm hover:bg-[rgb(var(--secondary))] rounded-b-xl flex items-center gap-2'
                   >
@@ -492,13 +499,15 @@ export function WeeklyReportShareClient({
                   </button>
                 </div>
               </div>
-              <Link
-                href={`/board/${board.id}/weekly-report/stats`}
-                className='px-3 py-2 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/20 text-violet-600 dark:text-violet-400 text-sm font-medium transition-colors flex items-center gap-2'
-              >
-                <BarChart3 className='w-4 h-4' />
-                통계
-              </Link>
+              {board && (
+                <Link
+                  href={`/board/${board.id}/weekly-report/stats`}
+                  className='px-3 py-2 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/20 text-violet-600 dark:text-violet-400 text-sm font-medium transition-colors flex items-center gap-2'
+                >
+                  <BarChart3 className='w-4 h-4' />
+                  통계
+                </Link>
+              )}
               <select
                 value={currentWeek}
                 onChange={(e) => {

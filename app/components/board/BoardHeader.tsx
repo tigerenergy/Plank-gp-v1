@@ -22,23 +22,23 @@ export function BoardHeader({ boardId, title, user, members, onSettingsClick }: 
 
   return (
     <header className='flex-shrink-0 sticky top-0 z-50 border-b border-[rgb(var(--border))] bg-[rgb(var(--card))]/95 backdrop-blur-sm'>
-      <div className='px-5 sm:px-6 py-4'>
-        <div className='flex items-center justify-between gap-4'>
+      <div className='px-4 sm:px-5 py-3'>
+        <div className='flex items-center justify-between gap-3'>
           {/* 왼쪽: 뒤로가기 + 제목 */}
-          <div className='flex items-center gap-4 min-w-0'>
-            <NavLink href='/' className='w-10 h-10 rounded-xl flex items-center justify-center btn-ghost border border-[rgb(var(--border))]' title='보드 목록'>
-              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+          <div className='flex items-center gap-3 min-w-0'>
+            <NavLink href='/' className='w-9 h-9 rounded-lg flex items-center justify-center btn-ghost border border-[rgb(var(--border))]' title='보드 목록'>
+              <svg className='w-3.5 h-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                 <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 19l-7-7 7-7' />
               </svg>
             </NavLink>
             
-            <h1 className='text-lg font-bold text-[rgb(var(--foreground))] truncate'>
+            <h1 className='text-base font-bold text-[rgb(var(--foreground))] truncate'>
               {title}
             </h1>
           </div>
 
           {/* 오른쪽: 완료된 작업 + 멤버 + 설정 */}
-          <div className='flex items-center gap-3 flex-shrink-0'>
+          <div className='flex items-center gap-2 flex-shrink-0'>
             {/* 멤버 아바타 */}
             {members.length > 0 && (
               <button
@@ -58,7 +58,7 @@ export function BoardHeader({ boardId, title, user, members, onSettingsClick }: 
                   ) : (
                     <div
                       key={member.id}
-                      className='w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 ring-2 ring-[rgb(var(--card))] flex items-center justify-center shadow-sm'
+                      className='w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 ring-2 ring-[rgb(var(--card))] flex items-center justify-center shadow-sm'
                     >
                       <span className='text-[10px] font-bold text-white'>
                         {(member.username || member.email || '?')[0].toUpperCase()}
@@ -80,7 +80,7 @@ export function BoardHeader({ boardId, title, user, members, onSettingsClick }: 
             <div className='relative group'>
               <Link
                 href={`/board/${boardId}/weekly-report/share`}
-                className='w-10 h-10 rounded-xl flex items-center justify-center btn-ghost border border-[rgb(var(--border))]'
+                className='w-9 h-9 rounded-lg flex items-center justify-center btn-ghost border border-[rgb(var(--border))]'
                 title='주간보고'
               >
                 <FileText className='w-5 h-5 text-violet-500' />
@@ -118,7 +118,7 @@ export function BoardHeader({ boardId, title, user, members, onSettingsClick }: 
             {onSettingsClick && (
               <button
                 onClick={onSettingsClick}
-                className='w-10 h-10 rounded-xl flex items-center justify-center btn-ghost border border-[rgb(var(--border))]'
+                className='w-9 h-9 rounded-lg flex items-center justify-center btn-ghost border border-[rgb(var(--border))]'
                 title='팀원 관리'
               >
                 <Users className='w-5 h-5' />

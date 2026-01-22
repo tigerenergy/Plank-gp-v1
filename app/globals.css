@@ -148,8 +148,8 @@ body {
   overflow-x: hidden;
   background-color: rgb(var(--background));
   color: rgb(var(--foreground));
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: 13px; /* 15px * 0.87 ≈ 13px (75% 줌 효과) */
+  line-height: 1.5;
 }
 
 /* ============================================

@@ -48,8 +48,8 @@ export function Column({ list, canEdit = false }: ColumnProps) {
     <div
       className={`
         relative flex flex-col
-        w-full flex-1 min-w-[320px]
-        min-h-[320px]
+        w-full flex-1 min-w-[280px]
+        min-h-[280px]
         bg-[rgb(var(--card))] rounded-2xl
         border border-[rgb(var(--border))]
         transition-all duration-200
@@ -58,15 +58,15 @@ export function Column({ list, canEdit = false }: ColumnProps) {
       style={{ boxShadow: 'var(--shadow)' }}
     >
       {/* 헤더 */}
-      <div className='flex items-center justify-between px-6 py-5'>
-        <div className='flex items-center gap-4 flex-1 min-w-0'>
+      <div className='flex items-center justify-between px-4 py-3'>
+        <div className='flex items-center gap-3 flex-1 min-w-0'>
           <div
-            className={`w-9 h-9 rounded-xl ${iconConfig.color} flex items-center justify-center`}
+            className={`w-8 h-8 rounded-lg ${iconConfig.color} flex items-center justify-center`}
           >
-            <IconComponent className={`w-5 h-5 ${iconConfig.iconColor}`} />
+            <IconComponent className={`w-4 h-4 ${iconConfig.iconColor}`} />
           </div>
 
-          <h2 className='text-lg font-bold text-[rgb(var(--foreground))] truncate'>
+          <h2 className='text-base font-bold text-[rgb(var(--foreground))] truncate'>
             {list.title}
           </h2>
 
@@ -105,7 +105,7 @@ export function Column({ list, canEdit = false }: ColumnProps) {
       </div>
 
       {/* 카드 목록 */}
-      <div ref={setNodeRef} className='flex-1 overflow-y-auto px-4 pb-4 space-y-4 min-h-[120px]'>
+      <div ref={setNodeRef} className='flex-1 overflow-y-auto px-3 pb-3 space-y-3 min-h-[100px]'>
         <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
           {list.cards.map((card) => (
             <Card key={card.id} card={card} isDoneList={list.is_done_list} />

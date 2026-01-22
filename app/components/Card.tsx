@@ -160,14 +160,14 @@ export function Card({ card, isDoneList = false }: CardProps) {
     >
       {/* 라벨 */}
       {card.labels && card.labels.length > 0 && (
-        <div className='flex flex-wrap gap-2 mb-4'>
+        <div className='flex flex-wrap gap-1.5 mb-3'>
           {card.labels.slice(0, 4).map((label, idx) => {
             const colorInfo = labelColorHex[label.color] || labelColorHex.blue
             return (
               <span
                 key={idx}
                 style={{ backgroundColor: colorInfo.bg, color: colorInfo.text }}
-                className='px-3 py-1.5 rounded-lg text-sm font-semibold'
+                className='px-2 py-1 rounded-md text-xs font-semibold'
               >
                 {label.name}
               </span>

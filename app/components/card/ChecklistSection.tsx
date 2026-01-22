@@ -4,7 +4,9 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Trash2, CheckSquare, Square, Clock, X } from 'lucide-react'
 import { toast } from 'sonner'
+import Select from 'react-select'
 import type { Checklist, ChecklistItem } from '@/types'
+import type { StylesConfig, SingleValue } from 'react-select'
 import {
   createChecklist,
   deleteChecklist,
@@ -47,11 +49,106 @@ export function ChecklistSection({
   const [customTimeValue, setCustomTimeValue] = useState('')
   const [isSavingTime, setIsSavingTime] = useState(false)
   
-  // 30분 단위 시간 옵션 생성 (0.5시간 ~ 24시간)
+  // 30분 단위 시간 옵션 생성 (0.5시간 ~ 24시간) - react-select 형식
   const timeOptions = Array.from({ length: 48 }, (_, i) => {
     const hours = (i + 1) * 0.5
-    return { value: hours.toString(), label: hours % 1 === 0 ? `${hours}시간` : `${hours}시간` }
+    return {
+      value: hours.toString(),
+      label: hours % 1 === 0 ? `${hours}시간` : `${hours}시간`,
+    }
   })
+  
+  // 직접 입력 옵션 추가
+  const allTimeOptions = [
+    ...timeOptions,
+    { value: 'custom', label: '✏️ 직접 입력' },
+  ]
+
+  // react-select 커스텀 스타일
+  const selectStyles: StylesConfig<{ value: string; label: string }, false> = {
+    control: (base, state) => ({
+      ...base,
+      minHeight: '48px',
+      borderRadius: '12px',
+      border: state.isFocused
+        ? '2px solid rgb(139, 92, 246)'
+        : '2px solid rgb(var(--border))',
+      boxShadow: state.isFocused
+        ? '0 0 0 3px rgba(139, 92, 246, 0.1)'
+        : 'none',
+      backgroundColor: 'rgb(var(--background))',
+      '&:hover': {
+        border: '2px solid rgb(139, 92, 246)',
+      },
+      transition: 'all 0.2s ease',
+    }),
+    menu: (base) => ({
+      ...base,
+      borderRadius: '12px',
+      overflow: 'hidden',
+      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+      border: '1px solid rgb(var(--border))',
+      backgroundColor: 'rgb(var(--card))',
+      zIndex: 9999,
+    }),
+    menuList: (base) => ({
+      ...base,
+      padding: '4px',
+      maxHeight: '300px',
+    }),
+    option: (base, state) => ({
+      ...base,
+      backgroundColor: state.isSelected
+        ? 'rgb(139, 92, 246)'
+        : state.isFocused
+        ? 'rgba(139, 92, 246, 0.1)'
+        : 'transparent',
+      color: state.isSelected
+        ? 'white'
+        : 'rgb(var(--foreground))',
+      borderRadius: '8px',
+      padding: '12px 16px',
+      margin: '2px',
+      cursor: 'pointer',
+      fontSize: '14px',
+      fontWeight: state.isSelected ? '600' : '500',
+      transition: 'all 0.15s ease',
+      '&:active': {
+        backgroundColor: 'rgb(139, 92, 246)',
+        color: 'white',
+      },
+    }),
+    placeholder: (base) => ({
+      ...base,
+      color: 'rgb(var(--muted-foreground))',
+      fontSize: '14px',
+    }),
+    singleValue: (base) => ({
+      ...base,
+      color: 'rgb(var(--foreground))',
+      fontSize: '14px',
+      fontWeight: '500',
+    }),
+    indicatorSeparator: () => ({
+      display: 'none',
+    }),
+    dropdownIndicator: (base, state) => ({
+      ...base,
+      color: 'rgb(var(--muted-foreground))',
+      transform: state.selectProps.menuIsOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+      transition: 'transform 0.2s ease',
+      '&:hover': {
+        color: 'rgb(139, 92, 246)',
+      },
+    }),
+    clearIndicator: (base) => ({
+      ...base,
+      color: 'rgb(var(--muted-foreground))',
+      '&:hover': {
+        color: 'rgb(139, 92, 246)',
+      },
+    }),
+  }
 
   // 체크리스트 생성
   const handleCreateChecklist = async () => {
@@ -183,14 +280,22 @@ export function ChecklistSection({
     }
   }
 
-  // 시간 선택 변경 핸들러
-  const handleTimeSelectChange = (value: string) => {
-    if (value === 'custom') {
+  // 시간 선택 변경 핸들러 (react-select용)
+  const handleTimeSelectChange = (
+    newValue: SingleValue<{ value: string; label: string }> | null
+  ) => {
+    if (!newValue) {
+      setSelectedTime('')
+      setShowCustomTimeInput(false)
+      return
+    }
+
+    if (newValue.value === 'custom') {
       setShowCustomTimeInput(true)
       setSelectedTime('')
     } else {
       setShowCustomTimeInput(false)
-      setSelectedTime(value)
+      setSelectedTime(newValue.value)
       setCustomTimeValue('')
     }
   }
@@ -588,20 +693,22 @@ export function ChecklistSection({
                 
                 {!showCustomTimeInput ? (
                   <div className='space-y-3'>
-                    <select
-                      value={selectedTime}
-                      onChange={(e) => handleTimeSelectChange(e.target.value)}
-                      disabled={isSavingTime}
-                      className='w-full px-4 py-3 rounded-xl bg-[rgb(var(--background))] border-2 border-[rgb(var(--border))] text-sm font-medium text-[rgb(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'
-                    >
-                      <option value=''>시간을 선택해주세요</option>
-                      {timeOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                      <option value='custom'>직접 입력</option>
-                    </select>
+                    <Select
+                      options={allTimeOptions}
+                      value={
+                        selectedTime
+                          ? allTimeOptions.find((opt) => opt.value === selectedTime)
+                          : null
+                      }
+                      onChange={handleTimeSelectChange}
+                      isDisabled={isSavingTime}
+                      placeholder='시간을 선택해주세요'
+                      isSearchable={false}
+                      styles={selectStyles}
+                      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                      menuPosition='fixed'
+                      classNamePrefix='time-select'
+                    />
                   </div>
                 ) : (
                   <div className='space-y-2'>

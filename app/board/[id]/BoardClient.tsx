@@ -171,7 +171,7 @@ export default function BoardClient({ user }: BoardClientProps) {
           onDragOver={canEdit ? handleDragOver : undefined}
           onDragEnd={canEdit ? handleDragEnd : undefined}
         >
-          <div className='flex flex-col sm:flex-row gap-4 p-4 sm:p-6 sm:items-start'>
+          <div className='flex flex-col sm:flex-row gap-3 p-3 sm:p-4 sm:items-start'>
             {lists.map((list) => (
               <Column key={list.id} list={list} canEdit={canEdit} />
             ))}

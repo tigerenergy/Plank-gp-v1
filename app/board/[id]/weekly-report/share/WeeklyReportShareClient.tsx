@@ -215,7 +215,7 @@ export function WeeklyReportShareClient({
               </Link>
               <div>
                 <h1 className='text-lg font-bold text-[rgb(var(--foreground))]'>
-                  {board.emoji || '📋'} {board.title} - 주간보고 공유
+                  주간보고 공유
                 </h1>
                 <p className='text-sm text-[rgb(var(--muted-foreground))]'>
                   팀원들의 주간보고를 한눈에 확인하세요

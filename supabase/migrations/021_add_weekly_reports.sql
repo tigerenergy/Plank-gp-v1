@@ -93,5 +93,14 @@ CREATE POLICY "weekly_reports_update" ON weekly_reports
 -- 삭제 정책 없음 = 삭제 불가
 
 -- =====================================================
+-- 3. Realtime 활성화 (실시간 업데이트 및 Presence)
+-- =====================================================
+-- Supabase Realtime을 활성화하여 실시간 협업 기능 사용
+ALTER PUBLICATION supabase_realtime ADD TABLE weekly_reports;
+
+-- Replica Identity 설정 (UPDATE/DELETE 이벤트를 위해 필요)
+ALTER TABLE weekly_reports REPLICA IDENTITY FULL;
+
+-- =====================================================
 -- 완료!
 -- =====================================================

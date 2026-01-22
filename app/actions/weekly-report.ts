@@ -606,12 +606,51 @@ export async function refreshWeeklyReportData(
     }, 0)
     const totalHours = completedHours + inProgressHours
 
+    // 기존 주간보고의 user_input 데이터 보존 (진행 중인 카드의 사용자 입력 유지)
+    const { data: existingReport } = await supabase
+      .from('weekly_reports')
+      .select('in_progress_cards')
+      .eq('id', reportId)
+      .single()
+
+    // 기존 user_input 데이터를 새로 수집된 카드와 병합
+    const existingUserInputs = new Map<string, any>()
+    if (existingReport?.in_progress_cards && Array.isArray(existingReport.in_progress_cards)) {
+      for (const card of existingReport.in_progress_cards) {
+        if (card.card_id && card.user_input) {
+          existingUserInputs.set(card.card_id, card.user_input)
+        }
+      }
+    }
+
+    // 새로 수집된 진행 중인 카드에 기존 user_input 병합
+    const mergedInProgressCards = inProgressCards.map((card) => {
+      const existingInput = existingUserInputs.get(card.card_id)
+      if (existingInput) {
+        return {
+          ...card,
+          user_input: {
+            ...card.user_input,
+            // 기존 사용자 입력 유지 (시간, 상태, 설명, 이슈 등)
+            hours_spent: existingInput.hours_spent ?? card.user_input?.hours_spent ?? card.auto_collected?.weekly_hours ?? 0,
+            status: existingInput.status ?? card.user_input?.status ?? '진행중',
+            description: existingInput.description || card.user_input?.description || card.description || '',
+            issues: existingInput.issues || card.user_input?.issues || '',
+            expected_completion_date: existingInput.expected_completion_date || card.user_input?.expected_completion_date || card.due_date || null,
+            // 진척도는 체크리스트 진행률로 자동 업데이트 (사용자가 수정한 경우 유지)
+            progress: existingInput.progress !== undefined ? existingInput.progress : (card.auto_collected?.checklist_progress || 0),
+          },
+        }
+      }
+      return card
+    })
+
     // 최신 데이터로 업데이트 (기존 notes는 유지)
     const { data, error } = await supabase
       .from('weekly_reports')
       .update({
         completed_cards: completedCards,
-        in_progress_cards: inProgressCards,
+        in_progress_cards: mergedInProgressCards,
         card_activities: cardActivities,
         total_hours: totalHours,
         // notes는 기존 값 유지

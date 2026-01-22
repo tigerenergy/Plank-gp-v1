@@ -272,6 +272,24 @@ export function WeeklyReportForm({ board, report: initialReport }: WeeklyReportF
 
             <div className='flex items-center gap-2'>
               <button
+                onClick={handleRefresh}
+                disabled={isRefreshing || isSaving || isSubmitting || report.status === 'submitted'}
+                className='flex items-center gap-2 px-4 py-2 rounded-xl btn-ghost border border-[rgb(var(--border))] disabled:opacity-50'
+                title='최신 데이터로 새로고침'
+              >
+                {isRefreshing ? (
+                  <>
+                    <div className='w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin' />
+                    새로고침 중...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className='w-4 h-4' />
+                    새로고침
+                  </>
+                )}
+              </button>
+              <button
                 onClick={handleSave}
                 disabled={isSaving || isSubmitting}
                 className='flex items-center gap-2 px-4 py-2 rounded-xl btn-ghost border border-[rgb(var(--border))] disabled:opacity-50'

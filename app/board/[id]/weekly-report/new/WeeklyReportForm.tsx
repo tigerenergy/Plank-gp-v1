@@ -25,6 +25,7 @@ export function WeeklyReportForm({ board, report: initialReport }: WeeklyReportF
   const [notes, setNotes] = useState(initialReport.notes || '')
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [activeTab, setActiveTab] = useState<'current' | 'next'>('current')
 
   // 진행 상태 옵션
   const statusOptions = [
@@ -330,20 +331,53 @@ export function WeeklyReportForm({ board, report: initialReport }: WeeklyReportF
 
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
         <div className='space-y-6'>
-          {/* 총 작업 시간 - 맨 위로 이동 */}
-          <div className='card p-6 bg-gradient-to-br from-violet-500/10 to-blue-500/10 border-violet-500/20'>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-3'>
-                <div className='p-3 bg-violet-500/20 rounded-xl'>
-                  <Clock className='w-6 h-6 text-violet-600' />
-                </div>
-                <div>
-                  <div className='text-sm font-medium text-[rgb(var(--muted-foreground))]'>주간 총 작업 시간</div>
-                  <div className='text-3xl font-bold text-[rgb(var(--foreground))] mt-1'>{totalHours.toFixed(1)}시간</div>
+          {/* 탭 네비게이션 */}
+          <div className='flex gap-2 border-b border-[rgb(var(--border))]'>
+            <button
+              onClick={() => setActiveTab('current')}
+              className={`px-6 py-3 font-medium text-sm transition-colors relative ${
+                activeTab === 'current'
+                  ? 'text-violet-600 dark:text-violet-400'
+                  : 'text-[rgb(var(--muted-foreground))] hover:text-[rgb(var(--foreground))]'
+              }`}
+            >
+              현재 주간 보고서
+              {activeTab === 'current' && (
+                <div className='absolute bottom-0 left-0 right-0 h-0.5 bg-violet-600 dark:bg-violet-400' />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('next')}
+              className={`px-6 py-3 font-medium text-sm transition-colors relative ${
+                activeTab === 'next'
+                  ? 'text-violet-600 dark:text-violet-400'
+                  : 'text-[rgb(var(--muted-foreground))] hover:text-[rgb(var(--foreground))]'
+              }`}
+            >
+              차주에 있을 일
+              {activeTab === 'next' && (
+                <div className='absolute bottom-0 left-0 right-0 h-0.5 bg-violet-600 dark:bg-violet-400' />
+              )}
+            </button>
+          </div>
+
+          {/* 현재 주간 보고서 탭 */}
+          {activeTab === 'current' && (
+            <>
+              {/* 총 작업 시간 - 맨 위로 이동 */}
+              <div className='card p-6 bg-gradient-to-br from-violet-500/10 to-blue-500/10 border-violet-500/20'>
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center gap-3'>
+                    <div className='p-3 bg-violet-500/20 rounded-xl'>
+                      <Clock className='w-6 h-6 text-violet-600' />
+                    </div>
+                    <div>
+                      <div className='text-sm font-medium text-[rgb(var(--muted-foreground))]'>주간 총 작업 시간</div>
+                      <div className='text-3xl font-bold text-[rgb(var(--foreground))] mt-1'>{totalHours.toFixed(1)}시간</div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
           {/* 완료된 카드 */}
           {report.completed_cards && report.completed_cards.length > 0 ? (
@@ -472,7 +506,7 @@ export function WeeklyReportForm({ board, report: initialReport }: WeeklyReportF
 
                     {/* 작업 시간 */}
                     <div>
-                      <label className='text-xs font-semibold text-[rgb(var(--muted-foreground))] mb-2 block uppercase tracking-wide flex items-center gap-1.5'>
+                      <label className='text-xs font-semibold text-[rgb(var(--muted-foreground))] mb-2 flex items-center gap-1.5 uppercase tracking-wide'>
                         <Clock className='w-3.5 h-3.5' />
                         작업 시간
                       </label>
@@ -557,18 +591,133 @@ export function WeeklyReportForm({ board, report: initialReport }: WeeklyReportF
             </div>
           )}
 
-          {/* 추가 메모 */}
-          <div className='card p-6'>
-            <label className='text-sm font-semibold text-[rgb(var(--foreground))] mb-3 block'>
-              추가 메모
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className='w-full px-4 py-3 rounded-xl bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm min-h-[120px] focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all resize-y placeholder:text-[rgb(var(--muted-foreground))]'
-              placeholder='추가로 기록하고 싶은 내용이 있다면 적어주세요...'
-            />
-          </div>
+              {/* 체크리스트 완료 항목 */}
+              {report.card_activities && report.card_activities.filter((a: any) => a.type === 'checklist_item_completed').length > 0 && (
+                <div className='card p-6'>
+                  <h2 className='text-lg font-bold text-[rgb(var(--foreground))] mb-4 flex items-center gap-2'>
+                    <CheckCircle2 className='w-5 h-5 text-amber-500' />
+                    체크리스트 완료 항목 ({report.card_activities.filter((a: any) => a.type === 'checklist_item_completed').length}개)
+                  </h2>
+                  <div className='space-y-2'>
+                    {report.card_activities
+                      .filter((a: any) => a.type === 'checklist_item_completed')
+                      .map((activity: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className='p-3 bg-amber-500/5 rounded-lg border border-amber-500/20 hover:border-amber-500/40 transition-colors'
+                        >
+                          <div className='flex items-start justify-between'>
+                            <div className='flex-1'>
+                              <div className='text-sm font-medium text-[rgb(var(--foreground))] mb-1'>
+                                {activity.item_content}
+                              </div>
+                              <div className='text-xs text-[rgb(var(--muted-foreground))]'>
+                                {activity.card_title} • {activity.list_title}
+                              </div>
+                            </div>
+                            {activity.hours && (
+                              <div className='flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 ml-2'>
+                                <Clock className='w-3 h-3' />
+                                {activity.hours}시간
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 추가 메모 */}
+              <div className='card p-6'>
+                <label className='text-sm font-semibold text-[rgb(var(--foreground))] mb-3 block'>
+                  추가 메모
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className='w-full px-4 py-3 rounded-xl bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm min-h-[120px] focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all resize-y placeholder:text-[rgb(var(--muted-foreground))]'
+                  placeholder='추가로 기록하고 싶은 내용이 있다면 적어주세요...'
+                />
+              </div>
+            </>
+          )}
+
+          {/* 차주에 있을 일 탭 */}
+          {activeTab === 'next' && (
+            <div className='space-y-6'>
+              <div className='card p-6'>
+                <h2 className='text-lg font-bold text-[rgb(var(--foreground))] mb-4 flex items-center gap-2'>
+                  <TrendingUp className='w-5 h-5 text-blue-500' />
+                  차주에 있을 일 ({inProgressCards.filter((card: any) => (card.user_input?.status || '진행중') !== '완료').length}개)
+                </h2>
+                {inProgressCards.filter((card: any) => (card.user_input?.status || '진행중') !== '완료').length > 0 ? (
+                  <div className='space-y-4'>
+                    {inProgressCards
+                      .filter((card: any) => (card.user_input?.status || '진행중') !== '완료')
+                      .map((card: any) => {
+                        const progress = card.user_input?.progress || card.auto_collected?.checklist_progress || 0
+                        const hours = card.user_input?.hours_spent || card.auto_collected?.weekly_hours || 0
+                        return (
+                          <div
+                            key={card.card_id}
+                            className='p-4 bg-blue-500/5 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition-colors'
+                          >
+                            <div className='flex items-start justify-between mb-3'>
+                              <div className='flex-1'>
+                                <div className='text-sm font-medium text-[rgb(var(--foreground))] mb-1'>{card.title}</div>
+                                <div className='flex items-center gap-2 mt-2'>
+                                  <span className='px-2 py-0.5 bg-violet-500/10 text-violet-600 dark:text-violet-400 rounded text-xs font-medium'>
+                                    {card.user_input?.status || '진행중'}
+                                  </span>
+                                  <span className='px-2 py-0.5 bg-blue-500/10 text-blue-600 rounded text-xs font-medium'>
+                                    {card.list_title}
+                                  </span>
+                                  {hours > 0 && (
+                                    <span className='flex items-center gap-1 text-xs text-[rgb(var(--muted-foreground))]'>
+                                      <Clock className='w-3 h-3' />
+                                      {hours}시간
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* 진척도 */}
+                            <div className='mb-3'>
+                              <div className='flex items-center justify-between mb-1'>
+                                <span className='text-xs text-[rgb(var(--muted-foreground))]'>진척도</span>
+                                <span className='text-xs font-medium text-[rgb(var(--foreground))]'>{progress}%</span>
+                              </div>
+                              <div className='w-full h-2 bg-[rgb(var(--secondary))] rounded-full overflow-hidden'>
+                                <div
+                                  className='h-full bg-gradient-to-r from-blue-500 to-violet-500 transition-all duration-300'
+                                  style={{ width: `${progress}%` }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* 설명 */}
+                            {card.user_input?.description && (
+                              <div className='text-xs text-[rgb(var(--foreground))] mb-2 whitespace-pre-wrap'>
+                                {card.user_input.description}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                  </div>
+                ) : (
+                  <div className='text-center py-8'>
+                    <TrendingUp className='w-12 h-12 mx-auto mb-3 text-[rgb(var(--muted-foreground))] opacity-30' />
+                    <p className='text-sm text-[rgb(var(--muted-foreground))]'>
+                      차주에 예정된 작업이 없습니다.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </main>
 

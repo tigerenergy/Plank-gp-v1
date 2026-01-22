@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Save, Send, Clock, CheckCircle2, TrendingUp } from 'lucide-react'
 import { toast } from 'sonner'
+import Select from 'react-select'
+import type { StylesConfig, SingleValue } from 'react-select'
 import type { Board } from '@/types'
 import { updateWeeklyReport, submitWeeklyReport } from '@/app/actions/weekly-report'
 import type { WeeklyReport } from '@/app/actions/weekly-report'
@@ -21,6 +23,95 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
   const [totalHours, setTotalHours] = useState(report.total_hours || 0)
   const [notes, setNotes] = useState(report.notes || '')
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
+
+  // 진행 상태 옵션
+  const statusOptions = [
+    { value: '진행중', label: '진행중' },
+    { value: '완료', label: '완료' },
+    { value: '대기', label: '대기' },
+    { value: '예정', label: '예정' },
+  ]
+
+  // react-select 커스텀 스타일
+  const selectStyles: StylesConfig<{ value: string; label: string }, false> = {
+    control: (base, state) => ({
+      ...base,
+      minHeight: '42px',
+      borderRadius: '12px',
+      border: state.isFocused
+        ? '2px solid rgb(139, 92, 246)'
+        : '1px solid rgb(var(--border))',
+      boxShadow: state.isFocused
+        ? '0 0 0 3px rgba(139, 92, 246, 0.1)'
+        : 'none',
+      backgroundColor: 'rgb(var(--background))',
+      '&:hover': {
+        border: '2px solid rgb(139, 92, 246)',
+      },
+      transition: 'all 0.2s ease',
+    }),
+    menu: (base) => ({
+      ...base,
+      borderRadius: '12px',
+      overflow: 'hidden',
+      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+      border: '1px solid rgb(var(--border))',
+      backgroundColor: 'rgb(var(--card))',
+      zIndex: 10000,
+    }),
+    menuList: (base) => ({
+      ...base,
+      padding: '4px',
+      maxHeight: '200px',
+      overflowY: 'auto',
+      overflowX: 'hidden',
+    }),
+    option: (base, state) => ({
+      ...base,
+      backgroundColor: state.isSelected
+        ? 'rgb(139, 92, 246)'
+        : state.isFocused
+        ? 'rgba(139, 92, 246, 0.1)'
+        : 'transparent',
+      color: state.isSelected
+        ? 'white'
+        : 'rgb(var(--foreground))',
+      borderRadius: '8px',
+      padding: '10px 14px',
+      margin: '2px',
+      cursor: 'pointer',
+      fontSize: '14px',
+      fontWeight: state.isSelected ? '600' : '500',
+      transition: 'all 0.15s ease',
+      '&:active': {
+        backgroundColor: 'rgb(139, 92, 246)',
+        color: 'white',
+      },
+    }),
+    placeholder: (base) => ({
+      ...base,
+      color: 'rgb(var(--muted-foreground))',
+      fontSize: '14px',
+    }),
+    singleValue: (base) => ({
+      ...base,
+      color: 'rgb(var(--foreground))',
+      fontSize: '14px',
+      fontWeight: '500',
+    }),
+    indicatorSeparator: () => ({
+      display: 'none',
+    }),
+    dropdownIndicator: (base, state) => ({
+      ...base,
+      color: 'rgb(var(--muted-foreground))',
+      transform: state.selectProps.menuIsOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+      transition: 'transform 0.2s ease',
+      '&:hover': {
+        color: 'rgb(139, 92, 246)',
+      },
+    }),
+  }
 
   // 시간 자동 집계 (프런트엔드에서도 계산)
   useEffect(() => {
@@ -261,16 +352,21 @@ export function WeeklyReportForm({ board, report }: WeeklyReportFormProps) {
                       <label className='text-xs font-semibold text-[rgb(var(--muted-foreground))] mb-2 block uppercase tracking-wide'>
                         진행 상태
                       </label>
-                      <select
-                        value={card.user_input?.status || '진행중'}
-                        onChange={(e) => updateCard(card.card_id, { status: e.target.value })}
-                        className='w-full px-4 py-2.5 rounded-xl bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all'
-                      >
-                        <option value='진행중'>진행중</option>
-                        <option value='완료'>완료</option>
-                        <option value='대기'>대기</option>
-                        <option value='예정'>예정</option>
-                      </select>
+                      <Select
+                        options={statusOptions}
+                        value={statusOptions.find((opt) => opt.value === (card.user_input?.status || '진행중')) || null}
+                        onChange={(newValue: SingleValue<{ value: string; label: string }>) => {
+                          if (newValue) {
+                            updateCard(card.card_id, { status: newValue.value })
+                          }
+                        }}
+                        isSearchable={false}
+                        styles={selectStyles}
+                        menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                        menuPosition='fixed'
+                        menuShouldScrollIntoView={true}
+                        classNamePrefix='status-select'
+                      />
                     </div>
 
                     {/* 진척도 */}

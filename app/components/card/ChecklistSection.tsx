@@ -82,20 +82,22 @@ export function ChecklistSection({
       },
       transition: 'all 0.2s ease',
     }),
-    menu: (base) => ({
-      ...base,
-      borderRadius: '12px',
-      overflow: 'hidden',
-      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-      border: '1px solid rgb(var(--border))',
-      backgroundColor: 'rgb(var(--card))',
-      zIndex: 9999,
-    }),
-    menuList: (base) => ({
-      ...base,
-      padding: '4px',
-      maxHeight: '300px',
-    }),
+      menu: (base) => ({
+        ...base,
+        borderRadius: '12px',
+        overflow: 'hidden',
+        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        border: '1px solid rgb(var(--border))',
+        backgroundColor: 'rgb(var(--card))',
+        zIndex: 10000,
+      }),
+      menuList: (base) => ({
+        ...base,
+        padding: '4px',
+        maxHeight: '300px',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+      }),
     option: (base, state) => ({
       ...base,
       backgroundColor: state.isSelected
@@ -715,6 +717,7 @@ export function ChecklistSection({
                       styles={selectStyles}
                       menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
                       menuPosition='fixed'
+                      menuShouldScrollIntoView={true}
                       classNamePrefix='time-select'
                     />
                   </div>

@@ -69,10 +69,14 @@ export function ReportHistoryModal({ reportId, isOpen, onClose }: ReportHistoryM
 
     const items: string[] = []
     if (changes.status) {
-      items.push(`상태: ${changes.status.old} → ${changes.status.new}`)
+      const oldStatus = changes.status.old === 'draft' ? '작성 중' : changes.status.old === 'submitted' ? '제출 완료' : changes.status.old || '없음'
+      const newStatus = changes.status.new === 'draft' ? '작성 중' : changes.status.new === 'submitted' ? '제출 완료' : changes.status.new || '없음'
+      items.push(`상태: ${oldStatus} → ${newStatus}`)
     }
     if (changes.total_hours) {
-      items.push(`작업 시간: ${changes.total_hours.old}시간 → ${changes.total_hours.new}시간`)
+      const oldHours = changes.total_hours.old !== null && changes.total_hours.old !== undefined ? `${changes.total_hours.old}시간` : '없음'
+      const newHours = changes.total_hours.new !== null && changes.total_hours.new !== undefined ? `${changes.total_hours.new}시간` : '없음'
+      items.push(`작업 시간: ${oldHours} → ${newHours}`)
     }
     if (changes.notes_changed) {
       items.push('메모 수정됨')
@@ -88,6 +92,60 @@ export function ReportHistoryModal({ reportId, isOpen, onClose }: ReportHistoryM
     }
 
     return items.length > 0 ? items : null
+  }
+
+  const formatPreviousData = (data: any) => {
+    if (!data || typeof data !== 'object') return null
+
+    const sections: JSX.Element[] = []
+
+    if (data.status !== undefined) {
+      const statusText = data.status === 'draft' ? '작성 중' : data.status === 'submitted' ? '제출 완료' : data.status || '없음'
+      sections.push(
+        <div key='status' className='mb-2'>
+          <span className='font-semibold text-[rgb(var(--foreground))]'>상태:</span>{' '}
+          <span className='text-[rgb(var(--muted-foreground))]'>{statusText}</span>
+        </div>
+      )
+    }
+
+    if (data.total_hours !== undefined && data.total_hours !== null) {
+      sections.push(
+        <div key='hours' className='mb-2'>
+          <span className='font-semibold text-[rgb(var(--foreground))]'>총 작업 시간:</span>{' '}
+          <span className='text-[rgb(var(--muted-foreground))]'>{data.total_hours}시간</span>
+        </div>
+      )
+    }
+
+    if (data.notes !== undefined && data.notes !== null) {
+      sections.push(
+        <div key='notes' className='mb-2'>
+          <span className='font-semibold text-[rgb(var(--foreground))]'>추가 메모:</span>
+          <div className='mt-1 text-[rgb(var(--muted-foreground))] whitespace-pre-wrap'>{data.notes || '(없음)'}</div>
+        </div>
+      )
+    }
+
+    if (data.completed_cards && Array.isArray(data.completed_cards)) {
+      sections.push(
+        <div key='completed' className='mb-2'>
+          <span className='font-semibold text-[rgb(var(--foreground))]'>완료된 작업:</span>{' '}
+          <span className='text-[rgb(var(--muted-foreground))]'>{data.completed_cards.length}개</span>
+        </div>
+      )
+    }
+
+    if (data.in_progress_cards && Array.isArray(data.in_progress_cards)) {
+      sections.push(
+        <div key='inprogress' className='mb-2'>
+          <span className='font-semibold text-[rgb(var(--foreground))]'>진행 중인 작업:</span>{' '}
+          <span className='text-[rgb(var(--muted-foreground))]'>{data.in_progress_cards.length}개</span>
+        </div>
+      )
+    }
+
+    return sections.length > 0 ? <div className='space-y-1'>{sections}</div> : null
   }
 
   return (
@@ -171,14 +229,14 @@ export function ReportHistoryModal({ reportId, isOpen, onClose }: ReportHistoryM
                       )}
 
                       {item.previous_data && Object.keys(item.previous_data).length > 0 && (
-                        <details className='pl-4 text-xs'>
-                          <summary className='cursor-pointer text-[rgb(var(--muted-foreground))] hover:text-[rgb(var(--foreground))]'>
-                            이전 데이터 보기
+                        <details className='pl-4'>
+                          <summary className='cursor-pointer text-xs text-[rgb(var(--muted-foreground))] hover:text-[rgb(var(--foreground))] font-medium'>
+                            ▶ 이전 데이터 보기
                           </summary>
-                          <div className='mt-2 p-2 bg-[rgb(var(--secondary))] rounded-lg'>
-                            <pre className='text-xs whitespace-pre-wrap'>
-                              {JSON.stringify(item.previous_data, null, 2)}
-                            </pre>
+                          <div className='mt-2 p-3 bg-[rgb(var(--secondary))] rounded-lg border border-[rgb(var(--border))]'>
+                            {formatPreviousData(item.previous_data) || (
+                              <div className='text-xs text-[rgb(var(--muted-foreground))]'>데이터 없음</div>
+                            )}
                           </div>
                         </details>
                       )}

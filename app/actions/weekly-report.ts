@@ -52,11 +52,24 @@ async function collectCompletedCards(
   if (!result.success || !result.data) return []
 
   // 해당 주간 완료된 카드만 필터링
-  return result.data.filter((card) => {
+  const filteredCards = result.data.filter((card) => {
     if (!card.completed_at) return false
     const completedAt = new Date(card.completed_at)
     return completedAt >= weekStart && completedAt <= weekEnd
   })
+
+  // 완료된 카드의 주간 시간 로그도 수집
+  const completedCardsWithHours = await Promise.all(
+    filteredCards.map(async (card) => {
+      const weeklyHours = await getCardWeeklyHours(card.id, weekStart, weekEnd)
+      return {
+        ...card,
+        weekly_hours: weeklyHours,
+      }
+    })
+  )
+
+  return completedCardsWithHours
 }
 
 // 주간보고 자동 수집: 진행 중인 카드 (모든 리스트의 미완료 카드)
@@ -193,6 +206,7 @@ async function collectCardActivities(
   if (!boardDataResult.success || !boardDataResult.data) return []
 
   const activities: any[] = []
+  const supabase = await createClient()
 
   // 모든 리스트의 모든 카드 순회
   for (const list of boardDataResult.data) {
@@ -242,6 +256,47 @@ async function collectCardActivities(
     }
   }
 
+  // 체크리스트 항목 완료 이력 수집 (card_time_logs에서 체크리스트 관련 로그 수집)
+  const { data: timeLogs } = await supabase
+    .from('card_time_logs')
+    .select(`
+      id,
+      hours,
+      description,
+      logged_date,
+      cards!inner(
+        id,
+        title,
+        lists!inner(
+          id,
+          title,
+          boards!inner(id)
+        )
+      )
+    `)
+    .eq('cards.lists.boards.id', boardId)
+    .like('description', '체크리스트:%')
+    .gte('logged_date', weekStart.toISOString().split('T')[0])
+    .lte('logged_date', weekEnd.toISOString().split('T')[0])
+
+  if (timeLogs) {
+    for (const log of timeLogs) {
+      const card = log.cards as any
+      const list = card.lists as any
+      const itemContent = log.description?.replace('체크리스트: ', '') || ''
+      
+      activities.push({
+        type: 'checklist_item_completed',
+        card_id: card.id,
+        card_title: card.title,
+        list_title: list.title,
+        item_content: itemContent,
+        hours: log.hours,
+        date: log.logged_date,
+      })
+    }
+  }
+
   return activities.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 }
 
@@ -285,10 +340,14 @@ export async function createWeeklyReport(
       collectCardActivities(boardId, weekStart, weekEnd),
     ])
 
-    // 시간 집계 (진행 중인 카드의 시간 로그 합계)
-    const totalHours = inProgressCards.reduce((sum, card) => {
+    // 시간 집계 (완료된 카드 + 진행 중인 카드의 시간 로그 합계)
+    const completedHours = completedCards.reduce((sum, card) => {
+      return sum + (card.weekly_hours || 0)
+    }, 0)
+    const inProgressHours = inProgressCards.reduce((sum, card) => {
       return sum + (card.user_input?.hours_spent || card.auto_collected?.weekly_hours || 0)
     }, 0)
+    const totalHours = completedHours + inProgressHours
 
     // 주간보고 생성
     const { data, error } = await supabase
@@ -491,10 +550,14 @@ export async function refreshWeeklyReportData(
       collectCardActivities(boardId, weekStart, weekEnd),
     ])
 
-    // 시간 집계 (진행 중인 카드의 시간 로그 합계)
-    const totalHours = inProgressCards.reduce((sum, card) => {
+    // 시간 집계 (완료된 카드 + 진행 중인 카드의 시간 로그 합계)
+    const completedHours = completedCards.reduce((sum, card) => {
+      return sum + (card.weekly_hours || 0)
+    }, 0)
+    const inProgressHours = inProgressCards.reduce((sum, card) => {
       return sum + (card.user_input?.hours_spent || card.auto_collected?.weekly_hours || 0)
     }, 0)
+    const totalHours = completedHours + inProgressHours
 
     // 최신 데이터로 업데이트 (기존 notes는 유지)
     const { data, error } = await supabase

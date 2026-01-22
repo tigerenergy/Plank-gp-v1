@@ -69,10 +69,20 @@ export function WeeklyReportDetailModal({ report, isOpen, onClose }: WeeklyRepor
                     key={idx}
                     className='p-4 bg-emerald-500/5 rounded-xl border border-emerald-500/20 hover:border-emerald-500/40 transition-colors'
                   >
-                    <div className='text-sm font-medium text-[rgb(var(--foreground))] mb-1'>{card.title}</div>
-                    {card.list_title && (
-                      <div className='text-xs text-[rgb(var(--muted-foreground))] mb-2'>{card.list_title}</div>
-                    )}
+                    <div className='flex items-start justify-between mb-2'>
+                      <div className='flex-1'>
+                        <div className='text-sm font-medium text-[rgb(var(--foreground))] mb-1'>{card.title}</div>
+                        {card.list_title && (
+                          <div className='text-xs text-[rgb(var(--muted-foreground))] mb-2'>{card.list_title}</div>
+                        )}
+                      </div>
+                      {card.weekly_hours && card.weekly_hours > 0 && (
+                        <div className='flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 ml-2'>
+                          <Clock className='w-3 h-3' />
+                          {card.weekly_hours}시간
+                        </div>
+                      )}
+                    </div>
                     {card.description && (
                       <div className='text-xs text-[rgb(var(--muted-foreground))] mt-2'>{card.description}</div>
                     )}
@@ -165,6 +175,45 @@ export function WeeklyReportDetailModal({ report, isOpen, onClose }: WeeklyRepor
                     </div>
                   )
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* 체크리스트 완료 항목 (했던 일) */}
+          {report.card_activities && report.card_activities.length > 0 && (
+            <div>
+              <div className='flex items-center gap-2 mb-3'>
+                <CheckCircle2 className='w-5 h-5 text-amber-500' />
+                <h3 className='text-base font-semibold text-[rgb(var(--foreground))]'>
+                  체크리스트 완료 항목 ({report.card_activities.filter((a: any) => a.type === 'checklist_item_completed').length}개)
+                </h3>
+              </div>
+              <div className='space-y-2'>
+                {report.card_activities
+                  .filter((a: any) => a.type === 'checklist_item_completed')
+                  .map((activity: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className='p-3 bg-amber-500/5 rounded-lg border border-amber-500/20 hover:border-amber-500/40 transition-colors'
+                    >
+                      <div className='flex items-start justify-between'>
+                        <div className='flex-1'>
+                          <div className='text-sm font-medium text-[rgb(var(--foreground))] mb-1'>
+                            {activity.item_content}
+                          </div>
+                          <div className='text-xs text-[rgb(var(--muted-foreground))]'>
+                            {activity.card_title} • {activity.list_title}
+                          </div>
+                        </div>
+                        {activity.hours && (
+                          <div className='flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 ml-2'>
+                            <Clock className='w-3 h-3' />
+                            {activity.hours}시간
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
               </div>
             </div>
           )}

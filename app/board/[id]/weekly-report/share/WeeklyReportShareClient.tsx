@@ -11,7 +11,7 @@ import { WeeklyReportDetailModal } from '@/app/components/weekly-report/WeeklyRe
 import { getWeeklyReportsByBoard } from '@/app/actions/weekly-report'
 
 interface WeeklyReportShareClientProps {
-  board: Board
+  board: Board | null
   reports: WeeklyReport[]
   selectedWeek?: string
 }
@@ -96,7 +96,7 @@ export function WeeklyReportShareClient({
           event: '*',
           schema: 'public',
           table: 'weekly_reports',
-          filter: `board_id=eq.${board.id}`,
+          // 모든 보드의 변경사항 구독 (필터 제거)
         },
         async (payload) => {
           console.log('📡 실시간 업데이트 이벤트:', payload.eventType, payload.new || payload.old)
@@ -412,9 +412,15 @@ export function WeeklyReportShareClient({
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
           <div className='h-16 flex items-center justify-between'>
             <div className='flex items-center gap-4'>
-              <Link href={`/board/${board.id}`} className='p-2 rounded-xl btn-ghost'>
-                <ArrowLeft className='w-5 h-5' />
-              </Link>
+              {board ? (
+                <Link href={`/board/${board.id}`} className='p-2 rounded-xl btn-ghost'>
+                  <ArrowLeft className='w-5 h-5' />
+                </Link>
+              ) : (
+                <Link href='/' className='p-2 rounded-xl btn-ghost'>
+                  <ArrowLeft className='w-5 h-5' />
+                </Link>
+              )}
               <div>
                 <h1 className='text-lg font-bold text-[rgb(var(--foreground))]'>
                   주간보고 공유
@@ -465,7 +471,8 @@ export function WeeklyReportShareClient({
                     onClick={() => {
                       const weekStart = currentWeekReports[0]?.week_start_date || currentWeek
                       const weekEnd = currentWeekReports[0]?.week_end_date || new Date(new Date(currentWeek).getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-                      generateWeeklyReportPDF(board, currentWeekReports, weekStart, weekEnd)
+                      const boardForExport = board || { id: 'all', title: '전체', emoji: '📋' } as Board
+                      generateWeeklyReportPDF(boardForExport, currentWeekReports, weekStart, weekEnd)
                     }}
                     className='w-full px-4 py-2 text-left text-sm hover:bg-[rgb(var(--secondary))] rounded-t-xl flex items-center gap-2'
                   >
@@ -495,7 +502,10 @@ export function WeeklyReportShareClient({
               <select
                 value={currentWeek}
                 onChange={(e) => {
-                  window.location.href = `/board/${board.id}/weekly-report/share?week=${e.target.value}`
+                  const url = board 
+                    ? `/board/${board.id}/weekly-report/share?week=${e.target.value}`
+                    : `/weekly-report/share?week=${e.target.value}`
+                  window.location.href = url
                 }}
                 className='px-3 py-2 rounded-xl bg-[rgb(var(--secondary))] border border-[rgb(var(--border))] text-sm'
               >
@@ -527,7 +537,7 @@ export function WeeklyReportShareClient({
               해당 주간에 제출된 주간보고가 없습니다.
             </p>
             <Link
-              href={`/board/${board.id}/weekly-report/new`}
+              href={board ? `/board/${board.id}/weekly-report/new` : '/weekly-report/new'}
               className='inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white text-sm transition-colors'
             >
               주간보고 작성하기
@@ -538,6 +548,7 @@ export function WeeklyReportShareClient({
             {Array.from(reportsByUser.entries()).map(([userId, report]) => {
               const completedCount = report.completed_cards?.length || 0
               const inProgressCount = report.in_progress_cards?.length || 0
+              const reportBoard = (report as any).board
               return (
                 <div
                   key={report.id}
@@ -567,6 +578,12 @@ export function WeeklyReportShareClient({
                             <>
                               <span className='w-1.5 h-1.5 bg-yellow-500 rounded-full' />
                               <span>작성 중</span>
+                            </>
+                          )}
+                          {reportBoard && (
+                            <>
+                              <span className='mx-1'>•</span>
+                              <span>{reportBoard.emoji || '📋'} {reportBoard.title}</span>
                             </>
                           )}
                         </div>

@@ -509,8 +509,9 @@ export async function getWeeklyReport(reportId: string): Promise<ActionResult<We
 }
 
 // 보드별 주간보고 목록 조회 (공유 페이지용)
+// 사용자가 접근 가능한 모든 보드의 주간보고 조회
 export async function getWeeklyReportsByBoard(
-  boardId: string,
+  boardId: string | null,
   weekStartDate?: string
 ): Promise<ActionResult<WeeklyReport[]>> {
   try {
@@ -524,16 +525,45 @@ export async function getWeeklyReportsByBoard(
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
+    // 사용자가 멤버인 모든 보드 ID 가져오기
+    const { data: boardMemberships } = await supabase
+      .from('board_members')
+      .select('board_id')
+      .eq('user_id', user.id)
+
+    const { data: ownedBoards } = await supabase
+      .from('boards')
+      .select('id')
+      .eq('created_by', user.id)
+
+    const accessibleBoardIds = new Set<string>()
+    if (boardMemberships) {
+      boardMemberships.forEach((bm) => accessibleBoardIds.add(bm.board_id))
+    }
+    if (ownedBoards) {
+      ownedBoards.forEach((b) => accessibleBoardIds.add(b.id))
+    }
+
+    if (accessibleBoardIds.size === 0) {
+      return { success: true, data: [] }
+    }
+
     let query = supabase
       .from('weekly_reports')
       .select(
         `
         *,
-        user:profiles!weekly_reports_user_id_fkey(id, email, username, avatar_url)
+        user:profiles!weekly_reports_user_id_fkey(id, email, username, avatar_url),
+        board:boards!weekly_reports_board_id_fkey(id, title, emoji)
       `
       )
-      .eq('board_id', boardId)
+      .in('board_id', Array.from(accessibleBoardIds))
       .order('week_start_date', { ascending: false })
+
+    // 특정 보드로 필터링 (선택사항)
+    if (boardId) {
+      query = query.eq('board_id', boardId)
+    }
 
     if (weekStartDate) {
       query = query.eq('week_start_date', weekStartDate)

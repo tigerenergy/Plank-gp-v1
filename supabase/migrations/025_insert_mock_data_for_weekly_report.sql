@@ -102,7 +102,7 @@ BEGIN
   -- =====================================================
   
   -- 완료된 카드 1: "사용자 인증 기능 구현"
-  INSERT INTO cards (list_id, title, description, position, created_by, assignee_id, is_completed, completed_at, completed_by, due_date, created_at, updated_at)
+  INSERT INTO cards (list_id, title, description, position, created_by, assignee_id, is_completed, completed_at, completed_by, due_date, start_date, created_at, updated_at)
   VALUES (
     list_done_id,
     '사용자 인증 기능 구현',
@@ -114,6 +114,7 @@ BEGIN
     (week_start + INTERVAL '2 days')::TIMESTAMPTZ, -- 1월 21일 완료
     current_user_id,
     week_start + INTERVAL '3 days',
+    (week_start + INTERVAL '0 days')::TIMESTAMPTZ, -- 1월 19일 시작
     (week_start + INTERVAL '0 days')::TIMESTAMPTZ, -- 1월 19일 생성
     (week_start + INTERVAL '2 days')::TIMESTAMPTZ  -- 1월 21일 수정
   )
@@ -125,7 +126,7 @@ BEGIN
   END IF;
 
   -- 완료된 카드 2: "API 엔드포인트 설계"
-  INSERT INTO cards (list_id, title, description, position, created_by, assignee_id, is_completed, completed_at, completed_by, due_date, created_at, updated_at)
+  INSERT INTO cards (list_id, title, description, position, created_by, assignee_id, is_completed, completed_at, completed_by, due_date, start_date, created_at, updated_at)
   VALUES (
     list_done_id,
     'API 엔드포인트 설계',
@@ -137,6 +138,7 @@ BEGIN
     (week_start + INTERVAL '4 days')::TIMESTAMPTZ, -- 1월 23일 완료
     current_user_id,
     week_start + INTERVAL '5 days',
+    (week_start + INTERVAL '1 day')::TIMESTAMPTZ, -- 1월 20일 시작
     (week_start + INTERVAL '1 day')::TIMESTAMPTZ, -- 1월 20일 생성
     (week_start + INTERVAL '4 days')::TIMESTAMPTZ  -- 1월 23일 수정
   )
@@ -152,7 +154,7 @@ BEGIN
   -- =====================================================
   
   -- 진행 중인 카드 1: "데이터베이스 스키마 설계"
-  INSERT INTO cards (list_id, title, description, position, created_by, assignee_id, is_completed, due_date, created_at, updated_at)
+  INSERT INTO cards (list_id, title, description, position, created_by, assignee_id, is_completed, due_date, start_date, created_at, updated_at)
   VALUES (
     list_progress_id,
     '데이터베이스 스키마 설계',
@@ -162,6 +164,7 @@ BEGIN
     current_user_id,
     false,
     week_start + INTERVAL '7 days',
+    (week_start + INTERVAL '1 day')::TIMESTAMPTZ, -- 1월 20일 시작
     (week_start + INTERVAL '1 day')::TIMESTAMPTZ, -- 1월 20일 생성
     NOW()::TIMESTAMPTZ                            -- 최근 수정
   )
@@ -173,7 +176,7 @@ BEGIN
   END IF;
 
   -- 진행 중인 카드 2: "프론트엔드 컴포넌트 개발"
-  INSERT INTO cards (list_id, title, description, position, created_by, assignee_id, is_completed, due_date, created_at, updated_at)
+  INSERT INTO cards (list_id, title, description, position, created_by, assignee_id, is_completed, due_date, start_date, created_at, updated_at)
   VALUES (
     list_progress_id,
     '프론트엔드 컴포넌트 개발',
@@ -183,6 +186,7 @@ BEGIN
     current_user_id,
     false,
     week_start + INTERVAL '10 days',
+    (week_start + INTERVAL '2 days')::TIMESTAMPTZ, -- 1월 21일 시작
     (week_start + INTERVAL '2 days')::TIMESTAMPTZ, -- 1월 21일 생성
     NOW()::TIMESTAMPTZ                             -- 최근 수정
   )
@@ -194,7 +198,7 @@ BEGIN
   END IF;
 
   -- 진행 중인 카드 3: "백엔드 API 개발"
-  INSERT INTO cards (list_id, title, description, position, created_by, assignee_id, is_completed, due_date, created_at, updated_at)
+  INSERT INTO cards (list_id, title, description, position, created_by, assignee_id, is_completed, due_date, start_date, created_at, updated_at)
   VALUES (
     list_review_id,
     '백엔드 API 개발',
@@ -204,6 +208,7 @@ BEGIN
     current_user_id,
     false,
     week_start + INTERVAL '12 days',
+    (week_start + INTERVAL '3 days')::TIMESTAMPTZ, -- 1월 22일 시작
     (week_start + INTERVAL '3 days')::TIMESTAMPTZ, -- 1월 22일 생성
     NOW()::TIMESTAMPTZ                             -- 최근 수정
   )

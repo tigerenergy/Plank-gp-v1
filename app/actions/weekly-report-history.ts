@@ -3,14 +3,39 @@
 import { createClient } from '@/lib/supabase/server'
 import type { ActionResult } from '@/types'
 
+// 주간보고 이전 데이터 타입
+export interface WeeklyReportPreviousData {
+  status?: 'draft' | 'submitted'
+  total_hours?: number | null
+  notes?: string | null
+  completed_cards?: unknown[]
+  in_progress_cards?: unknown[]
+}
+
+// 주간보고 변경 사항 타입
+export interface WeeklyReportChanges {
+  status?: {
+    old: 'draft' | 'submitted' | undefined
+    new: 'draft' | 'submitted' | undefined
+  }
+  total_hours?: {
+    old: number | null | undefined
+    new: number | null | undefined
+  }
+  notes_changed?: boolean
+  in_progress_cards_updated?: boolean
+  completed_cards_count?: number
+  in_progress_cards_count?: number
+}
+
 // 주간보고 수정 이력 타입
 export interface WeeklyReportHistory {
   id: string
   weekly_report_id: string
   user_id: string
   action: 'created' | 'updated' | 'submitted'
-  changes: any
-  previous_data: any
+  changes: WeeklyReportChanges
+  previous_data: WeeklyReportPreviousData
   created_at: string
   user?: {
     id: string

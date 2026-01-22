@@ -64,7 +64,7 @@ export function ReportHistoryModal({ reportId, isOpen, onClose }: ReportHistoryM
     }
   }
 
-  const formatChanges = (changes: any) => {
+  const formatChanges = (changes: WeeklyReportHistory['changes']) => {
     if (!changes || Object.keys(changes).length === 0) return null
 
     const items: string[] = []
@@ -94,10 +94,10 @@ export function ReportHistoryModal({ reportId, isOpen, onClose }: ReportHistoryM
     return items.length > 0 ? items : null
   }
 
-  const formatPreviousData = (data: any) => {
+  const formatPreviousData = (data: WeeklyReportHistory['previous_data']) => {
     if (!data || typeof data !== 'object') return null
 
-    const sections: React.ReactElement[] = []
+    const sections = []
 
     if (data.status !== undefined) {
       const statusText = data.status === 'draft' ? '작성 중' : data.status === 'submitted' ? '제출 완료' : data.status || '없음'

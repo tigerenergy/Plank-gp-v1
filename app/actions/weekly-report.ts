@@ -590,28 +590,64 @@ export async function refreshWeeklyReportData(
     const weekStart = new Date(weekStartDate)
     const weekEnd = getWeekEnd(weekStart)
 
+    // 기존 주간보고 데이터 조회 (완료 취소된 카드 유지를 위해)
+    const { data: existingReport } = await supabase
+      .from('weekly_reports')
+      .select('completed_cards, in_progress_cards')
+      .eq('id', reportId)
+      .single()
+
     // 최신 데이터 자동 수집 (병렬 처리)
-    const [completedCards, inProgressCards, cardActivities] = await Promise.all([
+    const [newCompletedCards, inProgressCards, cardActivities] = await Promise.all([
       collectCompletedCards(boardId, weekStart, weekEnd, user.id),
       collectInProgressCards(boardId, weekStart, weekEnd, user.id),
       collectCardActivities(boardId, weekStart, weekEnd),
     ])
 
+    // 기존 완료된 카드 중 완료 취소된 카드 유지
+    // 주간보고는 생성 시점의 스냅샷이므로, 완료 취소되어도 원래 완료된 카드는 유지
+    const existingCompletedCardIds = new Set<string>()
+    const existingCompletedCards = new Map<string, any>()
+    
+    if (existingReport?.completed_cards && Array.isArray(existingReport.completed_cards)) {
+      for (const card of existingReport.completed_cards) {
+        if (card.id) {
+          existingCompletedCardIds.add(card.id)
+          existingCompletedCards.set(card.id, card)
+        }
+      }
+    }
+
+    // 새로 수집된 완료 카드 ID
+    const newCompletedCardIds = new Set(newCompletedCards.map(card => card.id))
+
+    // 완료 취소된 카드 찾기 (기존에는 있었지만 새로 수집된 카드에는 없음)
+    const uncompletedCards: any[] = []
+    for (const cardId of existingCompletedCardIds) {
+      if (!newCompletedCardIds.has(cardId)) {
+        const existingCard = existingCompletedCards.get(cardId)
+        if (existingCard) {
+          // 완료 취소된 카드는 is_completed: false 플래그 추가
+          uncompletedCards.push({
+            ...existingCard,
+            is_completed: false,
+            was_completed: true, // 원래 완료되었던 카드임을 표시
+          })
+        }
+      }
+    }
+
+    // 완료된 카드와 완료 취소된 카드 병합
+    const mergedCompletedCards = [...newCompletedCards, ...uncompletedCards]
+
     // 시간 집계 (완료된 카드 + 진행 중인 카드의 시간 로그 합계)
-    const completedHours = completedCards.reduce((sum, card) => {
+    const completedHours = mergedCompletedCards.reduce((sum, card) => {
       return sum + (card.weekly_hours || 0)
     }, 0)
     const inProgressHours = inProgressCards.reduce((sum, card) => {
       return sum + (card.user_input?.hours_spent || card.auto_collected?.weekly_hours || 0)
     }, 0)
     const totalHours = completedHours + inProgressHours
-
-    // 기존 주간보고의 user_input 데이터 보존 (진행 중인 카드의 사용자 입력 유지)
-    const { data: existingReport } = await supabase
-      .from('weekly_reports')
-      .select('in_progress_cards')
-      .eq('id', reportId)
-      .single()
 
     // 기존 user_input 데이터를 새로 수집된 카드와 병합
     const existingUserInputs = new Map<string, any>()
@@ -649,7 +685,7 @@ export async function refreshWeeklyReportData(
     const { data, error } = await supabase
       .from('weekly_reports')
       .update({
-        completed_cards: completedCards,
+        completed_cards: mergedCompletedCards,
         in_progress_cards: mergedInProgressCards,
         card_activities: cardActivities,
         total_hours: totalHours,

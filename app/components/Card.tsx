@@ -276,13 +276,14 @@ export function Card({ card, isDoneList = false }: CardProps) {
                          bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 
                          text-slate-700 dark:text-slate-300 text-sm font-medium
                          transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                title='완료 상태를 되돌립니다'
               >
                 {isCompleting ? (
                   <div className='w-4 h-4 border-2 border-slate-700 dark:border-slate-300 border-t-transparent rounded-full animate-spin' />
                 ) : (
                   <>
                     <Undo2 className='w-4 h-4' />
-                    취소
+                    되돌리기
                   </>
                 )}
               </button>
@@ -293,6 +294,7 @@ export function Card({ card, isDoneList = false }: CardProps) {
                          bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 
                          text-red-600 dark:text-red-400 text-sm font-medium
                          transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                title='카드를 삭제합니다'
               >
                 {isDeleting ? (
                   <div className='w-4 h-4 border-2 border-red-600 dark:border-red-400 border-t-transparent rounded-full animate-spin' />

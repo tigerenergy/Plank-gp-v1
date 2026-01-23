@@ -241,7 +241,7 @@ export function Card({ card, isDoneList = false }: CardProps) {
                   src={displayUser.avatar_url}
                   alt=''
                   referrerPolicy='no-referrer'
-                  className='w-10 h-10 rounded-full ring-2 ring-white dark:ring-slate-700 shadow-md'
+                  className='w-10 h-10 rounded-full ring-2 ring-white dark:ring-slate-700 shadow-md object-cover'
                 />
               ) : (
                 <div className='w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-md'>

@@ -268,7 +268,7 @@ export default function HomeClient({ user, weeklyReports = [], teamMembers = [],
                       </h3>
 
                       {/* 상태 */}
-                      <div className='flex items-center gap-1.5 mb-4'>
+                      <div className='flex items-center gap-1.5 mb-auto'>
                         {report.status === 'submitted' ? (
                           <>
                             <span className='w-1.5 h-1.5 bg-emerald-500 rounded-full' />
@@ -320,7 +320,7 @@ export default function HomeClient({ user, weeklyReports = [], teamMembers = [],
                       </h3>
 
                       {/* 상태 */}
-                      <div className='flex items-center gap-1.5 mb-4'>
+                      <div className='flex items-center gap-1.5 mb-auto'>
                         <span className='w-1.5 h-1.5 bg-gray-400 rounded-full' />
                         <span className='text-sm text-[rgb(var(--muted-foreground))]'>아직 작성하지 않음</span>
                       </div>

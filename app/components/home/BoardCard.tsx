@@ -176,7 +176,7 @@ export function BoardCard({
 
       {/* D-Day 또는 작성일 */}
       {board.due_date ? (
-        <div className='flex items-center gap-1.5 mb-4'>
+        <div className='flex items-center gap-1.5 mb-auto'>
           <Calendar className='w-3.5 h-3.5 text-[rgb(var(--muted-foreground))]' />
           {(() => {
             const dday = formatDDay(board.due_date)
@@ -189,7 +189,7 @@ export function BoardCard({
           </span>
         </div>
       ) : (
-        <p className='text-sm text-[rgb(var(--muted-foreground))] mb-4'>
+        <p className='text-sm text-[rgb(var(--muted-foreground))] mb-auto'>
           {new Date(board.created_at).toLocaleDateString('ko-KR', {
             year: 'numeric',
             month: 'short',
@@ -199,43 +199,43 @@ export function BoardCard({
       )}
 
       {/* 하단: 보드 멤버 아바타들 (생성자 + 초대된 멤버) */}
-      <div className='absolute bottom-4 right-4 flex items-center -space-x-2'>
+      <div className='absolute bottom-4 left-5 right-5 flex items-center justify-end gap-2'>
         {/* 생성자 아바타 */}
         {creatorAvatar ? (
           <img
             src={creatorAvatar}
             alt=''
             referrerPolicy='no-referrer'
-            className='w-7 h-7 rounded-full ring-2 ring-white dark:ring-slate-700 shadow-sm'
+            className='w-10 h-10 rounded-full ring-2 ring-white dark:ring-slate-700 shadow-md object-cover'
             title={creatorName || '생성자'}
           />
         ) : creatorName ? (
           <div 
-            className='w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-sm'
+            className='w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-md'
             title={creatorName}
           >
-            <span className='text-xs font-bold text-white'>{creatorName[0].toUpperCase()}</span>
+            <span className='text-sm font-bold text-white'>{creatorName[0].toUpperCase()}</span>
           </div>
         ) : null}
         
-        {/* 초대된 멤버 아바타들 (최대 3명까지 표시) */}
-        {members.slice(0, 3).map((member) => (
+        {/* 초대된 멤버 아바타들 (최대 2명까지 표시, 생성자 포함 최대 3명) */}
+        {members.slice(0, creatorName ? 2 : 3).map((member) => (
           member.avatar_url ? (
             <img
               key={member.id}
               src={member.avatar_url}
               alt=''
               referrerPolicy='no-referrer'
-              className='w-7 h-7 rounded-full ring-2 ring-white dark:ring-slate-700 shadow-sm'
+              className='w-10 h-10 rounded-full ring-2 ring-white dark:ring-slate-700 shadow-md object-cover'
               title={member.username || member.email?.split('@')[0] || '멤버'}
             />
           ) : (
             <div 
               key={member.id}
-              className='w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-sm'
+              className='w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-md'
               title={member.username || member.email?.split('@')[0] || '멤버'}
             >
-              <span className='text-xs font-bold text-white'>
+              <span className='text-sm font-bold text-white'>
                 {(member.username || member.email?.split('@')[0] || 'M')[0].toUpperCase()}
               </span>
             </div>
@@ -243,10 +243,10 @@ export function BoardCard({
         ))}
         
         {/* 추가 멤버가 있으면 +N 표시 */}
-        {members.length > 3 && (
-          <div className='w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-sm'>
+        {(members.length > (creatorName ? 2 : 3)) && (
+          <div className='w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-md'>
             <span className='text-xs font-bold text-slate-600 dark:text-slate-300'>
-              +{members.length - 3}
+              +{members.length - (creatorName ? 2 : 3)}
             </span>
           </div>
         )}

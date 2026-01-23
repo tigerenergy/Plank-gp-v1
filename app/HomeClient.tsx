@@ -232,7 +232,7 @@ export default function HomeClient({ user, weeklyReports = [], teamMembers = [],
             </div>
             <Link
               href='/weekly-report/share'
-              className='text-sm text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-medium flex items-center gap-1'
+              className='btn-secondary inline-flex items-center gap-2 px-4 py-2 text-sm font-medium'
             >
               전체 보기
               <ArrowRight className='w-4 h-4' />

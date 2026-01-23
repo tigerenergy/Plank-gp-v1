@@ -39,9 +39,9 @@
 
 프로젝트 문서는 [`docs/`](./docs/) 폴더에 정리되어 있습니다.
 
-- **현재 기능**: [`docs/CURRENT_FEATURES.md`](./docs/CURRENT_FEATURES.md)
-- **주간보고 기능 계획**: [`docs/WEEKLY_REPORT_FEATURE.md`](./docs/WEEKLY_REPORT_FEATURE.md) ⭐ **최신**
-- **프로젝트 개요**: [`docs/PROJECT_OVERVIEW.md`](./docs/PROJECT_OVERVIEW.md)
+- **프로젝트 현황**: [`docs/PROJECT_STATUS.md`](./docs/PROJECT_STATUS.md) ⭐ **최신** - 구현 완료된 기능 및 구현해야 할 기능
+- **아키텍처**: [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
+- **개발 규칙**: [`docs/DEVELOPMENT_RULES.md`](./docs/DEVELOPMENT_RULES.md)
 
 ---
 
@@ -85,6 +85,19 @@
 - 카드 완료 처리
 - 완료된 카드 별도 페이지에서 관리
 - 통계 및 차트 (Recharts)
+
+### 주간보고 기능 ⭐ **최신**
+- 주간보고 자동 생성 (완료된 카드, 진행 중인 카드 자동 수집)
+- 주간보고 작성/수정 (진행 상태, 진척도, 설명, 이슈 입력)
+- 주간보고 제출 (draft/submitted 상태)
+- 주간보고 공유 페이지 (실시간 협업)
+  - 실시간 데이터 업데이트
+  - Presence 기능 (현재 보고 있는 사용자 표시)
+  - 마우스 커서 추적 (Figma 스타일)
+  - 클릭 시각화
+- 주간보고 내보내기 (PDF, CSV)
+- 시간 로그 (Jira 스타일 작업 시간 추적)
+- 체크리스트 자동 생성 (카드 생성 시)
 
 ### 권한 관리
 - 보드 소유자: 보드 삭제, 멤버 초대
@@ -159,13 +172,23 @@ plank/
 │   │   ├── list.ts           #   - 리스트 CRUD
 │   │   ├── member.ts         #   - 팀원 조회, 담당자 할당
 │   │   ├── notification.ts   #   - 알림 관리
-│   │   └── report.ts         #   - 리포트/통계
+│   │   ├── time-log.ts       #   - 시간 로그 관리
+│   │   ├── weekly-report.ts  #   - 주간보고 CRUD
+│   │   ├── weekly-report-stats.ts # - 주간보고 통계
+│   │   └── weekly-report-history.ts # - 주간보고 히스토리
 │   │
 │   ├── auth/callback/        # OAuth 콜백
 │   ├── board/[id]/           # 보드 상세 페이지
 │   │   ├── page.tsx
 │   │   ├── BoardClient.tsx
-│   │   └── completed/        # 완료된 카드 페이지
+│   │   ├── completed/        # 완료된 카드 페이지
+│   │   └── weekly-report/    # 주간보고
+│   │       ├── new/          #   - 주간보고 작성
+│   │       ├── share/        #   - 주간보고 공유 (보드별)
+│   │       └── stats/        #   - 주간보고 통계
+│   │
+│   ├── weekly-report/        # 주간보고 전역 페이지
+│   │   └── share/            #   - 주간보고 전체 공유
 │   │
 │   ├── components/           # UI 컴포넌트
 │   │   ├── auth/             #   - 인증 관련 (UserMenu, 알림, 초대)
@@ -174,6 +197,7 @@ plank/
 │   │   ├── column/           #   - 컬럼 관련
 │   │   ├── home/             #   - 홈 관련 (보드 카드, 생성 폼)
 │   │   ├── layout/           #   - 레이아웃 (헤더)
+│   │   ├── weekly-report/    #   - 주간보고 컴포넌트
 │   │   └── ui/               #   - 공통 UI (로딩, 테마 토글)
 │   │
 │   ├── login/                # 로그인 페이지
@@ -193,6 +217,7 @@ plank/
 │   ├── animations.ts         #   - Framer Motion 프리셋
 │   ├── email.ts              #   - 이메일 발송
 │   ├── gemini.ts             #   - Gemini AI
+│   ├── weekly-report-export.ts # - 주간보고 내보내기 (PDF, CSV)
 │   └── utils.ts              #   - 유틸 함수
 │
 ├── schema/                   # Zod 스키마
@@ -228,6 +253,8 @@ cards             - 카드 (list_id, title, description, due_date, labels, assig
 comments          - 댓글 (card_id, user_id, content)
 checklists        - 체크리스트 (card_id, title, position)
 checklist_items   - 체크리스트 항목 (checklist_id, content, is_checked, position)
+card_time_logs    - 시간 로그 (card_id, user_id, hours, description, logged_date)
+weekly_reports    - 주간보고 (board_id, user_id, week_start_date, status, completed_cards, in_progress_cards, total_hours)
 notifications     - 알림 (user_id, type, title, message, is_read, link)
 ```
 

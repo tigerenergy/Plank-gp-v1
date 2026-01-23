@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, TrendingUp, Clock, CheckCircle2, Users, BarChart3, Download, FileText } from 'lucide-react'
+import { ArrowLeft, TrendingUp, Clock, CheckCircle2, Users, BarChart3, Download, FileText, Activity } from 'lucide-react'
 import {
   BarChart,
   Bar,
@@ -25,6 +25,7 @@ import {
   type CompletionTrend,
   type TeamHoursComparison,
 } from '@/app/actions/weekly-report-stats'
+import { getTeamDashboardStats, type TeamDashboardStats } from '@/app/actions/team-dashboard'
 import { generateStatsPDF, generateStatsCSV } from '@/app/lib/weekly-report-stats-export'
 
 interface WeeklyReportStatsClientProps {
@@ -38,6 +39,7 @@ export function WeeklyReportStatsClient({ board }: WeeklyReportStatsClientProps)
   const [hoursTrend, setHoursTrend] = useState<WeeklyHoursTrend[]>([])
   const [completionTrend, setCompletionTrend] = useState<CompletionTrend[]>([])
   const [teamComparison, setTeamComparison] = useState<TeamHoursComparison[]>([])
+  const [teamDashboard, setTeamDashboard] = useState<TeamDashboardStats | null>(null)
 
   useEffect(() => {
     loadStats()
@@ -46,10 +48,11 @@ export function WeeklyReportStatsClient({ board }: WeeklyReportStatsClientProps)
   const loadStats = async () => {
     setIsLoading(true)
     try {
-      const [hoursResult, completionResult, teamResult] = await Promise.all([
+      const [hoursResult, completionResult, teamResult, dashboardResult] = await Promise.all([
         getWeeklyHoursTrend(board.id, 8),
         getCompletionTrend(board.id, 8),
         getTeamHoursComparison(board.id, 8),
+        getTeamDashboardStats(board.id, 8),
       ])
 
       if (hoursResult.success && hoursResult.data) {
@@ -60,6 +63,9 @@ export function WeeklyReportStatsClient({ board }: WeeklyReportStatsClientProps)
       }
       if (teamResult.success && teamResult.data) {
         setTeamComparison(teamResult.data)
+      }
+      if (dashboardResult.success && dashboardResult.data) {
+        setTeamDashboard(dashboardResult.data)
       }
     } catch (error) {
       console.error('통계 로드 에러:', error)
@@ -144,7 +150,90 @@ export function WeeklyReportStatsClient({ board }: WeeklyReportStatsClientProps)
 
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
         <div className='space-y-6'>
-          {/* 요약 카드 */}
+          {/* 팀 전체 요약 카드 */}
+          {teamDashboard && (
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4'>
+              <div className='card p-6'>
+                <div className='flex items-center gap-3 mb-2'>
+                  <Users className='w-5 h-5 text-blue-500' />
+                  <span className='text-sm font-medium text-[rgb(var(--muted-foreground))]'>팀원 수</span>
+                </div>
+                <div className='text-2xl font-bold text-[rgb(var(--foreground))]'>{teamDashboard.totalMembers}명</div>
+              </div>
+              <div className='card p-6'>
+                <div className='flex items-center gap-3 mb-2'>
+                  <FileText className='w-5 h-5 text-violet-500' />
+                  <span className='text-sm font-medium text-[rgb(var(--muted-foreground))]'>총 보고서</span>
+                </div>
+                <div className='text-2xl font-bold text-[rgb(var(--foreground))]'>{teamDashboard.totalReports}개</div>
+              </div>
+              <div className='card p-6'>
+                <div className='flex items-center gap-3 mb-2'>
+                  <Clock className='w-5 h-5 text-violet-500' />
+                  <span className='text-sm font-medium text-[rgb(var(--muted-foreground))]'>총 작업 시간</span>
+                </div>
+                <div className='text-2xl font-bold text-[rgb(var(--foreground))]'>
+                  {teamDashboard.totalHours.toFixed(1)}시간
+                </div>
+              </div>
+              <div className='card p-6'>
+                <div className='flex items-center gap-3 mb-2'>
+                  <BarChart3 className='w-5 h-5 text-emerald-500' />
+                  <span className='text-sm font-medium text-[rgb(var(--muted-foreground))]'>인원당 평균</span>
+                </div>
+                <div className='text-2xl font-bold text-[rgb(var(--foreground))]'>
+                  {teamDashboard.avgHoursPerMember.toFixed(1)}시간
+                </div>
+              </div>
+              <div className='card p-6'>
+                <div className='flex items-center gap-3 mb-2'>
+                  <TrendingUp className='w-5 h-5 text-blue-500' />
+                  <span className='text-sm font-medium text-[rgb(var(--muted-foreground))]'>주간 평균</span>
+                </div>
+                <div className='text-2xl font-bold text-[rgb(var(--foreground))]'>
+                  {teamDashboard.avgHoursPerWeek.toFixed(1)}시간
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 프로젝트 진행률 */}
+          {teamDashboard && (
+            <div className='card p-6'>
+              <h2 className='text-lg font-bold text-[rgb(var(--foreground))] mb-4 flex items-center gap-2'>
+                <BarChart3 className='w-5 h-5 text-violet-500' />
+                프로젝트 진행률
+              </h2>
+              <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+                <div className='p-4 bg-[rgb(var(--secondary))] rounded-xl'>
+                  <div className='text-sm text-[rgb(var(--muted-foreground))] mb-1'>전체 카드</div>
+                  <div className='text-2xl font-bold text-[rgb(var(--foreground))]'>
+                    {teamDashboard.projectProgress.total_cards}개
+                  </div>
+                </div>
+                <div className='p-4 bg-emerald-500/10 rounded-xl'>
+                  <div className='text-sm text-[rgb(var(--muted-foreground))] mb-1'>완료된 카드</div>
+                  <div className='text-2xl font-bold text-emerald-600 dark:text-emerald-400'>
+                    {teamDashboard.projectProgress.completed_cards}개
+                  </div>
+                </div>
+                <div className='p-4 bg-blue-500/10 rounded-xl'>
+                  <div className='text-sm text-[rgb(var(--muted-foreground))] mb-1'>진행 중인 카드</div>
+                  <div className='text-2xl font-bold text-blue-600 dark:text-blue-400'>
+                    {teamDashboard.projectProgress.in_progress_cards}개
+                  </div>
+                </div>
+                <div className='p-4 bg-violet-500/10 rounded-xl'>
+                  <div className='text-sm text-[rgb(var(--muted-foreground))] mb-1'>완료율</div>
+                  <div className='text-2xl font-bold text-violet-600 dark:text-violet-400'>
+                    {teamDashboard.projectProgress.completion_rate.toFixed(1)}%
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 요약 카드 (기존) */}
           <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
             <div className='card p-6'>
               <div className='flex items-center gap-3 mb-2'>
@@ -313,6 +402,121 @@ export function WeeklyReportStatsClient({ board }: WeeklyReportStatsClientProps)
                     <Bar dataKey='시간' fill='url(#teamBarGradient)' radius={[0, 8, 8, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* 멤버별 상세 통계 */}
+          {teamDashboard && teamDashboard.memberStats.length > 0 && (
+            <div className='card p-6'>
+              <h2 className='text-lg font-bold text-[rgb(var(--foreground))] mb-4 flex items-center gap-2'>
+                <Users className='w-5 h-5 text-blue-500' />
+                멤버별 상세 통계
+              </h2>
+              <div className='overflow-x-auto'>
+                <table className='w-full'>
+                  <thead>
+                    <tr className='border-b border-[rgb(var(--border))]'>
+                      <th className='text-left py-3 px-4 text-sm font-semibold text-[rgb(var(--foreground))]'>멤버</th>
+                      <th className='text-right py-3 px-4 text-sm font-semibold text-[rgb(var(--foreground))]'>총 작업 시간</th>
+                      <th className='text-right py-3 px-4 text-sm font-semibold text-[rgb(var(--foreground))]'>보고서 수</th>
+                      <th className='text-right py-3 px-4 text-sm font-semibold text-[rgb(var(--foreground))]'>주간 평균</th>
+                      <th className='text-right py-3 px-4 text-sm font-semibold text-[rgb(var(--foreground))]'>완료 작업</th>
+                      <th className='text-right py-3 px-4 text-sm font-semibold text-[rgb(var(--foreground))]'>진행 중</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {teamDashboard.memberStats.map((member) => (
+                      <tr key={member.user_id} className='border-b border-[rgb(var(--border))] hover:bg-[rgb(var(--secondary))] transition-colors'>
+                        <td className='py-4 px-4'>
+                          <div className='flex items-center gap-3'>
+                            {member.avatar_url ? (
+                              <img
+                                src={member.avatar_url}
+                                alt=''
+                                className='w-8 h-8 rounded-full'
+                                referrerPolicy='no-referrer'
+                              />
+                            ) : (
+                              <div className='w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center'>
+                                <span className='text-xs font-bold text-white'>
+                                  {(member.username || member.email.split('@')[0] || '?')[0].toUpperCase()}
+                                </span>
+                              </div>
+                            )}
+                            <div>
+                              <div className='text-sm font-medium text-[rgb(var(--foreground))]'>
+                                {member.username || member.email.split('@')[0] || '익명'}
+                              </div>
+                              {member.last_report_date && (
+                                <div className='text-xs text-[rgb(var(--muted-foreground))]'>
+                                  마지막 보고: {new Date(member.last_report_date).toLocaleDateString('ko-KR')}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className='py-4 px-4 text-right'>
+                          <span className='text-sm font-semibold text-[rgb(var(--foreground))]'>
+                            {member.total_hours.toFixed(1)}시간
+                          </span>
+                        </td>
+                        <td className='py-4 px-4 text-right'>
+                          <span className='text-sm text-[rgb(var(--foreground))]'>{member.report_count}개</span>
+                        </td>
+                        <td className='py-4 px-4 text-right'>
+                          <span className='text-sm text-[rgb(var(--foreground))]'>
+                            {member.avg_hours_per_week.toFixed(1)}시간
+                          </span>
+                        </td>
+                        <td className='py-4 px-4 text-right'>
+                          <span className='text-sm text-emerald-600 dark:text-emerald-400'>{member.completed_cards}개</span>
+                        </td>
+                        <td className='py-4 px-4 text-right'>
+                          <span className='text-sm text-blue-600 dark:text-blue-400'>{member.in_progress_cards}개</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* 최근 활동 */}
+          {teamDashboard && teamDashboard.recentActivity.length > 0 && (
+            <div className='card p-6'>
+              <h2 className='text-lg font-bold text-[rgb(var(--foreground))] mb-4 flex items-center gap-2'>
+                <Activity className='w-5 h-5 text-violet-500' />
+                최근 활동
+              </h2>
+              <div className='space-y-3'>
+                {teamDashboard.recentActivity.slice(0, 10).map((activity, index) => (
+                  <div
+                    key={index}
+                    className='flex items-center gap-3 p-3 rounded-xl bg-[rgb(var(--secondary))] hover:bg-[rgb(var(--muted))] transition-colors'
+                  >
+                    <div className='w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0'>
+                      <span className='text-xs font-bold text-white'>
+                        {(activity.username || activity.email.split('@')[0] || '?')[0].toUpperCase()}
+                      </span>
+                    </div>
+                    <div className='flex-1 min-w-0'>
+                      <div className='text-sm font-medium text-[rgb(var(--foreground))]'>
+                        {activity.username || activity.email.split('@')[0] || '익명'}
+                      </div>
+                      <div className='text-xs text-[rgb(var(--muted-foreground))]'>{activity.description}</div>
+                    </div>
+                    <div className='text-xs text-[rgb(var(--muted-foreground))] whitespace-nowrap'>
+                      {new Date(activity.date).toLocaleDateString('ko-KR', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

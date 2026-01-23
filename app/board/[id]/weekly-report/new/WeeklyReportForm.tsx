@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Save, Send, Clock, CheckCircle2, TrendingUp, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Save, Send, Clock, CheckCircle2, TrendingUp, RefreshCw, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import Select from 'react-select'
 import type { StylesConfig, SingleValue } from 'react-select'
@@ -10,6 +10,9 @@ import type { Board } from '@/types'
 import { updateWeeklyReport, submitWeeklyReport, refreshWeeklyReportData } from '@/app/actions/weekly-report'
 import type { WeeklyReport } from '@/app/actions/weekly-report'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
+import { WeeklyReportTemplateModal } from '@/app/components/weekly-report/WeeklyReportTemplateModal'
+import type { WeeklyReportTemplate } from '@/app/actions/weekly-report-template'
+import { createWeeklyReportTemplate } from '@/app/actions/weekly-report-template'
 
 interface WeeklyReportFormProps {
   board: Board
@@ -26,6 +29,7 @@ export function WeeklyReportForm({ board, report: initialReport }: WeeklyReportF
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [activeTab, setActiveTab] = useState<'current' | 'next'>('current')
+  const [showTemplateModal, setShowTemplateModal] = useState(false)
 
   // 진행 상태 옵션
   const statusOptions = [
@@ -176,6 +180,76 @@ export function WeeklyReportForm({ board, report: initialReport }: WeeklyReportF
     )
   }
 
+  // 템플릿 적용
+  const handleApplyTemplate = (template: WeeklyReportTemplate) => {
+    const templateData = template.template_data || {}
+    
+    // 진행 중인 카드에 템플릿 적용
+    if (templateData.default_status || templateData.default_progress !== undefined) {
+      setInProgressCards((cards) =>
+        cards.map((card) => ({
+          ...card,
+          user_input: {
+            ...card.user_input,
+            status: templateData.default_status || card.user_input?.status,
+            progress: templateData.default_progress !== undefined 
+              ? templateData.default_progress 
+              : card.user_input?.progress,
+            description: templateData.default_description_template 
+              ? templateData.default_description_template 
+              : card.user_input?.description,
+            issues: templateData.default_issues_template 
+              ? templateData.default_issues_template 
+              : card.user_input?.issues,
+          },
+        }))
+      )
+    }
+
+    // notes 템플릿 적용
+    if (templateData.notes_template) {
+      setNotes(templateData.notes_template)
+    }
+
+    toast.success(`템플릿 "${template.name}"이 적용되었습니다.`)
+  }
+
+  // 현재 보고서를 템플릿으로 저장
+  const handleSaveAsTemplate = async (data: {
+    name: string
+    description?: string
+    template_data: WeeklyReportTemplate['template_data']
+  }) => {
+    try {
+      // 현재 진행 중인 카드의 기본 구조 추출
+      const defaultStatus = inProgressCards[0]?.user_input?.status || '진행중'
+      const defaultProgress = inProgressCards[0]?.user_input?.progress || 0
+      
+      const templateData: WeeklyReportTemplate['template_data'] = {
+        default_status: defaultStatus,
+        default_progress: defaultProgress,
+        notes_template: notes || undefined,
+        ...data.template_data,
+      }
+
+      const result = await createWeeklyReportTemplate({
+        name: data.name,
+        description: data.description,
+        board_id: board.id,
+        template_data: templateData,
+      })
+
+      if (result.success) {
+        toast.success('템플릿으로 저장되었습니다.')
+      } else {
+        toast.error(result.error || '템플릿 저장에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('템플릿 저장 에러:', error)
+      toast.error('템플릿 저장 중 오류가 발생했습니다.')
+    }
+  }
+
   // 시간 입력 검증 (주간 최대 168시간, 현실적으로 80시간 제한)
   const validateHours = (hours: number): { valid: boolean; error?: string } => {
     if (hours < 0) {
@@ -272,6 +346,15 @@ export function WeeklyReportForm({ board, report: initialReport }: WeeklyReportF
             </div>
 
             <div className='flex items-center gap-2'>
+              <button
+                onClick={() => setShowTemplateModal(true)}
+                disabled={isSaving || isSubmitting || report.status === 'submitted'}
+                className='flex items-center gap-2 px-4 py-2 rounded-xl btn-ghost border border-[rgb(var(--border))] disabled:opacity-50'
+                title='템플릿 선택'
+              >
+                <FileText className='w-4 h-4' />
+                템플릿
+              </button>
               <button
                 onClick={handleRefresh}
                 disabled={isRefreshing || isSaving || isSubmitting || report.status === 'submitted'}
@@ -731,6 +814,15 @@ export function WeeklyReportForm({ board, report: initialReport }: WeeklyReportF
         variant='default'
         onConfirm={handleSubmit}
         onCancel={() => setShowSubmitConfirm(false)}
+      />
+
+      {/* 템플릿 모달 */}
+      <WeeklyReportTemplateModal
+        isOpen={showTemplateModal}
+        onClose={() => setShowTemplateModal(false)}
+        boardId={board.id}
+        onSelectTemplate={handleApplyTemplate}
+        onSaveAsTemplate={handleSaveAsTemplate}
       />
     </div>
   )

@@ -79,9 +79,9 @@ export function BoardHeader({ boardId, title, user, members, onSettingsClick }: 
             {/* 주간보고 버튼 (드롭다운) - 완료된 작업 포함 */}
             <div className='relative group'>
               <Link
-                href={`/board/${boardId}/weekly-report/share`}
+                href='/weekly-report/share'
                 className='w-9 h-9 rounded-lg flex items-center justify-center btn-ghost border border-[rgb(var(--border))]'
-                title='주간보고 (완료된 작업 포함)'
+                title='주간보고 공유 (모든 보드)'
               >
                 <FileText className='w-4 h-4 text-violet-500' />
               </Link>
@@ -94,11 +94,11 @@ export function BoardHeader({ boardId, title, user, members, onSettingsClick }: 
                   주간보고 작성
                 </Link>
                 <Link
-                  href={`/board/${boardId}/weekly-report/share`}
+                  href='/weekly-report/share'
                   className='w-full px-4 py-2.5 text-left text-sm hover:bg-[rgb(var(--secondary))] rounded-b-xl flex items-center gap-2'
                 >
                   <FileText className='w-4 h-4' />
-                  주간보고 공유
+                  주간보고 공유 (전체)
                 </Link>
               </div>
             </div>

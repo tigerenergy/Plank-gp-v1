@@ -1,17 +1,15 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Users, Clock, CheckCircle2, TrendingUp, FileText, BarChart3, Download } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import type { Board, Profile } from '@/types'
 import type { WeeklyReport } from '@/app/actions/weekly-report'
 import { generateWeeklyReportPDF, generateWeeklyReportCSV } from '@/app/lib/weekly-report-export'
 import { WeeklyReportDetailModal } from '@/app/components/weekly-report/WeeklyReportDetailModal'
-import { getWeeklyReportsByBoard } from '@/app/actions/weekly-report'
+import { getAllWeeklyReports } from '@/app/actions/weekly-report'
 
 interface WeeklyReportShareClientProps {
-  board: Board
   reports: WeeklyReport[]
   selectedWeek?: string
 }
@@ -33,7 +31,6 @@ interface PresenceUser {
 }
 
 export function WeeklyReportShareClient({
-  board,
   reports: initialReports,
   selectedWeek,
 }: WeeklyReportShareClientProps) {
@@ -75,12 +72,12 @@ export function WeeklyReportShareClient({
     loadCurrentUser()
   }, [])
 
-  // 실시간 업데이트 및 Presence
+  // 실시간 업데이트 및 Presence (모든 보드)
   useEffect(() => {
     const supabase = createClient()
     if (!currentUser) return
 
-    const channelName = `weekly_reports:${board.id}:${selectedWeek || 'current'}`
+    const channelName = `weekly_reports:all:${selectedWeek || 'current'}`
     const channel = supabase
       .channel(channelName, {
         config: {
@@ -89,14 +86,13 @@ export function WeeklyReportShareClient({
           },
         },
       })
-      // Postgres 변경사항 구독
+      // Postgres 변경사항 구독 (모든 보드)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'weekly_reports',
-          filter: `board_id=eq.${board.id}`,
         },
         async (payload) => {
           console.log('📡 실시간 업데이트 이벤트:', payload.eventType, payload.new || payload.old)
@@ -109,7 +105,8 @@ export function WeeklyReportShareClient({
                 .from('weekly_reports')
                 .select(`
                   *,
-                  user:profiles!weekly_reports_user_id_fkey(id, email, username, avatar_url)
+                  user:profiles!weekly_reports_user_id_fkey(id, email, username, avatar_url),
+                  board:boards!weekly_reports_board_id_fkey(id, title, emoji)
                 `)
                 .eq('id', payload.new.id)
                 .single()
@@ -127,12 +124,12 @@ export function WeeklyReportShareClient({
                   const existing = prev.find((r) => r.id === updatedReport.id)
                   if (existing) {
                     console.log('🔄 기존 보고서 업데이트')
-                    return prev.map((r) => (r.id === updatedReport.id ? { ...updatedReport, user: updatedReport.user } as WeeklyReport : r))
+                    return prev.map((r) => (r.id === updatedReport.id ? { ...updatedReport, user: updatedReport.user, board: updatedReport.board } as WeeklyReport : r))
                   } else {
                     // 현재 주간의 보고서만 추가
                     if (updatedReport.week_start_date === weekStart) {
                       console.log('➕ 새 보고서 추가')
-                      return [...prev, { ...updatedReport, user: updatedReport.user } as WeeklyReport]
+                      return [...prev, { ...updatedReport, user: updatedReport.user, board: updatedReport.board } as WeeklyReport]
                     } else {
                       console.log('⏭️ 다른 주간 보고서이므로 추가하지 않음')
                       return prev
@@ -249,7 +246,7 @@ export function WeeklyReportShareClient({
       channel.untrack()
       supabase.removeChannel(channel)
     }
-  }, [board.id, selectedWeek, currentUser])
+  }, [selectedWeek, currentUser])
 
   // 마우스 이벤트 추적
   useEffect(() => {
@@ -257,7 +254,7 @@ export function WeeklyReportShareClient({
 
     const container = containerRef.current
     const supabase = createClient()
-    const channelName = `weekly_reports:${board.id}:${selectedWeek || 'current'}`
+    const channelName = `weekly_reports:all:${selectedWeek || 'current'}`
     const channel = supabase.channel(channelName)
     
     let mouseMoveThrottle: NodeJS.Timeout | null = null
@@ -329,7 +326,7 @@ export function WeeklyReportShareClient({
       container.removeEventListener('mousemove', handleMouseMove)
       container.removeEventListener('click', handleClick)
     }
-  }, [currentUser, board.id, selectedWeek])
+  }, [currentUser, selectedWeek])
 
   // 주간 계산
   const getWeekOptions = () => {
@@ -407,12 +404,16 @@ export function WeeklyReportShareClient({
           </div>
         )
       })}
+
       {/* 헤더 */}
       <header className='sticky top-0 z-40 bg-[rgb(var(--background))]/80 backdrop-blur-xl border-b border-[rgb(var(--border))]'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
           <div className='h-16 flex items-center justify-between'>
             <div className='flex items-center gap-4'>
-              <Link href={`/board/${board.id}`} className='p-2 rounded-xl btn-ghost'>
+              <Link
+                href='/'
+                className='p-2 rounded-xl btn-ghost'
+              >
                 <ArrowLeft className='w-5 h-5' />
               </Link>
               <div>
@@ -465,7 +466,7 @@ export function WeeklyReportShareClient({
                     onClick={() => {
                       const weekStart = currentWeekReports[0]?.week_start_date || currentWeek
                       const weekEnd = currentWeekReports[0]?.week_end_date || new Date(new Date(currentWeek).getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-                      generateWeeklyReportPDF(board, currentWeekReports, weekStart, weekEnd)
+                      generateWeeklyReportPDF(null, currentWeekReports, weekStart, weekEnd)
                     }}
                     className='w-full px-4 py-2 text-left text-sm hover:bg-[rgb(var(--secondary))] rounded-t-xl flex items-center gap-2'
                   >
@@ -476,7 +477,7 @@ export function WeeklyReportShareClient({
                     onClick={() => {
                       const weekStart = currentWeekReports[0]?.week_start_date || currentWeek
                       const weekEnd = currentWeekReports[0]?.week_end_date || new Date(new Date(currentWeek).getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-                      generateWeeklyReportCSV(board, currentWeekReports, weekStart, weekEnd)
+                      generateWeeklyReportCSV(null, currentWeekReports, weekStart, weekEnd)
                     }}
                     className='w-full px-4 py-2 text-left text-sm hover:bg-[rgb(var(--secondary))] rounded-b-xl flex items-center gap-2'
                   >
@@ -485,17 +486,10 @@ export function WeeklyReportShareClient({
                   </button>
                 </div>
               </div>
-              <Link
-                href={`/board/${board.id}/weekly-report/stats`}
-                className='px-3 py-2 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/20 text-violet-600 dark:text-violet-400 text-sm font-medium transition-colors flex items-center gap-2'
-              >
-                <BarChart3 className='w-4 h-4' />
-                통계
-              </Link>
               <select
                 value={currentWeek}
                 onChange={(e) => {
-                  window.location.href = `/board/${board.id}/weekly-report/share?week=${e.target.value}`
+                  window.location.href = `/weekly-report/share?week=${e.target.value}`
                 }}
                 className='px-3 py-2 rounded-xl bg-[rgb(var(--secondary))] border border-[rgb(var(--border))] text-sm'
               >
@@ -526,18 +520,13 @@ export function WeeklyReportShareClient({
             <p className='text-sm text-[rgb(var(--muted-foreground))] mb-4'>
               해당 주간에 제출된 주간보고가 없습니다.
             </p>
-            <Link
-              href={`/board/${board.id}/weekly-report/new`}
-              className='inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white text-sm transition-colors'
-            >
-              주간보고 작성하기
-            </Link>
           </div>
         ) : (
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
             {Array.from(reportsByUser.entries()).map(([userId, report]) => {
               const completedCount = report.completed_cards?.length || 0
               const inProgressCount = report.in_progress_cards?.length || 0
+              const board = (report as any).board
               return (
                 <div
                   key={report.id}
@@ -573,6 +562,16 @@ export function WeeklyReportShareClient({
                       </div>
                     </div>
                   </div>
+
+                  {/* 보드 정보 */}
+                  {board && (
+                    <div className='mb-3'>
+                      <div className='flex items-center gap-1.5 px-2 py-1 bg-blue-500/10 rounded-md'>
+                        <span className='text-xs'>{board.emoji || '📋'}</span>
+                        <span className='text-xs font-medium text-blue-600 dark:text-blue-400'>{board.title}</span>
+                      </div>
+                    </div>
+                  )}
 
                   {/* 통계 */}
                   <div className='flex items-center gap-3 mb-3'>

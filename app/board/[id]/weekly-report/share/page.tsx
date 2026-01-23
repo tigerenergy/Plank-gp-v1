@@ -22,15 +22,19 @@ export default async function WeeklyReportSharePage({ params, searchParams }: Pa
     redirect('/login')
   }
 
-  // 주간보고 목록 조회 (사용자가 접근 가능한 모든 보드)
-  // boardId가 있으면 해당 보드만, 없으면 모든 보드
-  const reportsResult = await getWeeklyReportsByBoard(boardId || null, week)
-  if (!reportsResult.success) {
+  // 보드 조회
+  const boardResult = await getBoard(boardId)
+  if (!boardResult.success || !boardResult.data) {
     redirect('/')
   }
 
-  // 보드는 선택사항 (특정 보드로 필터링할 때만 사용)
-  const board = boardId ? (await getBoard(boardId)).data : null
+  const board = boardResult.data
+
+  // 주간보고 목록 조회
+  const reportsResult = await getWeeklyReportsByBoard(boardId, week)
+  if (!reportsResult.success) {
+    redirect(`/board/${boardId}`)
+  }
 
   return <WeeklyReportShareClient board={board} reports={reportsResult.data || []} selectedWeek={week} />
 }

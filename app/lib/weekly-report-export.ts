@@ -4,7 +4,7 @@ import type { Board } from '@/types'
 
 // PDF 생성
 export function generateWeeklyReportPDF(
-  board: Board,
+  board: Board | null,
   reports: WeeklyReport[],
   weekStartDate: string,
   weekEndDate: string
@@ -18,7 +18,11 @@ export function generateWeeklyReportPDF(
   // 헤더
   doc.setFontSize(20)
   doc.setFont('helvetica', 'bold')
-  doc.text(`${board.emoji || '📋'} ${board.title} - 주간보고`, margin, yPos)
+  if (board) {
+    doc.text(`${board.emoji || '📋'} ${board.title} - 주간보고`, margin, yPos)
+  } else {
+    doc.text('주간보고 공유', margin, yPos)
+  }
   yPos += 10
 
   doc.setFontSize(12)
@@ -160,7 +164,7 @@ export function generateWeeklyReportPDF(
 
 // CSV 생성
 export function generateWeeklyReportCSV(
-  board: Board,
+  board: Board | null,
   reports: WeeklyReport[],
   weekStartDate: string,
   weekEndDate: string
@@ -168,7 +172,11 @@ export function generateWeeklyReportCSV(
   const rows: string[] = []
 
   // 헤더
-  rows.push(`보드,${board.title}`)
+  if (board) {
+    rows.push(`보드,${board.title}`)
+  } else {
+    rows.push('보드,전체')
+  }
   rows.push(`기간,${weekStartDate} ~ ${weekEndDate}`)
   rows.push('')
 
@@ -226,7 +234,10 @@ export function generateWeeklyReportCSV(
   const link = document.createElement('a')
   const url = URL.createObjectURL(blob)
   link.setAttribute('href', url)
-  link.setAttribute('download', `${board.title}_주간보고_${weekStartDate}.csv`)
+  const fileName = board 
+    ? `${board.title}_주간보고_${weekStartDate}.csv`
+    : `주간보고_공유_${weekStartDate}.csv`
+  link.setAttribute('download', fileName)
   link.style.visibility = 'hidden'
   document.body.appendChild(link)
   link.click()

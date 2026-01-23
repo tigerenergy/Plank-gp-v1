@@ -509,9 +509,8 @@ export async function getWeeklyReport(reportId: string): Promise<ActionResult<We
 }
 
 // 보드별 주간보고 목록 조회 (공유 페이지용)
-// 사용자가 접근 가능한 모든 보드의 주간보고 조회
 export async function getWeeklyReportsByBoard(
-  boardId: string | null,
+  boardId: string,
   weekStartDate?: string
 ): Promise<ActionResult<WeeklyReport[]>> {
   try {
@@ -525,29 +524,81 @@ export async function getWeeklyReportsByBoard(
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    // 사용자가 멤버인 모든 보드 ID 가져오기
-    const { data: boardMemberships } = await supabase
+    let query = supabase
+      .from('weekly_reports')
+      .select(
+        `
+        *,
+        user:profiles!weekly_reports_user_id_fkey(id, email, username, avatar_url)
+      `
+      )
+      .eq('board_id', boardId)
+      .order('week_start_date', { ascending: false })
+
+    if (weekStartDate) {
+      query = query.eq('week_start_date', weekStartDate)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error('주간보고 목록 조회 에러:', error)
+      return { success: false, error: '주간보고 목록을 조회할 수 없습니다.' }
+    }
+
+    return { success: true, data: data || [] }
+  } catch (error) {
+    console.error('주간보고 목록 조회 에러:', error)
+    return { success: false, error: '서버 연결에 실패했습니다.' }
+  }
+}
+
+// 사용자가 접근 가능한 모든 보드의 주간보고 조회 (통합 공간용)
+export async function getAllWeeklyReports(
+  weekStartDate?: string
+): Promise<ActionResult<WeeklyReport[]>> {
+  try {
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
+    // 사용자가 멤버인 모든 보드 ID 조회
+    const { data: userBoards, error: boardsError } = await supabase
       .from('board_members')
       .select('board_id')
       .eq('user_id', user.id)
 
-    const { data: ownedBoards } = await supabase
+    if (boardsError) {
+      console.error('보드 멤버 조회 에러:', boardsError)
+      return { success: false, error: '보드 정보를 조회할 수 없습니다.' }
+    }
+
+    // 사용자가 소유한 보드도 포함
+    const { data: ownedBoards, error: ownedError } = await supabase
       .from('boards')
       .select('id')
       .eq('created_by', user.id)
 
-    const accessibleBoardIds = new Set<string>()
-    if (boardMemberships) {
-      boardMemberships.forEach((bm) => accessibleBoardIds.add(bm.board_id))
-    }
-    if (ownedBoards) {
-      ownedBoards.forEach((b) => accessibleBoardIds.add(b.id))
+    if (ownedError) {
+      console.error('소유 보드 조회 에러:', ownedError)
     }
 
-    if (accessibleBoardIds.size === 0) {
+    // 모든 접근 가능한 보드 ID 수집
+    const boardIds = new Set<string>()
+    userBoards?.forEach((mb) => boardIds.add(mb.board_id))
+    ownedBoards?.forEach((b) => boardIds.add(b.id))
+
+    if (boardIds.size === 0) {
       return { success: true, data: [] }
     }
 
+    // 모든 보드의 주간보고 조회
     let query = supabase
       .from('weekly_reports')
       .select(
@@ -557,13 +608,9 @@ export async function getWeeklyReportsByBoard(
         board:boards!weekly_reports_board_id_fkey(id, title, emoji)
       `
       )
-      .in('board_id', Array.from(accessibleBoardIds))
+      .in('board_id', Array.from(boardIds))
       .order('week_start_date', { ascending: false })
-
-    // 특정 보드로 필터링 (선택사항)
-    if (boardId) {
-      query = query.eq('board_id', boardId)
-    }
+      .order('created_at', { ascending: false })
 
     if (weekStartDate) {
       query = query.eq('week_start_date', weekStartDate)

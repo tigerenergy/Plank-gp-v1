@@ -458,6 +458,7 @@ export default function HomeClient({ user, weeklyReports = [], teamMembers = [],
 
           </div>
         )}
+        </div>
       </div>
 
       <ConfirmModal

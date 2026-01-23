@@ -406,7 +406,6 @@ export default function HomeClient({ user, weeklyReports = [], teamMembers = [],
         ) : boards.length === 0 && !isCreating ? (
           <EmptyState onCreateClick={startCreating} />
         ) : filteredBoards.length === 0 && !isCreating ? (
-          // 필터 결과가 없을 때
           <div className='flex flex-col items-center justify-center py-16 text-center'>
             <div className='w-16 h-16 rounded-2xl bg-[rgb(var(--secondary))] flex items-center justify-center mb-4'>
               {filter === 'owned' ? (
@@ -464,7 +463,7 @@ export default function HomeClient({ user, weeklyReports = [], teamMembers = [],
       <ConfirmModal
         isOpen={!!deleteTarget}
         title='보드 삭제'
-        message={`'${deleteTarget?.title}' 보드를 삭제하시겠습니까? 모든 리스트와 카드도 함께 삭제됩니다.`}
+        message={deleteTarget ? `'${deleteTarget.title}' 보드를 삭제하시겠습니까? 모든 리스트와 카드도 함께 삭제됩니다.` : ''}
         confirmText='삭제'
         cancelText='취소'
         variant='danger'

@@ -158,7 +158,7 @@ export function generateWeeklyReportPDF(
   }
 
   // 파일명 생성
-  const fileName = `${board.title}_주간보고_${weekStartDate}.pdf`
+  const fileName = board ? `${board.title}_주간보고_${weekStartDate}.pdf` : `주간보고_공유_${weekStartDate}.pdf`
   doc.save(fileName)
 }
 

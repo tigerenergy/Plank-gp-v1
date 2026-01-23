@@ -16,6 +16,10 @@ import { CreateBoardModal } from './components/home/CreateBoardModal'
 import { EmptyState } from './components/home/EmptyState'
 import { Header } from './components/layout/Header'
 import { BoardCardSkeleton } from './components/ui/Skeleton'
+import type { WeeklyReport } from './actions/weekly-report'
+import type { Profile } from '@/types'
+import { FileText, Clock, CheckCircle2, TrendingUp, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 
 type FilterType = 'all' | 'owned' | 'joined'
 
@@ -27,9 +31,12 @@ const FILTERS: { key: FilterType; label: string; icon: React.ReactNode }[] = [
 
 interface HomeClientProps {
   user: User | null
+  weeklyReports?: WeeklyReport[]
+  teamMembers?: Profile[]
+  currentWeek?: string
 }
 
-export default function HomeClient({ user }: HomeClientProps) {
+export default function HomeClient({ user, weeklyReports = [], teamMembers = [], currentWeek }: HomeClientProps) {
   const router = useRouter()
   const {
     boards,
@@ -186,21 +193,161 @@ export default function HomeClient({ user }: HomeClientProps) {
     }
   }
 
+  // 주간보고 데이터 처리 (모든 팀원 표시, 작성하지 않은 사람도 포함)
+  const reportsByUser = new Map<string, WeeklyReport>()
+  weeklyReports.forEach((report) => {
+    reportsByUser.set(report.user_id, report)
+  })
+
+  // 모든 팀원에 대해 보고서가 있는지 확인
+  const weeklyReportCards = teamMembers.map((member) => {
+    const report = reportsByUser.get(member.id)
+    return {
+      member,
+      report: report || null,
+    }
+  })
+
   return (
     <main className='min-h-screen'>
       <Header user={user} />
 
       <div className='max-w-6xl mx-auto px-4 sm:px-6 py-10'>
-        {/* 헤더 */}
-        <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6'>
-          <div>
-            <h2 className='text-2xl font-bold tracking-tight text-[rgb(var(--foreground))]'>
-              프로젝트
-            </h2>
-            <p className='text-sm text-[rgb(var(--muted-foreground))] mt-1'>
-              총 {boards.length}개의 프로젝트
-            </p>
+        {/* 주간보고 공유 섹션 */}
+        <div className='mb-12'>
+          <div className='flex items-center justify-between mb-4'>
+            <div>
+              <h2 className='text-2xl font-bold tracking-tight text-[rgb(var(--foreground))]'>
+                주간보고 공유
+              </h2>
+              <p className='text-sm text-[rgb(var(--muted-foreground))] mt-1'>
+                팀원들의 주간보고를 한눈에 확인하세요
+                {currentWeek && (
+                  <span className='ml-2'>
+                    ({new Date(currentWeek).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })} ~{' '}
+                    {new Date(new Date(currentWeek).getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })})
+                  </span>
+                )}
+              </p>
+            </div>
+            <Link
+              href='/weekly-report/share'
+              className='text-sm text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-medium flex items-center gap-1'
+            >
+              전체 보기
+              <ArrowRight className='w-4 h-4' />
+            </Link>
           </div>
+
+          {weeklyReportCards.length > 0 ? (
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+              {weeklyReportCards.map(({ member, report }) => {
+                if (report) {
+                  // 보고서가 있는 경우
+                  const completedCount = report.completed_cards?.length || 0
+                  const inProgressCount = report.in_progress_cards?.length || 0
+                  return (
+                    <Link
+                      key={member.id}
+                      href='/weekly-report/share'
+                      className='card p-4 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-violet-500/30 hover:scale-[1.02]'
+                    >
+                      <div className='flex items-center justify-between mb-4'>
+                        <div className='flex items-center gap-2.5'>
+                          <div className='w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm'>
+                            {member.username?.[0]?.toUpperCase() || member.email?.[0]?.toUpperCase() || '익'}
+                          </div>
+                          <div>
+                            <div className='text-sm font-semibold text-[rgb(var(--foreground))]'>
+                              {member.username || member.email?.split('@')[0] || '익명'}
+                            </div>
+                            <div className='text-xs text-[rgb(var(--muted-foreground))] flex items-center gap-1 mt-0.5'>
+                              {report.status === 'submitted' ? (
+                                <>
+                                  <span className='w-1.5 h-1.5 bg-emerald-500 rounded-full' />
+                                  <span>제출 완료</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className='w-1.5 h-1.5 bg-yellow-500 rounded-full' />
+                                  <span>작성 중</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className='flex items-center gap-3 mb-3'>
+                        <div className='flex items-center gap-1.5 px-2.5 py-1 bg-violet-500/10 rounded-lg'>
+                          <Clock className='w-3.5 h-3.5 text-violet-600 dark:text-violet-400' />
+                          <span className='text-xs font-semibold text-violet-600 dark:text-violet-400'>{report.total_hours || 0}시간</span>
+                        </div>
+                        <div className='flex items-center gap-2 text-xs text-[rgb(var(--muted-foreground))]'>
+                          <CheckCircle2 className='w-3.5 h-3.5 text-emerald-500' />
+                          <span>{completedCount}</span>
+                          <TrendingUp className='w-3.5 h-3.5 text-blue-500 ml-1' />
+                          <span>{inProgressCount}</span>
+                        </div>
+                      </div>
+                    </Link>
+                  )
+                } else {
+                  // 보고서가 없는 경우
+                  return (
+                    <div
+                      key={member.id}
+                      className='card p-4 border-2 border-dashed border-[rgb(var(--border))] bg-[rgb(var(--secondary))]/30'
+                    >
+                      <div className='flex items-center justify-between mb-4'>
+                        <div className='flex items-center gap-2.5'>
+                          <div className='w-9 h-9 rounded-full bg-[rgb(var(--muted))] flex items-center justify-center text-[rgb(var(--muted-foreground))] font-bold text-sm'>
+                            {member.username?.[0]?.toUpperCase() || member.email?.[0]?.toUpperCase() || '익'}
+                          </div>
+                          <div>
+                            <div className='text-sm font-semibold text-[rgb(var(--foreground))]'>
+                              {member.username || member.email?.split('@')[0] || '익명'}
+                            </div>
+                            <div className='text-xs text-[rgb(var(--muted-foreground))] flex items-center gap-1 mt-0.5'>
+                              <span className='w-1.5 h-1.5 bg-gray-400 rounded-full' />
+                              <span>아직 작성하지 않음</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className='text-xs text-[rgb(var(--muted-foreground))] text-center py-2'>
+                        주간보고를 작성하지 않았습니다
+                      </div>
+                    </div>
+                  )
+                }
+              })}
+            </div>
+          ) : (
+            <div className='card p-12 text-center'>
+              <FileText className='w-16 h-16 mx-auto mb-4 text-[rgb(var(--muted-foreground))] opacity-30' />
+              <h3 className='text-lg font-medium text-[rgb(var(--foreground))] mb-2'>
+                아직 제출된 주간보고가 없습니다
+              </h3>
+              <p className='text-sm text-[rgb(var(--muted-foreground))]'>
+                해당 주간에 제출된 주간보고가 없습니다.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* 프로젝트 섹션 */}
+        <div>
+          {/* 헤더 */}
+          <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6'>
+            <div>
+              <h2 className='text-2xl font-bold tracking-tight text-[rgb(var(--foreground))]'>
+                프로젝트
+              </h2>
+              <p className='text-sm text-[rgb(var(--muted-foreground))] mt-1'>
+                총 {boards.length}개의 프로젝트
+              </p>
+            </div>
 
           {!isCreating && boards.length > 0 && (
             <button onClick={startCreating} className='btn-primary inline-flex items-center gap-2'>

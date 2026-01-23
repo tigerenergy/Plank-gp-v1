@@ -239,8 +239,8 @@ export default function HomeClient({ user, weeklyReports = [], teamMembers = [],
             </Link>
           </div>
 
-          {weeklyReportCards.length > 0 ? (
-            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+          {teamMembers.length > 0 ? (
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5'>
               {weeklyReportCards.map(({ member, report }) => {
                 if (report) {
                   // 보고서가 있는 경우
@@ -250,9 +250,10 @@ export default function HomeClient({ user, weeklyReports = [], teamMembers = [],
                     <Link
                       key={member.id}
                       href='/weekly-report/share'
-                      className='card p-4 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-violet-500/30 hover:scale-[1.02]'
+                      className='card p-5 h-44 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-violet-500/30 hover:scale-[1.02] flex flex-col'
+                      style={{ boxShadow: 'var(--shadow)' }}
                     >
-                      <div className='flex items-center justify-between mb-4'>
+                      <div className='flex items-center justify-between mb-3'>
                         <div className='flex items-center gap-2.5'>
                           <div className='w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm'>
                             {member.username?.[0]?.toUpperCase() || member.email?.[0]?.toUpperCase() || '익'}
@@ -278,7 +279,7 @@ export default function HomeClient({ user, weeklyReports = [], teamMembers = [],
                         </div>
                       </div>
 
-                      <div className='flex items-center gap-3 mb-3'>
+                      <div className='flex items-center gap-3 mb-auto'>
                         <div className='flex items-center gap-1.5 px-2.5 py-1 bg-violet-500/10 rounded-lg'>
                           <Clock className='w-3.5 h-3.5 text-violet-600 dark:text-violet-400' />
                           <span className='text-xs font-semibold text-violet-600 dark:text-violet-400'>{report.total_hours || 0}시간</span>
@@ -297,9 +298,10 @@ export default function HomeClient({ user, weeklyReports = [], teamMembers = [],
                   return (
                     <div
                       key={member.id}
-                      className='card p-4 border-2 border-dashed border-[rgb(var(--border))] bg-[rgb(var(--secondary))]/30'
+                      className='card p-5 h-44 border-2 border-dashed border-[rgb(var(--border))] bg-[rgb(var(--secondary))]/30 flex flex-col'
+                      style={{ boxShadow: 'var(--shadow)' }}
                     >
-                      <div className='flex items-center justify-between mb-4'>
+                      <div className='flex items-center justify-between mb-3'>
                         <div className='flex items-center gap-2.5'>
                           <div className='w-9 h-9 rounded-full bg-[rgb(var(--muted))] flex items-center justify-center text-[rgb(var(--muted-foreground))] font-bold text-sm'>
                             {member.username?.[0]?.toUpperCase() || member.email?.[0]?.toUpperCase() || '익'}
@@ -315,7 +317,7 @@ export default function HomeClient({ user, weeklyReports = [], teamMembers = [],
                           </div>
                         </div>
                       </div>
-                      <div className='text-xs text-[rgb(var(--muted-foreground))] text-center py-2'>
+                      <div className='text-xs text-[rgb(var(--muted-foreground))] text-center mt-auto'>
                         주간보고를 작성하지 않았습니다
                       </div>
                     </div>

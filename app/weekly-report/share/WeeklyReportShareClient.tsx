@@ -522,7 +522,7 @@ export function WeeklyReportShareClient({
             </p>
           </div>
         ) : (
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5'>
             {Array.from(reportsByUser.entries()).map(([userId, report]) => {
               const completedCount = report.completed_cards?.length || 0
               const inProgressCount = report.in_progress_cards?.length || 0
@@ -534,10 +534,11 @@ export function WeeklyReportShareClient({
                     setSelectedReport(report)
                     setIsDetailModalOpen(true)
                   }}
-                  className='card p-4 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-violet-500/30 hover:scale-[1.02]'
+                  className='card p-5 h-44 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-violet-500/30 hover:scale-[1.02] flex flex-col'
+                  style={{ boxShadow: 'var(--shadow)' }}
                 >
                   {/* 헤더 */}
-                  <div className='flex items-center justify-between mb-4'>
+                  <div className='flex items-center justify-between mb-3'>
                     <div className='flex items-center gap-2.5'>
                       <div className='w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm'>
                         {((report as any).user?.username || (report as any).user?.email?.split('@')[0] || '익명')[0].toUpperCase()}
@@ -563,18 +564,8 @@ export function WeeklyReportShareClient({
                     </div>
                   </div>
 
-                  {/* 보드 정보 */}
-                  {board && (
-                    <div className='mb-3'>
-                      <div className='flex items-center gap-1.5 px-2 py-1 bg-blue-500/10 rounded-md'>
-                        <span className='text-xs'>{board.emoji || '📋'}</span>
-                        <span className='text-xs font-medium text-blue-600 dark:text-blue-400'>{board.title}</span>
-                      </div>
-                    </div>
-                  )}
-
                   {/* 통계 */}
-                  <div className='flex items-center gap-3 mb-3'>
+                  <div className='flex items-center gap-3 mb-auto'>
                     <div className='flex items-center gap-1.5 px-2.5 py-1 bg-violet-500/10 rounded-lg'>
                       <Clock className='w-3.5 h-3.5 text-violet-600 dark:text-violet-400' />
                       <span className='text-xs font-semibold text-violet-600 dark:text-violet-400'>{report.total_hours || 0}시간</span>
@@ -585,30 +576,6 @@ export function WeeklyReportShareClient({
                       <TrendingUp className='w-3.5 h-3.5 text-blue-500 ml-1' />
                       <span>{inProgressCount}</span>
                     </div>
-                  </div>
-
-                  {/* 미리보기 */}
-                  <div className='space-y-2'>
-                    {completedCount > 0 && (
-                      <div className='text-xs text-[rgb(var(--muted-foreground))]'>
-                        완료: {report.completed_cards?.[0]?.title || '작업 없음'}
-                      </div>
-                    )}
-                    {inProgressCount > 0 && (
-                      <div className='text-xs text-[rgb(var(--muted-foreground))]'>
-                        진행중: {report.in_progress_cards?.[0]?.title || '작업 없음'}
-                      </div>
-                    )}
-                    {completedCount === 0 && inProgressCount === 0 && (
-                      <div className='text-xs text-[rgb(var(--muted-foreground))] text-center py-2'>
-                        작업 없음
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 클릭 안내 */}
-                  <div className='mt-3 pt-3 border-t border-[rgb(var(--border))] text-xs text-center text-[rgb(var(--muted-foreground))]'>
-                    클릭하여 상세 보기
                   </div>
                 </div>
               )

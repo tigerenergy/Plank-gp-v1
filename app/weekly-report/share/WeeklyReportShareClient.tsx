@@ -534,38 +534,40 @@ export function WeeklyReportShareClient({
                     setSelectedReport(report)
                     setIsDetailModalOpen(true)
                   }}
-                  className='card p-5 h-44 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-violet-500/30 hover:scale-[1.02] flex flex-col'
+                  className='card p-5 h-44 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-violet-500/30 hover:scale-[1.02] flex flex-col relative'
                   style={{ boxShadow: 'var(--shadow)' }}
                 >
-                  {/* 헤더 */}
-                  <div className='flex items-center justify-between mb-3'>
-                    <div className='flex items-center gap-2.5'>
-                      <div className='w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm'>
+                  {/* 상단: 아바타 아이콘 */}
+                  <div className='flex items-start justify-between mb-4'>
+                    <div className='w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-md'>
+                      <span className='text-xl font-bold text-white'>
                         {((report as any).user?.username || (report as any).user?.email?.split('@')[0] || '익명')[0].toUpperCase()}
-                      </div>
-                      <div>
-                        <div className='text-sm font-semibold text-[rgb(var(--foreground))]'>
-                          {(report as any).user?.username || (report as any).user?.email?.split('@')[0] || '익명'}
-                        </div>
-                        <div className='text-xs text-[rgb(var(--muted-foreground))] flex items-center gap-1 mt-0.5'>
-                          {report.status === 'submitted' ? (
-                            <>
-                              <span className='w-1.5 h-1.5 bg-emerald-500 rounded-full' />
-                              <span>제출 완료</span>
-                            </>
-                          ) : (
-                            <>
-                              <span className='w-1.5 h-1.5 bg-yellow-500 rounded-full' />
-                              <span>작성 중</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
+                      </span>
                     </div>
                   </div>
 
-                  {/* 통계 */}
-                  <div className='flex items-center gap-3 mb-auto'>
+                  {/* 제목 (이름) */}
+                  <h3 className='text-base font-bold text-[rgb(var(--foreground))] truncate mb-1'>
+                    {(report as any).user?.username || (report as any).user?.email?.split('@')[0] || '익명'}
+                  </h3>
+
+                  {/* 상태 */}
+                  <div className='flex items-center gap-1.5 mb-4'>
+                    {report.status === 'submitted' ? (
+                      <>
+                        <span className='w-1.5 h-1.5 bg-emerald-500 rounded-full' />
+                        <span className='text-sm text-[rgb(var(--muted-foreground))]'>제출 완료</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className='w-1.5 h-1.5 bg-yellow-500 rounded-full' />
+                        <span className='text-sm text-[rgb(var(--muted-foreground))]'>작성 중</span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* 하단: 통계 정보 */}
+                  <div className='absolute bottom-4 left-5 right-5 flex items-center gap-3'>
                     <div className='flex items-center gap-1.5 px-2.5 py-1 bg-violet-500/10 rounded-lg'>
                       <Clock className='w-3.5 h-3.5 text-violet-600 dark:text-violet-400' />
                       <span className='text-xs font-semibold text-violet-600 dark:text-violet-400'>{report.total_hours || 0}시간</span>

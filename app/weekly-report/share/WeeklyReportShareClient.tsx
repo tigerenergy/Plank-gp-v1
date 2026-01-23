@@ -349,6 +349,22 @@ export function WeeklyReportShareClient({
   // 현재 주간의 보고서만 필터링
   const currentWeekReports = reports.filter((r) => r.week_start_date === currentWeek)
 
+  // 디버깅: 보고서 정보 로그
+  useEffect(() => {
+    console.log('📊 전체보기 페이지 - 보고서 정보:', {
+      totalReports: reports.length,
+      currentWeek,
+      currentWeekReports: currentWeekReports.length,
+      reports: currentWeekReports.map((r) => ({
+        id: r.id,
+        userId: r.user_id,
+        userName: (r as any).user?.username || (r as any).user?.email,
+        boardTitle: (r as any).board?.title,
+        status: r.status,
+      })),
+    })
+  }, [reports, currentWeek, currentWeekReports])
+
   // 사용자별 그룹화
   const reportsByUser = new Map<string, WeeklyReport>()
   for (const report of currentWeekReports) {
@@ -515,10 +531,14 @@ export function WeeklyReportShareClient({
           <div className='card p-12 text-center'>
             <FileText className='w-16 h-16 mx-auto mb-4 text-[rgb(var(--muted-foreground))] opacity-30' />
             <h3 className='text-lg font-medium text-[rgb(var(--foreground))] mb-2'>
-              아직 제출된 주간보고가 없습니다
+              {reports.length === 0 
+                ? '접근 가능한 주간보고가 없습니다'
+                : '해당 주간에 제출된 주간보고가 없습니다'}
             </h3>
             <p className='text-sm text-[rgb(var(--muted-foreground))] mb-4'>
-              해당 주간에 제출된 주간보고가 없습니다.
+              {reports.length === 0
+                ? '공유된 보드의 주간보고가 없거나, 접근 권한이 없습니다.'
+                : `다른 주간의 보고서는 ${reports.length}개가 있습니다. 위의 주간 선택기를 사용하여 다른 주간을 확인해보세요.`}
             </p>
           </div>
         ) : (

@@ -148,21 +148,30 @@ export function Card({ card, isDoneList = false }: CardProps) {
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{ ...(isCompleted ? { boxShadow: 'var(--shadow)' } : {}), ...style }}
       {...attributes}
       {...listeners}
       onClick={() => openCardModal(card)}
       className={`
-        card card-item cursor-pointer select-none flex flex-col
+        card card-item cursor-pointer select-none flex flex-col relative
         ${isDragging ? 'opacity-60 ring-2 ring-indigo-400 scale-[1.02] rotate-1' : ''}
         ${isCompleted 
-          ? 'px-4 py-3 opacity-60 bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800' 
-          : 'px-6 py-5'}
+          ? 'p-5 h-44 opacity-60 bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800' 
+          : 'p-5'}
       `}
     >
+      {/* 완료된 카드: 상단 아이콘 */}
+      {isCompleted && (
+        <div className='flex items-start justify-between mb-4'>
+          <div className='w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-md'>
+            <CheckCircle2 className='w-6 h-6 text-white' />
+          </div>
+        </div>
+      )}
+
       {/* 라벨 */}
       {card.labels && card.labels.length > 0 && (
-        <div className={`flex flex-wrap gap-1.5 ${isCompleted ? 'mb-2' : 'mb-3'}`}>
+        <div className={`flex flex-wrap gap-1.5 ${isCompleted ? 'mb-3' : 'mb-3'}`}>
           {card.labels.slice(0, 4).map((label, idx) => {
             const colorInfo = labelColorHex[label.color] || labelColorHex.blue
             return (
@@ -184,70 +193,71 @@ export function Card({ card, isDoneList = false }: CardProps) {
       )}
 
       {/* 제목 */}
-      <h3 className={`${isCompleted ? 'text-base' : 'text-lg'} font-bold leading-snug ${isCompleted ? 'mb-1.5' : 'mb-3'} flex items-center gap-2 ${isCompleted ? 'text-emerald-600 dark:text-emerald-400' : 'text-[rgb(var(--foreground))]'}`}>
-        {isCompleted && <CheckCircle2 className='w-4 h-4 flex-shrink-0' />}
-        <span className={isCompleted ? 'line-through' : ''}>{card.title}</span>
+      <h3 className={`text-base font-bold leading-snug mb-1 ${isCompleted ? 'text-emerald-600 dark:text-emerald-400 line-through' : 'text-[rgb(var(--foreground))]'}`}>
+        {card.title}
       </h3>
 
       {/* 설명 */}
-      {card.description && (
-        <p className={`${isCompleted ? 'text-sm' : 'text-base'} text-[rgb(var(--muted-foreground))] line-clamp-2 ${isCompleted ? 'mb-2' : 'mb-4'} leading-relaxed`}>
+      {card.description && !isCompleted && (
+        <p className='text-sm text-[rgb(var(--muted-foreground))] line-clamp-2 mb-auto leading-relaxed'>
           {card.description}
         </p>
       )}
 
       {/* 완료된 카드: 완료 시간 표시 */}
       {isCompleted && card.completed_at && (
-        <div className='text-xs text-emerald-600 dark:text-emerald-400 mb-2 font-medium flex items-center gap-1.5'>
-          <CheckCircle2 className='w-3.5 h-3.5 flex-shrink-0' />
-          <span>완료: {new Date(card.completed_at).toLocaleDateString('ko-KR', { 
-            month: 'short', 
-            day: 'numeric', 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          })}</span>
+        <div className='flex items-center gap-1.5 mb-auto'>
+          <span className='w-1.5 h-1.5 bg-emerald-500 rounded-full' />
+          <span className='text-sm text-[rgb(var(--muted-foreground))]'>
+            {new Date(card.completed_at).toLocaleDateString('ko-KR', { 
+              month: 'short', 
+              day: 'numeric'
+            })}
+          </span>
         </div>
       )}
 
-      {/* 하단: 마감일 + 아바타 (항상 아래에 고정) */}
-      <div className={`flex items-center justify-between mt-auto ${isCompleted ? 'pt-2' : 'pt-4'}`}>
-        <div className='flex items-center gap-2'>
-          {/* 마감일 - D-Day 형식 (완료 안 된 경우만) */}
-          {!isCompleted && card.due_date && dueDateStatus && (
-            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold ${getDueDateStyle(dueDateStatus)}`}>
-              <Calendar className='w-4 h-4' />
-              <span>{formatDDay(card.due_date)}</span>
-            </div>
-          )}
-        </div>
-
-        {/* 담당자 아바타 */}
-        {displayUser && (
-          <div 
-            className='flex-shrink-0'
-            title={displayUser.username || displayUser.email || ''}
-          >
-            {displayUser.avatar_url ? (
-              <img
-                src={displayUser.avatar_url}
-                alt=''
-                referrerPolicy='no-referrer'
-                className={`${isCompleted ? 'w-8 h-8' : 'w-10 h-10'} rounded-full ring-2 ring-white dark:ring-slate-700 shadow-md`}
-              />
-            ) : (
-              <div className={`${isCompleted ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-md`}>
-                <span className={`${isCompleted ? 'text-xs' : 'text-sm'} font-bold text-white`}>
-                  {(displayUser.username || displayUser.email || '?')[0].toUpperCase()}
-                </span>
+      {/* 하단: 마감일 + 아바타 (완료된 카드는 하단 고정, 완료 리스트가 아닐 때만) */}
+      {!isDoneList && (
+        <div className={`${isCompleted ? 'absolute bottom-4 left-5 right-5' : 'mt-auto pt-4'} flex items-center justify-between`}>
+          <div className='flex items-center gap-2'>
+            {/* 마감일 - D-Day 형식 (완료 안 된 경우만) */}
+            {!isCompleted && card.due_date && dueDateStatus && (
+              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold ${getDueDateStyle(dueDateStatus)}`}>
+                <Calendar className='w-4 h-4' />
+                <span>{formatDDay(card.due_date)}</span>
               </div>
             )}
           </div>
-        )}
-      </div>
+
+          {/* 담당자 아바타 */}
+          {displayUser && (
+            <div 
+              className='flex-shrink-0'
+              title={displayUser.username || displayUser.email || ''}
+            >
+              {displayUser.avatar_url ? (
+                <img
+                  src={displayUser.avatar_url}
+                  alt=''
+                  referrerPolicy='no-referrer'
+                  className='w-10 h-10 rounded-full ring-2 ring-white dark:ring-slate-700 shadow-md'
+                />
+              ) : (
+                <div className='w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-md'>
+                  <span className='text-sm font-bold text-white'>
+                    {(displayUser.username || displayUser.email || '?')[0].toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 완료 리스트일 때만 완료 처리 버튼 표시 */}
       {isDoneList && (
-        <div className={`${isCompleted ? 'mt-2 pt-2' : 'mt-4 pt-4'} border-t border-[rgb(var(--border))]`}>
+        <div className={`${isCompleted ? 'absolute bottom-4 left-5 right-5' : 'mt-4 pt-4'} ${isCompleted ? '' : 'border-t border-[rgb(var(--border))]'}`}>
           {!isCompleted ? (
             <button
               onClick={handleComplete}

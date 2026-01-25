@@ -8,6 +8,7 @@
 
 ### 🎯 프로젝트 현황
 - **[PROJECT_STATUS.md](./PROJECT_STATUS.md)** ⭐ **최신** - 구현 완료된 기능 및 구현해야 할 기능 목록
+- **[DEVELOPMENT_HISTORY.md](./DEVELOPMENT_HISTORY.md)** - 개발 히스토리 및 타임라인
 
 ### 🛠️ 개발 가이드
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - 아키텍처 문서
@@ -23,6 +24,7 @@
 ## 🔍 빠른 찾기
 
 - **현재 상태 확인**: [PROJECT_STATUS.md](./PROJECT_STATUS.md) ⭐ **최신**
+- **개발 히스토리**: [DEVELOPMENT_HISTORY.md](./DEVELOPMENT_HISTORY.md)
 - **아키텍처**: [ARCHITECTURE.md](./ARCHITECTURE.md)
 - **개발 규칙**: [DEVELOPMENT_RULES.md](./DEVELOPMENT_RULES.md)
 - **설정 가이드**: [SETUP_GUIDE.md](./SETUP_GUIDE.md)

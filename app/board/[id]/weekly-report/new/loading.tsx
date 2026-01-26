@@ -1,76 +1,50 @@
 'use client'
 
-import { Skeleton } from '@/app/components/ui/Skeleton'
+import Image from 'next/image'
+import { motion } from 'framer-motion'
 
 export default function WeeklyReportNewLoading() {
   return (
-    <div className='min-h-screen bg-[rgb(var(--background))]'>
-      {/* 헤더 스켈레톤 */}
-      <header className='sticky top-0 z-40 bg-[rgb(var(--background))]/80 backdrop-blur-xl border-b border-[rgb(var(--border))]'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='h-16 flex items-center justify-between'>
-            <div className='flex items-center gap-4'>
-              <Skeleton className='w-10 h-10 rounded-xl' />
-              <div>
-                <Skeleton className='h-5 w-48 mb-2' />
-                <Skeleton className='h-4 w-32' />
-              </div>
-            </div>
-            <div className='flex items-center gap-2'>
-              <Skeleton className='h-10 w-24 rounded-xl' />
-              <Skeleton className='h-10 w-20 rounded-xl' />
-            </div>
-          </div>
+    <div className='min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center'>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className='flex flex-col items-center gap-4'
+      >
+        <Image
+          src='/blackLogo.png'
+          alt='Plank'
+          width={120}
+          height={40}
+          className='h-10 w-auto dark:hidden'
+          priority
+        />
+        <Image
+          src='/whiteLogo.png'
+          alt='Plank'
+          width={120}
+          height={40}
+          className='h-10 w-auto hidden dark:block'
+          priority
+        />
+        <div className='flex gap-1'>
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              className='w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full'
+              animate={{ y: [0, -8, 0] }}
+              transition={{
+                duration: 0.5,
+                repeat: Infinity,
+                delay: i * 0.1,
+              }}
+            />
+          ))}
         </div>
-      </header>
-
-      <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
-        <div className='space-y-6'>
-          {/* 완료된 카드 섹션 스켈레톤 */}
-          <div className='card p-6'>
-            <Skeleton className='h-6 w-32 mb-4' />
-            <div className='space-y-3'>
-              {[1, 2, 3].map((i) => (
-                <div key={i} className='p-4 bg-[rgb(var(--secondary))] rounded-xl border border-[rgb(var(--border))]'>
-                  <Skeleton className='h-5 w-3/4 mb-2' />
-                  <Skeleton className='h-4 w-1/2' />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 진행 중인 카드 섹션 스켈레톤 */}
-          <div className='card p-6'>
-            <Skeleton className='h-6 w-32 mb-4' />
-            <div className='space-y-4'>
-              {[1, 2].map((i) => (
-                <div key={i} className='p-4 bg-[rgb(var(--secondary))] rounded-xl border border-[rgb(var(--border))]'>
-                  <Skeleton className='h-5 w-2/3 mb-2' />
-                  <Skeleton className='h-4 w-1/3 mb-4' />
-                  <div className='grid grid-cols-2 gap-4 mb-4'>
-                    <Skeleton className='h-10 w-full' />
-                    <Skeleton className='h-10 w-full' />
-                  </div>
-                  <Skeleton className='h-10 w-full mb-4' />
-                  <Skeleton className='h-20 w-full mb-4' />
-                  <Skeleton className='h-16 w-full' />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 총 작업 시간 스켈레톤 */}
-          <div className='card p-6'>
-            <Skeleton className='h-8 w-48' />
-          </div>
-
-          {/* 추가 메모 스켈레톤 */}
-          <div className='card p-6'>
-            <Skeleton className='h-5 w-24 mb-2' />
-            <Skeleton className='h-32 w-full' />
-          </div>
-        </div>
-      </main>
+        <p className='text-sm text-slate-500 dark:text-slate-400 mt-2'>
+          주간보고 불러오는 중...
+        </p>
+      </motion.div>
     </div>
   )
 }

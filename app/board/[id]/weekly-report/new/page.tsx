@@ -50,17 +50,29 @@ export default async function WeeklyReportNewPage({ params }: PageProps) {
   if (!report) {
     const createResult = await createWeeklyReport(boardId, weekStartStr)
     if (!createResult.success || !createResult.data) {
-      redirect(`/board/${boardId}`)
-    }
-    report = createResult.data
-  } else {
-    // 기존 보고서가 있어도 최신 데이터로 자동 갱신 (draft 상태일 때만)
-    // 완료 취소 후 이동 등으로 인한 데이터 변경을 반영하기 위해 항상 갱신
-    if (report.status === 'draft') {
-      const refreshResult = await refreshWeeklyReportData(report.id, boardId, weekStartStr)
-      if (refreshResult.success && refreshResult.data) {
-        report = refreshResult.data
+      // 생성 실패 시 다시 조회 시도 (중복 생성 등의 경우)
+      const { data: retryReport } = await supabase
+        .from('weekly_reports')
+        .select('*')
+        .eq('board_id', boardId)
+        .eq('user_id', user.id)
+        .eq('week_start_date', weekStartStr)
+        .maybeSingle()
+      
+      if (!retryReport) {
+        redirect(`/board/${boardId}`)
       }
+      report = retryReport
+    } else {
+      report = createResult.data
+    }
+  }
+  
+  // 기존 보고서가 있으면 최신 데이터로 자동 갱신 (draft 상태일 때만)
+  if (report && report.status === 'draft') {
+    const refreshResult = await refreshWeeklyReportData(report.id, boardId, weekStartStr)
+    if (refreshResult.success && refreshResult.data) {
+      report = refreshResult.data
     }
   }
 

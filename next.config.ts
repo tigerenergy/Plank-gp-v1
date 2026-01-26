@@ -1,7 +1,12 @@
 import type { NextConfig } from 'next'
+import path from 'path'
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  // Turbopack 루트 디렉토리 명시적 설정
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
   images: {
     remotePatterns: [
       {

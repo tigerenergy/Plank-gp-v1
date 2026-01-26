@@ -1,6 +1,6 @@
 'use client'
 
-import { Users, FileText, History } from 'lucide-react'
+import { Users, FileText } from 'lucide-react'
 import Link from 'next/link'
 import type { User } from '@supabase/supabase-js'
 import type { Profile } from '@/types'
@@ -92,13 +92,6 @@ export function BoardHeader({ boardId, title, user, members, onSettingsClick }: 
                 >
                   <FileText className='w-4 h-4' />
                   주간보고 작성
-                </Link>
-                <Link
-                  href={`/board/${boardId}/weekly-report/history`}
-                  className='w-full px-4 py-2.5 text-left text-sm hover:bg-[rgb(var(--secondary))] flex items-center gap-2'
-                >
-                  <History className='w-4 h-4' />
-                  주간보고 히스토리
                 </Link>
                 <Link
                   href='/weekly-report/share'

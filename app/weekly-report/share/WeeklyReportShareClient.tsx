@@ -3,10 +3,70 @@
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Users, Clock, CheckCircle2, TrendingUp, FileText } from 'lucide-react'
+import Select from 'react-select'
+import type { StylesConfig, SingleValue } from 'react-select'
 import { createClient } from '@/lib/supabase/client'
 import type { WeeklyReport } from '@/app/actions/weekly-report'
 import { WeeklyReportDetailModal } from '@/app/components/weekly-report/WeeklyReportDetailModal'
 import { getAllWeeklyReports } from '@/app/actions/weekly-report'
+
+// react-select 스타일
+const selectStyles: StylesConfig<{ value: string; label: string }, false> = {
+  control: (base) => ({
+    ...base,
+    backgroundColor: 'rgb(var(--secondary))',
+    borderColor: 'rgb(var(--border))',
+    borderRadius: '0.75rem',
+    padding: '0 0.25rem',
+    minHeight: '38px',
+    boxShadow: 'none',
+    '&:hover': {
+      borderColor: 'rgb(var(--border))',
+    },
+  }),
+  menu: (base) => ({
+    ...base,
+    backgroundColor: 'rgb(var(--card))',
+    borderRadius: '0.75rem',
+    border: '1px solid rgb(var(--border))',
+    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+    zIndex: 50,
+  }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isSelected
+      ? 'rgb(139 92 246)'
+      : state.isFocused
+      ? 'rgb(var(--secondary))'
+      : 'transparent',
+    color: state.isSelected ? 'white' : 'rgb(var(--foreground))',
+    cursor: 'pointer',
+    fontSize: '0.875rem',
+    '&:active': {
+      backgroundColor: 'rgb(139 92 246 / 0.8)',
+    },
+  }),
+  singleValue: (base) => ({
+    ...base,
+    color: 'rgb(var(--foreground))',
+    fontSize: '0.875rem',
+  }),
+  input: (base) => ({
+    ...base,
+    color: 'rgb(var(--foreground))',
+  }),
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+  dropdownIndicator: (base) => ({
+    ...base,
+    color: 'rgb(var(--muted-foreground))',
+    padding: '4px',
+    '&:hover': {
+      color: 'rgb(var(--foreground))',
+    },
+  }),
+}
 
 interface WeeklyReportShareClientProps {
   reports: WeeklyReport[]
@@ -471,25 +531,31 @@ export function WeeklyReportShareClient({
                   </span>
                 </div>
               )}
-              <select
-                value={currentWeek}
-                onChange={(e) => {
-                  window.location.href = `/weekly-report/share?week=${e.target.value}`
+              <Select
+                value={{
+                  value: currentWeek,
+                  label: (() => {
+                    const date = new Date(currentWeek)
+                    const endDate = new Date(date)
+                    endDate.setDate(date.getDate() + 6)
+                    return `${date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })} ~ ${endDate.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}`
+                  })()
                 }}
-                className='px-3 py-2 rounded-xl bg-[rgb(var(--secondary))] border border-[rgb(var(--border))] text-sm'
-              >
-                {weekOptions.map((week) => {
+                onChange={(option: SingleValue<{ value: string; label: string }>) => {
+                  if (option) window.location.href = `/weekly-report/share?week=${option.value}`
+                }}
+                options={weekOptions.map((week) => {
                   const date = new Date(week)
                   const endDate = new Date(date)
                   endDate.setDate(date.getDate() + 6)
-                  return (
-                    <option key={week} value={week}>
-                      {date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })} ~{' '}
-                      {endDate.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
-                    </option>
-                  )
+                  return {
+                    value: week,
+                    label: `${date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })} ~ ${endDate.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}`
+                  }
                 })}
-              </select>
+                styles={selectStyles}
+                isSearchable={false}
+              />
             </div>
           </div>
         </div>

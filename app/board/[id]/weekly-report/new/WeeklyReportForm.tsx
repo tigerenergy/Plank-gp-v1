@@ -4,10 +4,74 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Save, Send, Clock, CheckCircle2, TrendingUp, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
+import Select from 'react-select'
+import type { StylesConfig, SingleValue } from 'react-select'
 import type { Board } from '@/types'
 import { updateWeeklyReport, submitWeeklyReport, refreshWeeklyReportData } from '@/app/actions/weekly-report'
 import type { WeeklyReport } from '@/app/actions/weekly-report'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
+
+// react-select 스타일
+const selectStyles: StylesConfig<{ value: string; label: string }, false> = {
+  control: (base) => ({
+    ...base,
+    backgroundColor: 'rgb(var(--background))',
+    borderColor: 'rgb(var(--border))',
+    borderRadius: '0.75rem',
+    padding: '0.125rem 0.25rem',
+    boxShadow: 'none',
+    '&:hover': {
+      borderColor: 'rgb(var(--border))',
+    },
+    '&:focus-within': {
+      borderColor: 'rgb(139 92 246)',
+      boxShadow: '0 0 0 2px rgba(139, 92, 246, 0.2)',
+    },
+  }),
+  menu: (base) => ({
+    ...base,
+    backgroundColor: 'rgb(var(--card))',
+    borderRadius: '0.75rem',
+    border: '1px solid rgb(var(--border))',
+    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+    zIndex: 50,
+  }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isSelected
+      ? 'rgb(139 92 246)'
+      : state.isFocused
+      ? 'rgb(var(--secondary))'
+      : 'transparent',
+    color: state.isSelected ? 'white' : 'rgb(var(--foreground))',
+    cursor: 'pointer',
+    '&:active': {
+      backgroundColor: 'rgb(139 92 246 / 0.8)',
+    },
+  }),
+  singleValue: (base) => ({
+    ...base,
+    color: 'rgb(var(--foreground))',
+  }),
+  input: (base) => ({
+    ...base,
+    color: 'rgb(var(--foreground))',
+  }),
+  placeholder: (base) => ({
+    ...base,
+    color: 'rgb(var(--muted-foreground))',
+  }),
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+  dropdownIndicator: (base) => ({
+    ...base,
+    color: 'rgb(var(--muted-foreground))',
+    '&:hover': {
+      color: 'rgb(var(--foreground))',
+    },
+  }),
+}
 
 interface WeeklyReportFormProps {
   board: Board
@@ -382,17 +446,16 @@ export function WeeklyReportForm({ board, report: initialReport }: WeeklyReportF
                       <label className='text-xs font-semibold text-[rgb(var(--muted-foreground))] mb-2 block uppercase tracking-wide'>
                         진행 상태
                       </label>
-                      <select
-                        value={card.user_input?.status || '진행중'}
-                        onChange={(e) => updateCard(card.card_id, { status: e.target.value })}
-                        className='w-full px-4 py-2.5 rounded-xl bg-[rgb(var(--background))] border border-[rgb(var(--border))] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all'
-                      >
-                        {statusOptions.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
+                      <Select
+                        value={statusOptions.find((opt) => opt.value === (card.user_input?.status || '진행중'))}
+                        onChange={(option: SingleValue<{ value: string; label: string }>) => {
+                          if (option) updateCard(card.card_id, { status: option.value })
+                        }}
+                        options={statusOptions}
+                        styles={selectStyles}
+                        isSearchable={false}
+                        placeholder="상태 선택"
+                      />
                     </div>
 
                     {/* 진척도 */}

@@ -279,21 +279,21 @@ export function Card({ card, isDoneList = false }: CardProps) {
               )}
             </button>
           ) : (
-            <div className='flex gap-2'>
+            <div className='flex items-center gap-2'>
               <button
                 onClick={handleUncomplete}
                 disabled={isCompleting || isDeleting}
-                className='flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg
-                         bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 
-                         text-slate-700 dark:text-slate-300 text-sm font-medium
+                className='flex items-center gap-1 px-2.5 py-1 rounded-md
+                         bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/50 dark:hover:bg-slate-600/50 
+                         text-slate-600 dark:text-slate-400 text-xs font-medium
                          transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                 title='완료 상태를 되돌립니다'
               >
                 {isCompleting ? (
-                  <div className='w-4 h-4 border-2 border-slate-700 dark:border-slate-300 border-t-transparent rounded-full animate-spin' />
+                  <div className='w-3 h-3 border-2 border-slate-600 dark:border-slate-400 border-t-transparent rounded-full animate-spin' />
                 ) : (
                   <>
-                    <Undo2 className='w-4 h-4' />
+                    <Undo2 className='w-3 h-3' />
                     되돌리기
                   </>
                 )}
@@ -301,17 +301,17 @@ export function Card({ card, isDoneList = false }: CardProps) {
               <button
                 onClick={handleDeleteClick}
                 disabled={isCompleting || isDeleting}
-                className='flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg
-                         bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 
-                         text-red-600 dark:text-red-400 text-sm font-medium
+                className='flex items-center gap-1 px-2.5 py-1 rounded-md
+                         bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 
+                         text-red-500 dark:text-red-400 text-xs font-medium
                          transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                 title='카드를 삭제합니다'
               >
                 {isDeleting ? (
-                  <div className='w-4 h-4 border-2 border-red-600 dark:border-red-400 border-t-transparent rounded-full animate-spin' />
+                  <div className='w-3 h-3 border-2 border-red-500 dark:border-red-400 border-t-transparent rounded-full animate-spin' />
                 ) : (
                   <>
-                    <Trash2 className='w-4 h-4' />
+                    <Trash2 className='w-3 h-3' />
                     삭제
                   </>
                 )}

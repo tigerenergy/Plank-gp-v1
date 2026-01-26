@@ -581,7 +581,8 @@ export function WeeklyReportShareClient({
             {Array.from(reportsByUser.entries()).map(([userId, report]) => {
               const completedCount = report.completed_cards?.length || 0
               const inProgressCount = report.in_progress_cards?.length || 0
-              const board = (report as any).board
+              const user = (report as any).user
+              const displayName = user?.username || user?.email?.split('@')[0] || '익명'
               return (
                 <div
                   key={report.id}
@@ -592,47 +593,45 @@ export function WeeklyReportShareClient({
                   className='card p-5 h-44 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-violet-500/30 hover:scale-[1.02] flex flex-col relative'
                   style={{ boxShadow: 'var(--shadow)' }}
                 >
-                  {/* 상단: 아바타 아이콘 */}
+                  {/* 상단: 아이콘 */}
                   <div className='flex items-start justify-between mb-4'>
                     <div className='w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-md'>
-                      <span className='text-xl font-bold text-white'>
-                        {((report as any).user?.username || (report as any).user?.email?.split('@')[0] || '익명')[0].toUpperCase()}
-                      </span>
+                      <FileText className='w-5 h-5 text-white' />
                     </div>
                   </div>
 
                   {/* 제목 (이름) */}
                   <h3 className='text-base font-bold text-[rgb(var(--foreground))] truncate mb-1'>
-                    {(report as any).user?.username || (report as any).user?.email?.split('@')[0] || '익명'}
+                    {displayName}
                   </h3>
 
-                  {/* 상태 */}
-                  <div className='flex items-center gap-1.5 mb-auto'>
+                  {/* 상태 + 통계 */}
+                  <div className='flex items-center gap-2 text-sm text-[rgb(var(--muted-foreground))] mb-auto'>
                     {report.status === 'submitted' ? (
-                      <>
-                        <span className='w-1.5 h-1.5 bg-emerald-500 rounded-full' />
-                        <span className='text-sm text-[rgb(var(--muted-foreground))]'>제출 완료</span>
-                      </>
+                      <span className='text-emerald-500'>제출 완료</span>
                     ) : (
-                      <>
-                        <span className='w-1.5 h-1.5 bg-yellow-500 rounded-full' />
-                        <span className='text-sm text-[rgb(var(--muted-foreground))]'>작성 중</span>
-                      </>
+                      <span className='text-amber-500'>작성 중</span>
                     )}
+                    <span>·</span>
+                    <span>{report.total_hours || 0}시간</span>
+                    <span>·</span>
+                    <span>완료 {completedCount}</span>
                   </div>
 
-                  {/* 하단: 통계 정보 */}
-                  <div className='absolute bottom-4 left-5 right-5 flex items-center gap-3'>
-                    <div className='flex items-center gap-1.5 px-2.5 py-1 bg-violet-500/10 rounded-lg'>
-                      <Clock className='w-3.5 h-3.5 text-violet-600 dark:text-violet-400' />
-                      <span className='text-xs font-semibold text-violet-600 dark:text-violet-400'>{report.total_hours || 0}시간</span>
-                    </div>
-                    <div className='flex items-center gap-2 text-xs text-[rgb(var(--muted-foreground))]'>
-                      <CheckCircle2 className='w-3.5 h-3.5 text-emerald-500' />
-                      <span>{completedCount}</span>
-                      <TrendingUp className='w-3.5 h-3.5 text-blue-500 ml-1' />
-                      <span>{inProgressCount}</span>
-                    </div>
+                  {/* 하단: 아바타 */}
+                  <div className='absolute bottom-4 right-5'>
+                    {user?.avatar_url ? (
+                      <img
+                        src={user.avatar_url}
+                        alt={displayName}
+                        referrerPolicy='no-referrer'
+                        className='w-10 h-10 rounded-full ring-2 ring-white dark:ring-slate-700 shadow-md object-cover'
+                      />
+                    ) : (
+                      <div className='w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 shadow-md'>
+                        <span className='text-sm font-bold text-white'>{displayName[0].toUpperCase()}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )

@@ -10,7 +10,7 @@ interface SkeletonProps {
 export function Skeleton({ className = '' }: SkeletonProps) {
   return (
     <div
-      className={`animate-pulse bg-gray-200 dark:bg-white/10 rounded ${className}`}
+      className={`animate-pulse bg-[rgb(var(--secondary))] rounded ${className}`}
     />
   )
 }
@@ -19,7 +19,7 @@ export function Skeleton({ className = '' }: SkeletonProps) {
 export function CardSkeleton() {
   return (
     <motion.div
-      className='p-3 rounded-lg bg-gray-50 dark:bg-[#2a2a45] border border-gray-200 dark:border-white/10'
+      className='p-3 rounded-lg bg-[rgb(var(--card))] border border-[rgb(var(--border))]'
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
@@ -45,13 +45,13 @@ export function ColumnSkeleton() {
   return (
     <motion.div
       className='w-full sm:w-72 sm:min-w-[288px] flex-shrink-0 rounded-xl 
-                 bg-gray-100 dark:bg-[#1e1e38] border border-gray-200 dark:border-white/10'
+                 bg-[rgb(var(--card))] border border-[rgb(var(--border))]'
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
       {/* Header */}
-      <div className='px-4 py-3 border-b border-gray-200 dark:border-white/5'>
+      <div className='px-4 py-3 border-b border-[rgb(var(--border))]'>
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-2'>
             <Skeleton className='w-2 h-2 rounded-full' />
@@ -81,16 +81,17 @@ export function ColumnSkeleton() {
 // 보드 스켈레톤 (전체 로딩)
 export function BoardSkeleton() {
   return (
-    <div className='min-h-[100dvh] flex flex-col bg-gray-50 dark:bg-[#0f0f1a]'>
+    <div className='min-h-[100dvh] flex flex-col bg-[rgb(var(--background))]'>
       {/* Header */}
-      <div className='flex-shrink-0 sticky top-0 z-50 bg-white/80 dark:bg-[#0f0f1a]/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/5'>
-        <div className='px-4 sm:px-6 py-3'>
+      <div className='flex-shrink-0 sticky top-0 z-50 bg-[rgb(var(--card))]/95 backdrop-blur-sm border-b border-[rgb(var(--border))]'>
+        <div className='px-4 sm:px-5 py-3'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-3'>
               <Skeleton className='w-9 h-9 rounded-lg' />
               <Skeleton className='h-6 w-32' />
             </div>
-            <div className='flex items-center gap-3'>
+            <div className='flex items-center gap-2'>
+              <Skeleton className='w-9 h-9 rounded-lg' />
               <Skeleton className='w-9 h-9 rounded-lg' />
               <Skeleton className='w-9 h-9 rounded-lg' />
               <Skeleton className='w-8 h-8 rounded-full' />
@@ -119,7 +120,7 @@ export function BoardSkeleton() {
 export function BoardCardSkeleton() {
   return (
     <motion.div
-      className='rounded-xl p-5 h-36 bg-gray-100 dark:bg-[#1a1a2e] border border-gray-200 dark:border-white/10'
+      className='rounded-xl p-5 h-36 bg-[rgb(var(--card))] border border-[rgb(var(--border))]'
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
@@ -132,9 +133,9 @@ export function BoardCardSkeleton() {
 // 홈 페이지 스켈레톤
 export function HomeSkeleton() {
   return (
-    <div className='min-h-[100dvh] bg-gray-50 dark:bg-[#0f0f1a]'>
+    <div className='min-h-[100dvh] bg-[rgb(var(--background))]'>
       {/* Header */}
-      <div className='sticky top-0 z-50 bg-white/80 dark:bg-[#0f0f1a]/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/5'>
+      <div className='sticky top-0 z-50 bg-[rgb(var(--background))]/80 backdrop-blur-xl border-b border-[rgb(var(--border))]'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between'>
           <div className='flex items-center gap-2'>
             <Skeleton className='w-8 h-8 rounded-lg' />
@@ -162,5 +163,30 @@ export function HomeSkeleton() {
         </div>
       </main>
     </div>
+  )
+}
+
+// 주간보고 카드 스켈레톤
+export function WeeklyReportCardSkeleton() {
+  return (
+    <motion.div
+      className='card p-5 h-44 relative'
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
+      <div className='flex items-start justify-between mb-4'>
+        <Skeleton className='w-11 h-11 rounded-xl' />
+      </div>
+      <Skeleton className='h-5 w-24 mb-2' />
+      <div className='flex items-center gap-1.5'>
+        <Skeleton className='w-1.5 h-1.5 rounded-full' />
+        <Skeleton className='h-4 w-16' />
+      </div>
+      <div className='absolute bottom-4 left-5 right-5 flex items-center gap-3'>
+        <Skeleton className='h-6 w-16 rounded-lg' />
+        <Skeleton className='h-4 w-8' />
+        <Skeleton className='h-4 w-8' />
+      </div>
+    </motion.div>
   )
 }

@@ -22,7 +22,6 @@ export default function BoardLoading() {
           animate={{ opacity: 1 }}
           className='flex flex-col items-center gap-4'
         >
-          {/* Plank 로고 */}
           <Image
             src='/blackLogo.png'
             alt='Plank'
@@ -44,9 +43,7 @@ export default function BoardLoading() {
               <motion.div
                 key={i}
                 className='w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full'
-                animate={{
-                  y: [0, -8, 0],
-                }}
+                animate={{ y: [0, -8, 0] }}
                 transition={{
                   duration: 0.5,
                   repeat: Infinity,
@@ -55,7 +52,6 @@ export default function BoardLoading() {
               />
             ))}
           </div>
-
         </motion.div>
       </div>
     </div>

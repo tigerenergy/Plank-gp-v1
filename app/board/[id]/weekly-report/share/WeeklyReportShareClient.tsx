@@ -2,11 +2,10 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Users, Clock, CheckCircle2, TrendingUp, FileText, BarChart3, Download } from 'lucide-react'
+import { ArrowLeft, Users, Clock, CheckCircle2, TrendingUp, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Board, Profile } from '@/types'
 import type { WeeklyReport } from '@/app/actions/weekly-report'
-import { generateWeeklyReportPDF, generateWeeklyReportCSV } from '@/app/lib/weekly-report-export'
 import { WeeklyReportDetailModal } from '@/app/components/weekly-report/WeeklyReportDetailModal'
 import { getWeeklyReportsByBoard } from '@/app/actions/weekly-report'
 
@@ -455,43 +454,6 @@ export function WeeklyReportShareClient({
                   </span>
                 </div>
               )}
-              <div className='relative group'>
-                <button className='px-3 py-2 rounded-xl bg-[rgb(var(--secondary))] hover:bg-[rgb(var(--secondary))]/80 border border-[rgb(var(--border))] text-sm font-medium transition-colors flex items-center gap-2'>
-                  <Download className='w-4 h-4' />
-                  내보내기
-                </button>
-                <div className='absolute right-0 top-full mt-2 w-40 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50'>
-                  <button
-                    onClick={() => {
-                      const weekStart = currentWeekReports[0]?.week_start_date || currentWeek
-                      const weekEnd = currentWeekReports[0]?.week_end_date || new Date(new Date(currentWeek).getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-                      generateWeeklyReportPDF(board, currentWeekReports, weekStart, weekEnd)
-                    }}
-                    className='w-full px-4 py-2 text-left text-sm hover:bg-[rgb(var(--secondary))] rounded-t-xl flex items-center gap-2'
-                  >
-                    <FileText className='w-4 h-4' />
-                    PDF 다운로드
-                  </button>
-                  <button
-                    onClick={() => {
-                      const weekStart = currentWeekReports[0]?.week_start_date || currentWeek
-                      const weekEnd = currentWeekReports[0]?.week_end_date || new Date(new Date(currentWeek).getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-                      generateWeeklyReportCSV(board, currentWeekReports, weekStart, weekEnd)
-                    }}
-                    className='w-full px-4 py-2 text-left text-sm hover:bg-[rgb(var(--secondary))] rounded-b-xl flex items-center gap-2'
-                  >
-                    <Download className='w-4 h-4' />
-                    CSV 다운로드
-                  </button>
-                </div>
-              </div>
-              <Link
-                href={`/board/${board.id}/weekly-report/stats`}
-                className='px-3 py-2 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/20 text-violet-600 dark:text-violet-400 text-sm font-medium transition-colors flex items-center gap-2'
-              >
-                <BarChart3 className='w-4 h-4' />
-                통계
-              </Link>
               <select
                 value={currentWeek}
                 onChange={(e) => {

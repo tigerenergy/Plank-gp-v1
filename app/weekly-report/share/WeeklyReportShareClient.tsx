@@ -2,10 +2,9 @@
 
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Users, Clock, CheckCircle2, TrendingUp, FileText, BarChart3, Download } from 'lucide-react'
+import { ArrowLeft, Users, Clock, CheckCircle2, TrendingUp, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { WeeklyReport } from '@/app/actions/weekly-report'
-import { generateWeeklyReportPDF, generateWeeklyReportCSV } from '@/app/lib/weekly-report-export'
 import { WeeklyReportDetailModal } from '@/app/components/weekly-report/WeeklyReportDetailModal'
 import { getAllWeeklyReports } from '@/app/actions/weekly-report'
 
@@ -472,36 +471,6 @@ export function WeeklyReportShareClient({
                   </span>
                 </div>
               )}
-              <div className='relative group'>
-                <button className='px-3 py-2 rounded-xl bg-[rgb(var(--secondary))] hover:bg-[rgb(var(--secondary))]/80 border border-[rgb(var(--border))] text-sm font-medium transition-colors flex items-center gap-2'>
-                  <Download className='w-4 h-4' />
-                  내보내기
-                </button>
-                <div className='absolute right-0 top-full mt-2 w-40 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50'>
-                  <button
-                    onClick={() => {
-                      const weekStart = currentWeekReports[0]?.week_start_date || currentWeek
-                      const weekEnd = currentWeekReports[0]?.week_end_date || new Date(new Date(currentWeek).getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-                      generateWeeklyReportPDF(null, currentWeekReports, weekStart, weekEnd)
-                    }}
-                    className='w-full px-4 py-2 text-left text-sm hover:bg-[rgb(var(--secondary))] rounded-t-xl flex items-center gap-2'
-                  >
-                    <FileText className='w-4 h-4' />
-                    PDF 다운로드
-                  </button>
-                  <button
-                    onClick={() => {
-                      const weekStart = currentWeekReports[0]?.week_start_date || currentWeek
-                      const weekEnd = currentWeekReports[0]?.week_end_date || new Date(new Date(currentWeek).getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-                      generateWeeklyReportCSV(null, currentWeekReports, weekStart, weekEnd)
-                    }}
-                    className='w-full px-4 py-2 text-left text-sm hover:bg-[rgb(var(--secondary))] rounded-b-xl flex items-center gap-2'
-                  >
-                    <Download className='w-4 h-4' />
-                    CSV 다운로드
-                  </button>
-                </div>
-              </div>
               <select
                 value={currentWeek}
                 onChange={(e) => {

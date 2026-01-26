@@ -52,7 +52,7 @@ export default async function WeeklyReportSearchPage({ params, searchParams }: P
     offset,
   })
 
-  if (!searchResult.success) {
+  if (!searchResult.success || !searchResult.data) {
     redirect(`/board/${boardId}/weekly-report/history`)
   }
 
